@@ -18,7 +18,8 @@
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
         }
-      ]
+      ],
+      "linkerFlags": "-lncurses"  // Add the -lncurses flag here
     }
   ]
 }
