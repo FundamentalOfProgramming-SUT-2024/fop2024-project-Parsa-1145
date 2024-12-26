@@ -1,5 +1,6 @@
 #ifndef NGAMEMENU
 #define NGAMEMENU
+
 #include "EngineState.h"
 
 void initNewGameMenu();

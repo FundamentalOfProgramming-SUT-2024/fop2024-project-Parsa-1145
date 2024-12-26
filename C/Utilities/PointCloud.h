@@ -5,9 +5,11 @@ typedef struct{
     float x, y;
     float radius;
     int locked;
+    float xForce, yForce;
 }Point;
 
-void iteratePointCloud(Point** points, int n, int spread);
+int iteratePointCloud(Point** points, int n, int spread);
 float pointGetDistance(Point* p1, Point* p2);
 void pointRender(Point* p);
+float pointForceFunction(float d, float thresh);
 #endif

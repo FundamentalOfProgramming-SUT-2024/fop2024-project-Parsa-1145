@@ -2,7 +2,7 @@
 #define TEXTBOX
 #include <ncurses.h>
 #include "Widget.h"
-#include "GlobalDefines.h"
+#include "../GlobalDefines.h"
 
 typedef struct{
     Widget* widget;

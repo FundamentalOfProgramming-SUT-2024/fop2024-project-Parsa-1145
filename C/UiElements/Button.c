@@ -1,8 +1,10 @@
 #include "Button.h"
+
 #include <ncurses.h>
 #include <string.h>
 #include <stdlib.h>
-#include "GlobalDefines.h"
+
+#include "../GlobalDefines.h"
 
 
 void renderButton(Button* btn){

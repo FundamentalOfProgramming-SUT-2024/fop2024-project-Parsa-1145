@@ -1,6 +1,7 @@
 #include "Widget.h"
-#include "Globals.h"
-#include "GlobalDefines.h"
+
+#include "../Globals.h"
+#include "../GlobalDefines.h"
 
 
 void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, int alignmentX, int alignmentY , int x, int y, int w, int h, int bColor, int bgColor){

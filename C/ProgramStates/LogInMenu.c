@@ -1,13 +1,15 @@
-#include "LogInMenu.h"
-#include <ncurses.h>
-#include "GlobalDefines.h"
-#include "Globals.h"
-#include "Widget.h"
-#include "Button.h"
-#include "TextBox.h"
-#include "MainMenu.h"
 #include <string.h>
 #include <stdlib.h>
+#include <ncurses.h>
+
+#include "LogInMenu.h"
+#include "MainMenu.h"
+#include "../GlobalDefines.h"
+#include "../Globals.h"
+#include "../UiElements/Widget.h"
+#include "../UiElements/Button.h"
+#include "../UiElements/TextBox.h"
+
 
 
 char enteredUsername[30];

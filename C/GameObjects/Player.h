@@ -5,5 +5,4 @@ typedef struct{
     int x, y;
 } Player;
 
-
 #endif

@@ -1,11 +1,12 @@
-#include "MainMenu.h"
-#include "NewGameMenu.h"
-#include <ncurses.h>
 #include <stdio.h>
+#include <ncurses.h>
+
+#include "ProgramStates/MainMenu.h"
+#include "ProgramStates/NewGameMenu.h"
+#include "ProgramStates/LogInMenu.h"
+#include "ProgramStates/MainGame.h"
 #include "GlobalDefines.h"
 #include "Globals.h"
-#include "LogInMenu.h"
-#include "MainGame.h"
 
 
 

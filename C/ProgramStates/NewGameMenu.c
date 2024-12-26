@@ -1,12 +1,14 @@
+#include <stdlib.h>
+#include <ncurses.h>
+
 #include "MainMenu.h"
-#include "Globals.h"
-#include "GlobalDefines.h"
-#include "stdlib.h"
-#include "Button.h"
-#include "Widget.h"
-#include "NewGameMenu.h"
-#include "TextBox.h"
 #include "MainGame.h"
+#include "NewGameMenu.h"
+#include "../Globals.h"
+#include "../GlobalDefines.h"
+#include "../UiElements/Widget.h"
+#include "../UiElements/TextBox.h"
+#include "../UiElements/Button.h"
 
 
  
@@ -35,11 +37,13 @@ void enterNewGameMenu(){
     curs_set(0);
     keypad(stdscr, TRUE);       
     noecho();
-    cbreak();
-    mouseinterval(1);
+    //cbreak();
+    //mouseinterval(1);
 
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     //timeout(1000);
+    printf("\033[?1003h\n");
+
 }
 void updateNewGameMenu(){
     int ch = getch();

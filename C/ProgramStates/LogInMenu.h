@@ -1,5 +1,6 @@
 #ifndef LOGINMENU
 #define LOGINMENU
+
 #include "EngineState.h"
 
 void initLogInMenu();

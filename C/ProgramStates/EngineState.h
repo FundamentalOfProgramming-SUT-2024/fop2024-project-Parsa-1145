@@ -1,6 +1,7 @@
 #ifndef ENGINESTATE
 #define ENGINESTATE
-#include "GlobalDefines.h"
+
+#include "../GlobalDefines.h"
 
 
     typedef struct{

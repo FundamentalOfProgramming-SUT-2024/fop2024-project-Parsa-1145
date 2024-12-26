@@ -1,7 +1,9 @@
 #ifndef BUTTON
 #define BUTTON
-#include "Globals.h"
 #include <ncurses.h>
+
+#include "../Globals.h"
+
 #include "Widget.h"
 
 typedef struct {

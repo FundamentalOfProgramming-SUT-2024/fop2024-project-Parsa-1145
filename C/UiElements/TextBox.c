@@ -1,7 +1,9 @@
 #include "TextBox.h"
-#include "stdlib.h"
-#include "Globals.h"
-#include "string.h"
+
+#include <string.h>
+#include <stdlib.h>
+
+#include "../Globals.h"
 
 void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int sizePolicyX, int sizePolicyY, int alignmentX, int alignmentY, int x, int y, int w){
     textBox->widget = malloc(sizeof(Widget));

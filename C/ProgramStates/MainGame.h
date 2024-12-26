@@ -1,5 +1,6 @@
 #ifndef MAINGAME
 #define MAINGAME
+
 #include "EngineState.h"
 
 void initMainGame();

@@ -1,7 +1,6 @@
 #ifndef MAINMENU
 #define MAINMENU
-#include <ncurses.h>
-#include <stdio.h>
+
 #include "EngineState.h"
 
 void initMainMenu();

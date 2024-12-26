@@ -1,7 +1,7 @@
 #include "Globals.h"
 #include <string.h>
 #include<stdlib.h>
- 
+#include <time.h>
  
 EngineState* engineState;
 int scrW;
@@ -57,4 +57,10 @@ int freadBinStr(FILE* file, char* dest){
         }
     }
 
+}
+
+int randBetween(int min, int max, int seed){
+    srand(time(NULL) + seed);
+
+    return ((rand()) % (max - min)) + min;
 }

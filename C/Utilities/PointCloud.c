@@ -5,71 +5,56 @@
 #include "stdlib.h"
 #include "time.h"
 
-void iteratePointCloud(Point** points, int n, int spread){
-    float distance, spreadAmount, newDistance, minDistance = 0;
-    int minDisIndex = 0;
+int iteratePointCloud(Point** points, int n, int spread){
+    float distance, diffrence, desiredDistance;
+    float xDir, yDir;
+    float force = 0;
+
+    int flag = 1;
     for(int i = 0; i < n; i++){
-        for(int j = i+1; j < n; j++){
-            if(j != i){
-                distance = pointGetDistance(points[i], points[j]);
+        points[i]->xForce = 0;
+        points[i]->yForce = 0;
+        if((!points[i]->locked)){
+            for(int j = 0; j < n; j++){
+                if(i != j){
+                    distance = pointGetDistance(points[i], points[j]);
 
-                if(distance < points[i]->radius + points[j]->radius + spread){
+                    srand(time(NULL) + i + j);
+                    desiredDistance = points[i]->radius + points[j]->radius + spread;
+                    diffrence = desiredDistance - distance;
                     if(distance < 1){
-                        float xDir, yDir;
-                        srand(time(NULL) + i + j);
-                        xDir = (((float)rand()) / RAND_MAX) * 2 - 1;
                         srand(time(NULL) + i + j + 1);
-                        yDir = (((float)rand()) / RAND_MAX) * 2 - 1;
+                        xDir = (((float)rand()) / RAND_MAX) * 2 - 1;
                         srand(time(NULL) + i + j + 2);
-                        spreadAmount = (((float)rand()) / RAND_MAX) * spread;
-                        newDistance = spreadAmount + points[i]->radius + points[j]->radius;
-                        srand(time(NULL) + i + j + 3);
-                        if(!points[i]->locked){
-                            points[i]->x = (newDistance) * (xDir) + points[j]->x;
-                            points[i]->y = (newDistance) * (yDir) + points[j]->y ;
-                        }else if(!points[j]->locked){
-                            points[j]->x = (newDistance) * (xDir) + points[i]->x;
-                            points[j]->y = (newDistance) * (yDir) + points[i]->y;
-                        }
+                        yDir = (((float)rand()) / RAND_MAX) * 2 - 1;
+                        
                     }else{
-                        srand(time(NULL) + i + j);
-                        spreadAmount = spread;
-                        newDistance = spreadAmount + points[i]->radius + points[j]->radius;
-
-                        if(!points[i]->locked){
-                            points[i]->x = (newDistance/distance) * (points[i]->x - points[j]->x) + points[j]->x;
-                            points[i]->y = (newDistance/distance) * (points[i]->y - points[j]->y) + points[j]->y ;
-                        }else if(!points[j]->locked){
-                            points[j]->x = (newDistance/distance) * (points[j]->x - points[i]->x) + points[i]->x;
-                            points[j]->y = (newDistance/distance) * (points[j]->y - points[i]->y) + points[i]->y;
-                        }
+                        xDir = (points[i]->x - points[j]->x) / distance;
+                        yDir = (points[i]->y - points[j]->y) / distance;
                     }
+
+                    force = pointForceFunction(diffrence, desiredDistance) * diffrence;
                     
-                    distance = pointGetDistance(points[i], points[j]) - points[i]->radius - points[j]->radius;
+                    points[i]->xForce += force * xDir;
+                    points[i]->yForce += force * yDir;
 
-                    if(minDistance == 0) minDistance = distance;
-                    else if(minDistance > distance){
-                        minDisIndex = j;
-                        minDistance = distance;
-                    }
-                }
 
-                if(minDistance > spread){
-                    distance = minDistance + points[i]->radius + points[minDisIndex]->radius;
-                    newDistance = minDistance * 0.1 + points[i]->radius + points[minDisIndex]->radius;
-
-                    if(!points[i]->locked){
-                        points[i]->x = (newDistance/distance) * (points[i]->x - points[minDisIndex]->x) + points[minDisIndex]->x;
-                        points[i]->y = (newDistance/distance) * (points[i]->y - points[minDisIndex]->y) + points[minDisIndex]->y ;
-                    }else if(!points[minDisIndex]->locked){
-                        points[minDisIndex]->x = (newDistance/distance) * (points[minDisIndex]->x - points[i]->x) + points[i]->x;
-                        points[minDisIndex]->y = (newDistance/distance) * (points[minDisIndex]->y - points[i]->y) + points[i]->y;
-                    }
                 }
             }
-        
+        }
+        if((points[i]->xForce > .1) || (points[i]->yForce > .1)){
+            flag = 0;
         }
     }
+    if(flag)return 1;
+    else{
+        FOR(i, n){
+            points[i]->x += points[i]->xForce;
+            points[i]->y += points[i]->yForce;
+        }
+        return 0;
+    }
+    
 }
 
 float pointGetDistance(Point* p1, Point* p2){
@@ -86,4 +71,9 @@ void pointRender(Point* p){
             }
         }
     }
+}
+float pointForceFunction(float d, float thresh){
+    if(d < -thresh) return 1;
+    else if(d > thresh) return 0;
+    else return (d) * (d) * (d-2 * thresh) * (d-2 * thresh) / (powf(thresh, 4) * 16);
 }

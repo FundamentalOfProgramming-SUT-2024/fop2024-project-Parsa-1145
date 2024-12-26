@@ -1,11 +1,14 @@
+#include <ncurses.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "MainMenu.h"
-#include "Globals.h"
-#include "GlobalDefines.h"
-#include "stdlib.h"
-#include "Button.h"
-#include "Widget.h"
 #include "NewGameMenu.h"
 #include "LogInMenu.h"
+#include "../Globals.h"
+#include "../GlobalDefines.h"
+#include "../UiElements/Button.h"
+#include "../UiElements/Widget.h"
 
 Button mmExitBtn;
 Button mmNewGameBtn;
@@ -45,7 +48,6 @@ void enterMainMenu(){
     clear();
     engineState = &maineMenu;
 
-    //use_default_colors();
     curs_set(0);
     keypad(stdscr, TRUE);       
     noecho();
