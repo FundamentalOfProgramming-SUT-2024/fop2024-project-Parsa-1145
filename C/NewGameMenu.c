@@ -6,12 +6,13 @@
 #include "Widget.h"
 #include "NewGameMenu.h"
 #include "TextBox.h"
+#include "MainGame.h"
 
 
  
-Button start;
+Button ngmStart;
 Button ngmBackBtn;
-Button* newGameMenuButtonList[2] = {&start, &ngmBackBtn};
+Button* newGameMenuButtonList[2] = {&ngmStart, &ngmBackBtn};
 
 Widget sideBar;
 
@@ -20,10 +21,11 @@ EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGame
 void initNewGameMenu(){
     createWidget(&sideBar, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 40, 100, COLOR_GRAY0, COLOR_GRAY0);
 
-    createButton(&start, &sideBar, "Start", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);
+    createButton(&ngmStart, &sideBar, "Start", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);
     createButton(&ngmBackBtn, &sideBar, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6, COLOR_WHITE, COLOR_BLACK, COLOR_RED, COLOR_WHITE);
     
     ngmBackBtn.callBack = maineMenu.enter;
+    ngmStart.callBack = mainGame.enter;
 }
 
 void enterNewGameMenu(){

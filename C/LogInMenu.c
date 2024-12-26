@@ -31,33 +31,16 @@ void logIn(){
         char tmp[100];
         while(!feof(playerDb)){
             freadBinStr(playerDb, tmp);
-            printw("%s ", tmp);
-            refresh();
             if(!strcmp(tmp, "#")){
                 freadBinStr(playerDb, NULL);
                 freadBinStr(playerDb, tmp);
-                //printw("%s ", tmp);
-                refresh();
 
                 if(!strcmp(tmp, enteredUsername)){
                     freadBinStr(playerDb, NULL);
                     fread(tmp,1,  strlen(enteredUsername), playerDb);
                     
-
                     char* tmpHash = hashWithKey(enteredUsername, enteredPassword);
 
-                    
-                    printw("khkh ");
-                    FOR(i, strlen(enteredUsername)){
-                        printw("%c", tmp[i]);
-                    }
-                    addch(' ');
-                    printw("khkh ");
-
-                    FOR(i, strlen(enteredUsername)){
-                        printw("%c", tmpHash[i]);
-                    }
-                    addch(' ');
                     if(!strncmp(tmp, tmpHash, strlen(enteredUsername))){
                         maineMenu.enter();
                         free(tmpHash);

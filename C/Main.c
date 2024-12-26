@@ -5,6 +5,7 @@
 #include "GlobalDefines.h"
 #include "Globals.h"
 #include "LogInMenu.h"
+#include "MainGame.h"
 
 
 
@@ -19,6 +20,7 @@ int main(){
     initMainMenu();
     initNewGameMenu();
     initLogInMenu();
+    initMainGame();
     
 
     engineState = &maineMenu;
@@ -29,5 +31,6 @@ int main(){
         (*(engineState->update))();
         (*(engineState->render))();
     }
+
     endwin();
 }
