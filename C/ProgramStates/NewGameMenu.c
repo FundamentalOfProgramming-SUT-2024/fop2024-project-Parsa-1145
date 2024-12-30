@@ -21,10 +21,10 @@ Widget sideBar;
 EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGameMenu, &exitNewGameMenu};
 
 void initNewGameMenu(){
-    createWidget(&sideBar, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 40, 100, COLOR_GRAY0, COLOR_GRAY0);
+    createWidget(&sideBar, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 40, 100, C_BG_GRAY0);
 
-    createButton(&ngmStart, &sideBar, "Start", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);
-    createButton(&ngmBackBtn, &sideBar, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6, COLOR_WHITE, COLOR_BLACK, COLOR_RED, COLOR_WHITE);
+    createButton(&ngmStart, &sideBar, "Start", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60);
+    createButton(&ngmBackBtn, &sideBar, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6);
     
     ngmBackBtn.callBack = maineMenu.enter;
     ngmStart.callBack = mainGame.enter;
@@ -67,7 +67,7 @@ void updateNewGameMenu(){
                         break;
                     default:
                         FOR(i, 2){
-                            buttonMouseClickEvent(newGameMenuButtonList[i], mEvent);
+                            buttonMouseClickEvent(newGameMenuButtonList[i]);
                         }
                         break;
                 }

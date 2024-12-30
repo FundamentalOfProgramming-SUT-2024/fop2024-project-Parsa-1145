@@ -1,6 +1,7 @@
 #include <math.h>
 #include <ncurses.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "MainGame.h"
 #include "../Globals.h"
@@ -12,6 +13,7 @@
 #include "../UiElements/Widget.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/TextBox.h"
+#include "../UiElements/Checkbox.h"
 #include "../GameObjects/Room.h"
 #include "../GameObjects/GameSettings.h"
 #include "../GameObjects/Floor.h"
@@ -41,35 +43,53 @@ int roomNum = 0;
 
 Widget debugMenu;
 Button mgCloseDebugBtn;
+Button debugTogglePointCloudBtn;
+Button debugToggleNoclipBtn;
+CheckBox showCloud;
 
-Button** mgButtonList[1] = {&mgCloseDebugBtn};
+Button* mgButtonList[3] = {&mgCloseDebugBtn, &debugToggleNoclipBtn, &debugTogglePointCloudBtn};
 
 void mgtoggleDegbugMenu(){
     debugMenu.isVisible = !debugMenu.isVisible;
 }
 void uiMouseMove(){
-    FOR(i, 1){
+    FOR(i, 3){
         buttonMouseMoveCallback(mgButtonList[i]);
     }
+    checkBoxMouseMoveCallback(&showCloud);
 }
 void renderUi(){
     renderWidget(&debugMenu);
-    FOR(i, 1){
+    FOR(i, 3){
         renderButton(mgButtonList[i]);
     }
+    renderCheckbox(&showCloud);
+
 }
 void uiMouseClick(){
-    FOR(i, 1){
-        buttonMouseClickEvent(mgButtonList[i], mEvent);
+    FOR(i, 3){
+        buttonMouseClickEvent(mgButtonList[i]);
     }
+    checkBoxMouseClickEvent(&showCloud);
 }
 
 void initMainGame(){
-    createWidget(&debugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, COLOR_GRAY0, COLOR_GRAY0);
+    createWidget(&debugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
+    debugMenu.layoutType = HORIZONTAL_LAYOUT;
+    debugMenu.layoutPadding = 1;
     debugMenu.isVisible = 0;
 
-    createButton(&mgCloseDebugBtn, &debugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 7, COLOR_WHITE, COLOR_BLACK, COLOR_RED, COLOR_WHITE);
+    createButton(&mgCloseDebugBtn, &debugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 7);
+    createButton(&debugTogglePointCloudBtn, &debugMenu, "Toggle point cloud", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 5, 20);
+    createButton(&debugToggleNoclipBtn, &debugMenu, "Toggle no clip", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 20);
+    createCheckBox(&showCloud, &debugMenu, "Show Clouds", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 100);
+    linkedListPushBack(debugMenu.children, debugTogglePointCloudBtn.widget);
+    linkedListPushBack(debugMenu.children, debugToggleNoclipBtn.widget);
+    linkedListPushBack(debugMenu.children, showCloud.widget);
+
+    updateWidgetChildren(&debugMenu);
     mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
+
 
     gameSettings.difficaulity = 0;
     gameSettings.maxRoomNumber = 15;
@@ -346,21 +366,24 @@ void renderMainGame(){
     mainCamera.y = player.y-mainCamera.h/2;
 
     //attron(COLOR_PAIR(100));
-    if(gameSettings.debugMode){
-        if(gameSettings.debugShowPointCloud){
-            // FOR(i, roomNum){
-            //     pointRender(pointCloud[i]);
-            //     mvprintw(i + 1,2, "%f %f", pointCloud[i]->x, pointCloud[i]->y);
-            // }
-            
-        }
-    }
+    
     mrenderTexture(floor1.groundMesh, NULL, floor1.minx, floor1.miny, frameBuffer, NULL);
     mrenderTexture(visited, NULL, floor1.minx, floor1.miny, visitedMaskBuffer, NULL);
     maskFrameBuffer(frameBuffer, NULL, visitedMaskBuffer);
     renderFrameBuffer(frameBuffer);
 
+
+    if(gameSettings.debugMode){
+        if(gameSettings.debugShowPointCloud){
+            FOR(i, roomNum){
+                pointRender(pointCloud[i]);
+                mvprintw(i + 1,2, "%f %f", pointCloud[i]->x, pointCloud[i]->y);
+            }
+        }
+    }
+    
     mvprintw(scrH/2, scrW/2, "@");
+    mvprintw(0, 0, "%llu", time(NULL));
 
     renderUi();
 

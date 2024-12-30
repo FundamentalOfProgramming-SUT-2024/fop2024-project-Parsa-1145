@@ -14,13 +14,11 @@ void renderButton(Button* btn){
     }
     
     if(isWidgetVisible(btn->widget->parent)){
-        if(btn->clicked){
-        attron(COLOR_PAIR(btn->clkColorPair));
-        }else{
+        if(!btn->clicked){
             if(btn->hovered){
-                attron(A_BOLD);
+                attron(A_DIM);
             }
-            attron(COLOR_PAIR(btn->colorPair));
+            attron(A_REVERSE);
         }
 
         move(btn->widget->topLeftY, btn->widget->topLeftX);
@@ -34,33 +32,24 @@ void renderButton(Button* btn){
             addch(' ');
         }
         
-        attroff(A_BOLD);
-        attroff(COLOR_PAIR(1));
+        if(!btn->clicked){
+            if(btn->hovered){
+                attroff(A_DIM);
+            }
+            attroff(A_REVERSE);
+        }
     }
 }
-void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int alignmentX, int alignmentY, int x, int y, int w, int bgC, int c, int clkBgC, int clkC){
+void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int alignmentX, int alignmentY, int x, int y, int w){
     btn->widget = malloc(sizeof(Widget));
 
-    createWidget(btn->widget, parent, sizePolicyX, ABSOLUTE, alignmentX, alignmentY, x, y, w, 1, COLOR_BLACK, COLOR_BLACK);
+    createWidget(btn->widget, parent, sizePolicyX, ABSOLUTE, alignmentX, alignmentY, x, y, w, 1, COLOR_BLACK);
 
     btn->strLegth = strlen(str);
     btn->margin = (btn->widget->wCopy - btn->strLegth) / 2;
     btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
 
     btn->str = str;
-
-    btn->bgColor    = bgC;
-    btn->color      = c;
-    btn->clkBgColor = clkBgC;
-    btn->clkColor   = clkC;
-
-    init_pair(colorPairNum, c, bgC);
-    init_pair(colorPairNum+1, clkC, clkBgC);
-    btn->colorPair = colorPairNum;
-    btn->clkColorPair = colorPairNum + 1;
-
-    colorPairNum += 2;
-
 }
 void buttonMouseMoveCallback(Button* btn){
     if(isWidgetVisible(btn->widget->parent)){
@@ -75,12 +64,12 @@ void buttonMouseMoveCallback(Button* btn){
         btn->clicked = 0;
     }
 }
-void buttonMouseClickEvent(Button* btn, MEVENT e){  //// button is still hovered after clicking
+void buttonMouseClickEvent(Button* btn){  //// button is still hovered after clicking
     if(isWidgetVisible(btn->widget->parent)){
         if(btn->hovered){
-            if(e.bstate & BUTTON1_PRESSED){
+            if(mEvent.bstate & BUTTON1_PRESSED){
                 btn->clicked = 1;
-            }else if((e.bstate & BUTTON1_RELEASED) && btn->clicked){
+            }else if((mEvent.bstate & BUTTON1_RELEASED) && btn->clicked){
                 btn->callBack();
                 btn->clicked = 0;
                 btn->hovered = 0;
@@ -93,4 +82,9 @@ void buttonMouseClickEvent(Button* btn, MEVENT e){  //// button is still hovered
     }else{
         btn->hovered = 0;
     }
+}
+
+void deleteButton(Button* btn){
+    deleteWidget(btn->widget);
+    free(btn);
 }

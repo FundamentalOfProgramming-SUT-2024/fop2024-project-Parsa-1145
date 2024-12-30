@@ -5,6 +5,7 @@
 #include "MainMenu.h"
 #include "NewGameMenu.h"
 #include "LogInMenu.h"
+#include "SignupMenu.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
 #include "../UiElements/Button.h"
@@ -27,20 +28,21 @@ void exitMainMenu(){
     terminate = 1;
 }
 void initMainMenu(){
-    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 30, 12, COLOR_BLACK, COLOR_BLACK );
+    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 30, 12, C_BG_BLACK );
 
 
-    createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 0, 100, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);
-    createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 2, 100, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);
-    createButton(&mmSettingsBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 100, COLOR_WHITE, COLOR_BLACK, COLOR_BLUE, COLOR_WHITE);
-    createButton(&mmSocreboardBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 6, 100, COLOR_WHITE, COLOR_BLACK, COLOR_YELLOW, COLOR_BLACK);
-    createButton(&mmLoginBtn, &menu, "Log in", RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 8, 48, COLOR_WHITE, COLOR_BLACK, COLOR_YELLOW, COLOR_BLACK);
-    createButton(&mmNewCharacterBtn, &menu, "New Character", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 8, 48, COLOR_WHITE, COLOR_BLACK, COLOR_YELLOW, COLOR_BLACK);
-    createButton(&mmExitBtn, &menu, "Exit"          , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 10, 80, COLOR_WHITE, COLOR_BLACK, COLOR_RED, COLOR_WHITE);
+    createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 0, 100);
+    createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 2, 100);
+    createButton(&mmSettingsBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 100);
+    createButton(&mmSocreboardBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 6, 100);
+    createButton(&mmLoginBtn, &menu, "Log in", RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 8, 48);
+    createButton(&mmNewCharacterBtn, &menu, "New Character", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 8, 48);
+    createButton(&mmExitBtn, &menu, "Exit"          , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 10, 80);
     
     mmExitBtn.callBack = &exitMainMenu;
     mmNewGameBtn.callBack = (newGameMenu.enter);
     mmLoginBtn.callBack = logInMenu.enter;
+    mmNewCharacterBtn.callBack = signUpMenu.enter;
 
 
 }
@@ -81,7 +83,7 @@ void updateMainMenu(){
                         break;
                     default:
                         FOR(i, 7){
-                            buttonMouseClickEvent(mainMenuButtonList[i], mEvent);
+                            buttonMouseClickEvent(mainMenuButtonList[i]);
                         }
                         break;
                 }

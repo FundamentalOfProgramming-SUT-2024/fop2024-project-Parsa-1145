@@ -1,11 +1,12 @@
-#include "Widget.h"
+#include <stdlib.h>
 
+#include "Widget.h"
 #include "../Globals.h"
+#include"../Utilities/LinkedList.h"
 #include "../GlobalDefines.h"
 
 
-void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, int alignmentX, int alignmentY , int x, int y, int w, int h, int bColor, int bgColor){
-    widget->bColor = bColor;
+void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, int alignmentX, int alignmentY , int x, int y, int w, int h, int bgColor){
     widget->bgColor = bgColor;
 
     widget->w = w;
@@ -24,11 +25,12 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     int tmpx, tmpy;
     getWidgetTopLeft(widget, &tmpx, &tmpy);
 
-    widget->colorPair = colorPairNum;
-    init_pair(widget->colorPair, bColor, bgColor);
-    colorPairNum++;
+    widget->colorPair = bgColor;
 
     widget->isVisible = 1;
+
+    widget->children = malloc(sizeof(LinkedList));
+    createLinkedList(widget->children, sizeof(Widget*));
 }
 int isWidgetVisible(Widget* widget){
     if(widget->parent != NULL){
@@ -120,7 +122,7 @@ int getWidgetSize(Widget* widget, int* w, int* h){
                 *w = min(*w, widget->w);
                 break;
             case RELATIVE:
-                *w = (*w * widget->w ) / 100;
+                *w = ((*w * widget->w ) / 100) - widget->x;
                 break;
         }switch(widget->sizeType[1]){
             case ABSOLUTE:
@@ -175,4 +177,22 @@ int isWidgetHovered(Widget* widget, int x, int y){
     updateWidgetTopLeft(widget);
 
     return (((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
+}
+
+void updateWidgetChildren(Widget* widget){
+    if(widget->layoutType == HORIZONTAL_LAYOUT){
+        if(widget->children->size){
+            Widget* ch = ((Widget*)linkedListGetElement(widget->children, 0));
+            int tmp = ch->y + ch->h;
+            for(int i = 1; i < widget->children->size; i++){
+                ch = ((Widget*)linkedListGetElement(widget->children, i));
+                ch->y = tmp + widget->layoutPadding;
+                tmp += ch->h + widget->layoutPadding;
+            }
+        }
+    }
+}
+
+void deleteWidget(Widget* widget){
+    free(widget);
 }

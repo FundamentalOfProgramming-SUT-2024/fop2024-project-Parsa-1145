@@ -6,8 +6,11 @@
 #define ALIGN_RIGHT 3
 #define ALIGN_TOP 1
 #define ALIGN_BOTTOM 3
+#define HORIZONTAL_LAYOUT 1
 
-#define COLOR_GRAY0 10
+#define C_BG_GRAY0 10
+#define C_BG_GRAY1 12
+#define C_BG_BLACK 11
 
 #define FOR(i, n) for(int i = 0 ; i < n ; i++)
 

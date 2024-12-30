@@ -2,6 +2,8 @@
 #include <string.h>
 #include<stdlib.h>
 #include <time.h>
+
+#include "Utilities/LinkedList.h"
  
 EngineState* engineState;
 GameSettings gameSettings;
@@ -11,6 +13,7 @@ int mousex;
 int mousey;
 int terminate = 0;
 int colorPairNum = 5;
+
 MEVENT mEvent;
 
 char* playerDbAddress = "../Data/Players.txt";
@@ -80,7 +83,23 @@ int randIndexWithProb(int n, float* prob,int seed){
         }
     }
 }
-
-int isInRange(float a, float min, float max){
-    return((a <= min) && (a >= max));
+void wrapText(char* txt, int w){
+    int n = 0;
+    int j = 0;
+    
+    int size = strlen(txt);
+    
+    FOR(i, size){
+        if(n == w){
+            txt[j] = '\n';
+            n = i - j;
+        }else{
+            if(txt[i] == ' '){
+                j = i;
+                n++;
+            }else{
+                n++;
+            }
+        }
+    }
 }

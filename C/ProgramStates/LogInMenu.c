@@ -26,10 +26,10 @@ EngineState logInMenu = {&enterLogInMenu, &updateLogInMenu, &renderLogInMenu, &e
 void logIn(){
     FILE* playerDb = fopen(playerDbAddress, "r");
 
-    move(0,0);
-    printw("%s ", playerDbAddress);
-    refresh();
     if(playerDb != NULL){
+        move(0, 0);
+        printw("%s ", playerDbAddress);
+        refresh();
         char tmp[100];
         while(!feof(playerDb)){
             freadBinStr(playerDb, tmp);
@@ -57,9 +57,9 @@ void logIn(){
 }
 
 void initLogInMenu(){
-    createWidget(&formWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 50, 20, COLOR_WHITE, COLOR_GRAY0);
-    createButton(&limLoginBtn, &formWidget, "Log In", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60, COLOR_WHITE, COLOR_BLACK, COLOR_BLUE, COLOR_WHITE);
-    createButton(&limBackBtn, &formWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6, COLOR_WHITE, COLOR_BLACK, COLOR_RED, COLOR_WHITE);
+    createWidget(&formWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 50, 20, C_BG_GRAY0);
+    createButton(&limLoginBtn, &formWidget, "Log In", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60);
+    createButton(&limBackBtn, &formWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6);
     createTextBox(&usernameTb, &formWidget, "Username", enteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 90);
     createTextBox(&passwordTb, &formWidget, "Password", enteredPassword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 8, 90);
 
@@ -109,7 +109,7 @@ void updateLogInMenu(){
                         break;
                     default:
                         FOR(i, 2){
-                            buttonMouseClickEvent(logInMenuButtonList[i], mEvent);
+                            buttonMouseClickEvent(logInMenuButtonList[i]);
                         }
                         FOR(i, 2){
                             textBoxMouseClickCallback(logInMenuTextBoxList[i]);
@@ -130,6 +130,7 @@ void updateLogInMenu(){
 }
 
 void renderLogInMenu(){
+    erase();
     renderWidget(&formWidget);
     FOR(i, 2){
         renderButton(logInMenuButtonList[i]);
@@ -137,6 +138,7 @@ void renderLogInMenu(){
     FOR(i, 2){
         renderTextBox(logInMenuTextBoxList[i]);
     }
+    refresh();
 }
 void exitLogInMenu(){
 
