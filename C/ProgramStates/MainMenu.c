@@ -27,7 +27,7 @@ void exitMainMenu(){
     terminate = 1;
 }
 void initMainMenu(){
-    createWidget(&menu, NULL, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 50, 12, COLOR_BLACK, COLOR_BLACK );
+    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 30, 12, COLOR_BLACK, COLOR_BLACK );
 
 
     createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 0, 100, COLOR_WHITE, COLOR_BLACK, COLOR_GREEN, COLOR_WHITE);

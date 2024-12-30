@@ -4,6 +4,7 @@
 #include <time.h>
  
 EngineState* engineState;
+GameSettings gameSettings;
 int scrW;
 int scrH;
 int mousex;
@@ -14,11 +15,11 @@ MEVENT mEvent;
 
 char* playerDbAddress = "../Data/Players.txt";
 
-int max(int a, int b){
+float max(float a, float b){
     if(a > b) return a;
     else return b;
 }
-int min(int a, int b){
+float min(float a, float b){
     if(a < b) return a;
     else return b;
 }
@@ -63,4 +64,23 @@ int randBetween(int min, int max, int seed){
     srand(time(NULL) + seed);
 
     return ((rand()) % (max - min)) + min;
+}
+
+int randIndexWithProb(int n, float* prob,int seed){
+    srand(time(NULL) + seed);
+
+    float r = ((float)(rand()) / RAND_MAX);
+
+    float tmp = 0;
+    for(int i = 0 ; i < n; i++){
+        if((r > tmp) && (r < tmp + prob[i])){
+            return i;
+        }else{
+            tmp += prob[i];
+        }
+    }
+}
+
+int isInRange(float a, float min, float max){
+    return((a <= min) && (a >= max));
 }

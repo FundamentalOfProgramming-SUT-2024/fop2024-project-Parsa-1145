@@ -3,6 +3,7 @@
 
 typedef struct{
     int x, y;
+    int visionRadius;
 } Player;
 
 #endif

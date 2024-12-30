@@ -2,6 +2,7 @@
 #define MAINGAME
 
 #include "EngineState.h"
+#include "../GameObjects/Camera.h"
 
 void initMainGame();
 void enterMainGame();
@@ -10,7 +11,6 @@ void renderMainGame();
 void exitMainGame();
 
 extern EngineState mainGame;
-
-void addRoom();
+extern Camera mainCamera;
 
 #endif 

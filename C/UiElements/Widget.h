@@ -11,6 +11,7 @@ struct Widget{
     int sizeType[2];
     int w, h;
     int alignment[2];
+    int isVisible;
 
     int bColor;
     int bgColor;
@@ -32,5 +33,6 @@ void renderWidget(Widget* widget);
 int updateWidgetSize(Widget* widget);
 int updateWidgetTopLeft(Widget* widget);
 int isWidgetHovered(Widget* widget, int x, int y);
+int isWidgetVisible(Widget* widget);
 
 #endif

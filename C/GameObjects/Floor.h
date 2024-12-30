@@ -2,13 +2,16 @@
 #define FLOOR
 
 #include"Room.h"
+#include "Texture.h"
 
 typedef struct{
     int minx, miny, maxx, maxy;
 
-    Room* roomList;
+    Room** roomList;
     int roomNum;
-    char** groundMesh;
+    
+    CharTexture* groundMesh;
+    ColorTexture* groundMeshColor;
 }Floor;
 
 #endif

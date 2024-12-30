@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build",
+        "type": "shell",
+        "command": "/usr/bin/gcc",
+        "args": [
+          "-g",
+          "ProgramStates/MainMenu.c",
+          "Main.c",
+          "Globals.c",
+          "UiElements/Button.c",
+          "UiElements/Widget.c",
+          "ProgramStates/NewGameMenu.c",
+          "UiElements/TextBox.c",
+          "ProgramStates/LogInMenu.c",
+          "ProgramStates/MainGame.c",
+          "Utilities/LinkedList.c",
+          "GameObjects/Room.c",
+          "Utilities/PointCloud.c",
+          "-o", "main",
+          "-lncurses",
+          "-lm"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": ["$gcc"],
+        "detail": "Generated task for C program build"
+      }
+    ]
+  }
+  

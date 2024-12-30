@@ -8,10 +8,11 @@ typedef struct{
     int tmpx, tmpy, tmpx2, tmpy2;
 
     int theme;
+
+    int visited;
     
 }Room;
 
-void createRoom(Room* room, int x, int y, int w, int h);
-void renderRoom(Room* room, int x, int y);
+Room* createRoom(int x, int y, int w, int h);
 
 #endif

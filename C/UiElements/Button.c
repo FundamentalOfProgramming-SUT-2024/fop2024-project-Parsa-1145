@@ -13,28 +13,30 @@ void renderButton(Button* btn){
         btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
     }
     
-    if(btn->clicked){
+    if(isWidgetVisible(btn->widget->parent)){
+        if(btn->clicked){
         attron(COLOR_PAIR(btn->clkColorPair));
-    }else{
-        if(btn->hovered){
-            attron(A_BOLD);
+        }else{
+            if(btn->hovered){
+                attron(A_BOLD);
+            }
+            attron(COLOR_PAIR(btn->colorPair));
         }
-        attron(COLOR_PAIR(btn->colorPair));
-    }
 
-    move(btn->widget->topLeftY, btn->widget->topLeftX);
-    for(int i = 0; i < btn->margin + btn->marginCarry; i++){
-        addch(' ');
-    }
+        move(btn->widget->topLeftY, btn->widget->topLeftX);
+        for(int i = 0; i < btn->margin + btn->marginCarry; i++){
+            addch(' ');
+        }
 
-    printw("%s", btn->str);
+        printw("%s", btn->str);
 
-    for(int i = 0; i < btn->margin; i++){
-        addch(' ');
+        for(int i = 0; i < btn->margin; i++){
+            addch(' ');
+        }
+        
+        attroff(A_BOLD);
+        attroff(COLOR_PAIR(1));
     }
-    
-    attroff(A_BOLD);
-    attroff(COLOR_PAIR(1));
 }
 void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int alignmentX, int alignmentY, int x, int y, int w, int bgC, int c, int clkBgC, int clkC){
     btn->widget = malloc(sizeof(Widget));
@@ -61,25 +63,34 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
 
 }
 void buttonMouseMoveCallback(Button* btn){
-    if(isWidgetHovered(btn->widget, mEvent.x, mEvent. y)){
-        btn->hovered = 1;
+    if(isWidgetVisible(btn->widget->parent)){
+        if(isWidgetHovered(btn->widget, mEvent.x, mEvent. y)){
+            btn->hovered = 1;
+        }else{
+            btn->hovered = 0;
+            btn->clicked = 0;
+        }
     }else{
         btn->hovered = 0;
         btn->clicked = 0;
     }
 }
 void buttonMouseClickEvent(Button* btn, MEVENT e){  //// button is still hovered after clicking
-    if(btn->hovered){
-        if(e.bstate & BUTTON1_PRESSED){
-            btn->clicked = 1;
-        }else if((e.bstate & BUTTON1_RELEASED) && btn->clicked){
-            btn->callBack();
-            btn->clicked = 0;
-            btn->hovered = 0;
+    if(isWidgetVisible(btn->widget->parent)){
+        if(btn->hovered){
+            if(e.bstate & BUTTON1_PRESSED){
+                btn->clicked = 1;
+            }else if((e.bstate & BUTTON1_RELEASED) && btn->clicked){
+                btn->callBack();
+                btn->clicked = 0;
+                btn->hovered = 0;
+            }else{
+                btn->clicked = 0;
+            }
         }else{
             btn->clicked = 0;
         }
     }else{
-        btn->clicked = 0;
+        btn->hovered = 0;
     }
 }

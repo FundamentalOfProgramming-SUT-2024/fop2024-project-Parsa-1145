@@ -22,7 +22,8 @@ int iteratePointCloud(Point** points, int n, int spread){
                     srand(time(NULL) + i + j);
                     desiredDistance = points[i]->radius + points[j]->radius + spread;
                     diffrence = desiredDistance - distance;
-                    if(distance < 1){
+
+                    if(distance < 1.5){
                         srand(time(NULL) + i + j + 1);
                         xDir = (((float)rand()) / RAND_MAX) * 2 - 1;
                         srand(time(NULL) + i + j + 2);
@@ -33,24 +34,25 @@ int iteratePointCloud(Point** points, int n, int spread){
                         yDir = (points[i]->y - points[j]->y) / distance;
                     }
 
-                    force = pointForceFunction(diffrence, desiredDistance) * diffrence;
+                    force = pointForceFunction(diffrence, desiredDistance/2) * diffrence;
                     
-                    points[i]->xForce += force * xDir;
-                    points[i]->yForce += force * yDir;
+                    if(diffrence > 0){
+                        points[i]->xForce += force * xDir;
+                        points[i]->yForce += force * yDir;
+                    }
 
-
+                    if(diffrence > 4){
+                        flag = 0;
+                    }
                 }
             }
-        }
-        if((points[i]->xForce > .1) || (points[i]->yForce > .1)){
-            flag = 0;
         }
     }
     if(flag)return 1;
     else{
         FOR(i, n){
-            points[i]->x += points[i]->xForce;
-            points[i]->y += points[i]->yForce;
+            points[i]->x += points[i]->xForce / n;
+            points[i]->y += points[i]->yForce / n;
         }
         return 0;
     }
@@ -73,7 +75,6 @@ void pointRender(Point* p){
     }
 }
 float pointForceFunction(float d, float thresh){
-    if(d < -thresh) return 1;
-    else if(d > thresh) return 0;
-    else return (d) * (d) * (d-2 * thresh) * (d-2 * thresh) / (powf(thresh, 4) * 16);
+    if(d > thresh) return thresh/2;
+    return (d) * (d)/ (powf(thresh, 2));
 }

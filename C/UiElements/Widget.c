@@ -27,8 +27,17 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->colorPair = colorPairNum;
     init_pair(widget->colorPair, bColor, bgColor);
     colorPairNum++;
-}
 
+    widget->isVisible = 1;
+}
+int isWidgetVisible(Widget* widget){
+    if(widget->parent != NULL){
+        if(isWidgetVisible(widget->parent) && widget->isVisible) return 1;
+        else return 0;
+    }else{
+        return widget->isVisible;
+    }
+}
 int getWidgetTopLeft(Widget* widget, int*x, int* y){
     if(widgetParentResized(widget)){
         int pw, ph;
@@ -137,7 +146,7 @@ int widgetParentResized(Widget* widget){          /////////// right now it only 
 }
 
 void renderWidget(Widget* widget){
-    //if(widgetParentResized(widget)){
+    if(isWidgetVisible(widget)){
         int tmpx, tmpy;
         getWidgetTopLeft(widget, &tmpx, &tmpy);
         attron(COLOR_PAIR(widget->colorPair));
@@ -149,7 +158,8 @@ void renderWidget(Widget* widget){
             move(i+1, widget->topLeftX + 1);
         }
         attroff(COLOR_PAIR(widget->colorPair));
-    //}
+
+    }
 }
 
 int updateWidgetSize(Widget* widget){
