@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "Checkbox.h"
 #include "Widget.h"
 
@@ -21,7 +23,7 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
 
 }
 
-void renderCheckbox(CheckBox* cb){
+void renderCheckBox(CheckBox* cb){
     updateWidgetTopLeft(cb->widget);
 
     if(isWidgetVisible(cb->widget)){

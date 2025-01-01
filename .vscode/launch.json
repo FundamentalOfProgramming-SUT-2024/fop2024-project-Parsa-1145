@@ -9,7 +9,7 @@
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "/home/parsa/Projects/University/BP/Rouge/C/ProgramStates",
-      "program": "/home/parsa/Projects/University/BP/Rouge/C/ProgramStates/build/Debug/outDebug",
+      "program": "/home/parsa/Projects/University/BP/Rouge/C/main",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

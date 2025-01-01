@@ -72,7 +72,6 @@ void buttonMouseClickEvent(Button* btn){  //// button is still hovered after cli
             }else if((mEvent.bstate & BUTTON1_RELEASED) && btn->clicked){
                 btn->callBack();
                 btn->clicked = 0;
-                btn->hovered = 0;
             }else{
                 btn->clicked = 0;
             }

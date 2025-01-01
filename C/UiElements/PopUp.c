@@ -7,9 +7,9 @@
 
 PopUp* createPopUp(char* message, Widget* parent, int w, int h, voidCB closeCallback){
     PopUp* out = malloc(sizeof(PopUp));
-    out->msg =  malloc(strlen(message) + 10);
+    out->msg =  malloc(strlen(message) + 1);
     strcpy(out->msg, message);
-    wrapText(out->msg, w - 2);
+    //wrapText(out->msg, w - 2);
     out->msgLen = strlen(out->msg);
 
     out->widget = malloc(sizeof(Widget));
@@ -31,15 +31,16 @@ void renderPopup(PopUp* popUp){
     int line = popUp->widget->topLeftY + 2;
 
     move(line, popUp->widget->topLeftX + 2);
-    FOR(i, popUp->msgLen){
-        if(popUp->msg[i] == '\n'){
-            line++;
-            move(line, popUp->widget->topLeftX + 2);
-        }else{
-            addch(popUp->msg[i]);
-        }
+    // FOR(i, popUp->msgLen){
+    //     if(popUp->msg[i] == '\n'){
+    //         line++;
+    //         move(line, popUp->widget->topLeftX + 2);
+    //     }else{
+    //         addch(popUp->msg[i]);
+    //     }
 
-    }
+    // }
+    printw("%s", popUp->msg);
     attroff(COLOR_PAIR(popUp->widget->bgColor));
 }
 void deletePopUp(PopUp* popup){

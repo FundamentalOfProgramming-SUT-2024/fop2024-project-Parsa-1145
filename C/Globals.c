@@ -1,10 +1,12 @@
-#include "Globals.h"
 #include <string.h>
 #include<stdlib.h>
 #include <time.h>
 
+#include "Globals.h"
+
 #include "Utilities/LinkedList.h"
- 
+#include "Utilities/cJSON.h"
+
 EngineState* engineState;
 GameSettings gameSettings;
 int scrW;
@@ -16,7 +18,7 @@ int colorPairNum = 5;
 
 MEVENT mEvent;
 
-char* playerDbAddress = "../Data/Players.txt";
+char* playerDbAddress = "../Data/Players.json";
 
 float max(float a, float b){
     if(a > b) return a;
@@ -103,3 +105,42 @@ void wrapText(char* txt, int w){
         }
     }
 }
+int fileToStr(char* address, char** buffer){
+    FILE* file = fopen(address, "rb");
+    long int length;
+
+    if (file){
+        fseek (file, 0, SEEK_END);
+        length = ftell(file);
+        fseek (file, 0, SEEK_SET);
+        *buffer = malloc(length + 20);
+        if (*buffer){
+            fread (*buffer, 1, length, file);
+        }
+        (*buffer)[length] = '\0';
+        fclose (file);
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+int saveJsonToFile(char* address, void* json){
+    FILE* file = fopen(address, "w");
+    
+
+    if (file){
+        char* str = cJSON_Print(json);
+        fprintf(file, "%s", str);
+
+        free(str);
+        fclose (file);
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+
+
+

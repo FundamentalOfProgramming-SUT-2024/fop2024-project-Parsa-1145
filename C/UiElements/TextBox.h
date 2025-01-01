@@ -12,6 +12,7 @@ typedef struct{
     char* label;
     char* str;
     char* placeHolder;
+    int spaceAccepted;
     int index;
 
     int sizePolicyX, sizePolicyY;

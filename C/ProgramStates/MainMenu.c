@@ -99,6 +99,7 @@ void updateMainMenu(){
 }
 
 void renderMainMenu(){
+    erase();
     renderWidget(&menu);
     FOR(i, 7){
         renderButton(mainMenuButtonList[i]);

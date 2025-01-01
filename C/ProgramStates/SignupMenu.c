@@ -1,8 +1,9 @@
 #include <string.h>
 
 #include "SignupMenu.h"
-
 #include "MainMenu.h"
+
+#include "../Utilities/cJSON.h"
 #include "../UiElements/TextBox.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/PopUp.h"
@@ -37,6 +38,53 @@ void closeInvalidPopup(){
     deletePopUp(suInvalidPopup);
     suInvalidPopup = NULL;
 }
+int isEmailValid(char* email){
+    int size = strlen(email);
+    int valid = 1;
+    int partSize = 0;
+    int seenAtsign = 0;
+    int seenDot = 0;
+
+    FOR(i, size){
+        if(email[i] == '@'){
+            if((!partSize) || (seenAtsign)){
+                valid = 0;
+                break;
+            }
+            seenAtsign = 1;
+            partSize = 0;
+        }else if(email[i] == '.'){
+            if((!partSize) || (!seenAtsign) || (seenDot)){
+                valid = 0;
+                break;
+            }
+            seenDot = 1;
+            partSize = 0;
+        }else{
+            partSize++;
+        }
+    }
+    return ((seenAtsign) && (seenDot) && (partSize));
+}
+int isPasswordValid(char* pass){
+    int passSize = 0;
+    int hasCap = 0;
+    int hasLow = 0;
+    int hasNum = 0;
+    passSize = strlen(pass);
+    FOR(i, passSize){
+        if((pass[i] >= 'A') &&  (pass[i] <= 'Z')) hasCap = 1;
+        else if((pass[i] >= 'a') &&  (pass[i] <= 'z')) hasLow = 1;
+        else if((pass[i] >= '0') &&  (pass[i] <= '9')) hasNum = 1;
+    }
+    return ((passSize >= 7) && hasLow && hasCap && hasNum);
+}
+void returnToMainMenu(){
+    deletePopUp(suInvalidPopup);
+    suInvalidPopup = NULL;
+
+    enterMainMenu();
+}
 void signUp(){
     if(suEnteredUsername[0] == '\0'){
         suInvalidPopup = createPopUp("Please Enter a username for your acount.", NULL, 20, 20, &closeInvalidPopup);
@@ -48,81 +96,48 @@ void signUp(){
         suInvalidPopup = createPopUp("Please Enter a email for your acount.", NULL, 20, 20, &closeInvalidPopup);
         return;
     }else{
-        int passSize = 0;
-        int hasCap = 0;
-        int hasLow = 0;
-        int hasNum = 0;
-        passSize = strlen(suEnteredPssword);
-        FOR(i, passSize){
-            if((suEnteredPssword[i] >= 'A') &&  (suEnteredPssword[i] <= 'Z')) hasCap = 1;
-            else if((suEnteredPssword[i] >= 'a') &&  (suEnteredPssword[i] <= 'z')) hasLow = 1;
-            else if((suEnteredPssword[i] >= '0') &&  (suEnteredPssword[i] <= '9')) hasNum = 1;
-        }
+        if(isPasswordValid(suEnteredPssword)){
+            if(isEmailValid(suEnteredEmail)){
+                char* usersData;
 
-        if((passSize >= 7) && hasLow && hasCap && hasNum){
-            passSize = strlen(suEnteredEmail);
-            int valid = 1;
-            int partSize = 0;
-            int seenAtsign = 0;
-            int seenDot = 0;
-
-            FOR(i, passSize){
-                if(suEnteredEmail[i] == '@'){
-                    if((!partSize) || (seenAtsign)){
-                        valid = 0;
-                        break;
-                    }
-                    seenAtsign = 1;
-                    partSize = 0;
-                }else if(suEnteredEmail[i] == '.'){
-                    if((!partSize) || (!seenAtsign) || (seenDot)){
-                        valid = 0;
-                        break;
-                    }
-                    seenDot = 1;
-                    partSize = 0;
-                }else{
-                    partSize++;
-                }
-            }
-            if((!seenAtsign) || (!seenDot) || (!partSize)){
-                valid = 0;
-            }
-
-            if(valid){
-                FILE* playerdb = fopen(playerDbAddress, "r");
-                if(playerdb != NULL){
-                    int playernum = 0;
-                    fscanf(playerdb, "%d", &playernum);
-                    
-                    int exists = 0;
-                    char tmp[100];
-
-                    while(!feof(playerdb)){
-                        fscanf(playerdb, "%s", tmp);
-
-                        if(!strcmp(tmp, "#")){
-                            fscanf(playerdb, "%s", tmp);
-                            if(!strcmp(tmp, suEnteredUsername)){
-                                suInvalidPopup = createPopUp("Username exists.", NULL, 20, 20, &closeInvalidPopup);
-                                fclose(playerdb);
-
-                                return;
+                if(fileToStr(playerDbAddress, &usersData)){
+                    cJSON* json = cJSON_Parse(usersData);
+                    int new = 1;
+                    cJSON* user;
+                    char* buffer;
+                    if(json){
+                        user = cJSON_GetArrayItem(json, 0);
+                        while(user){
+                            buffer = cJSON_GetObjectItem(user, "username")->valuestring;
+                            if(buffer){
+                                if(!strcmp(suEnteredUsername, buffer)){
+                                    new = 0;
+                                    break;
+                                }
                             }
-                        }
-                        mvprintw(0, 0, "%s", tmp);
+                            user = user->next;
+                        }   
                     }
-                    fclose(playerdb);
+                   
+                    if(new){
+                        user = cJSON_CreateObject();
+                        cJSON_AddStringToObject(user, "username", suEnteredUsername);
+                        cJSON_AddStringToObject(user, "password", suEnteredPssword);
+                        cJSON_AddStringToObject(user, "email", suEnteredEmail);
 
-                    FILE* playerdb = fopen(playerDbAddress, "a");
+                        cJSON_AddItemToArray(json, user);
+                        saveJsonToFile(playerDbAddress, json);
+                        suInvalidPopup = createPopUp("User created. you need to log in.", NULL, 20, 20, &returnToMainMenu);
 
-                    fprintf(playerdb, "# %s\n", suEnteredUsername);
-                    fclose(playerdb);
+                    }else{
+                        suInvalidPopup = createPopUp("Username exists.", NULL, 20, 20, &closeInvalidPopup);
+                    }
+                    cJSON_free(json);
+
                 }else{
                     suInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &closeInvalidPopup);
                     return;
                 }
-                
 
             }else{
                 suInvalidPopup = createPopUp("Please enter a valid email.", NULL, 20, 20, &closeInvalidPopup);
@@ -134,21 +149,47 @@ void signUp(){
         }
     }
 }
+
+void randomPassword(){
+    resetTextbox(&suPasswordTb);
+    int tmp1 = 0, tmp2 = 0;
+
+    suEnteredPssword[0] = randBetween('A', 'Z'+1, 1);
+    suEnteredPssword[1] = randBetween('a', 'z'+1, 2);
+    suEnteredPssword[2] = randBetween('0', '9'+1, 3);
+
+    for(int i = 3; i < 17; i++){
+        suEnteredPssword[i] = randBetween(33, 'z'+1, i);
+    }
+
+    tmp1 = randBetween(1, 17, 0);
+
+    char buffer[17];
+
+    FOR(i, 17){
+        buffer[((i + 1) * tmp1)%17] = suEnteredPssword[i];
+    }
+    FOR(i, 17){
+        suEnteredPssword[i] = buffer[i];
+    }
+    suEnteredPssword[17] = '\0';
+}
 void initSignUpMenu(){
     createWidget(&suFormWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 30, C_BG_GRAY0);
     suFormWidget.layoutType = ABSOLUTE;
 
     createButton(&suBackButton, &suFormWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 6);
     createButton(&suSignupButton, &suFormWidget, "Sign Up", ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 2, 11);
-    createButton(&suRandomPasswordBtn, &suFormWidget, "Random", ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 17, 11);
+    createButton(&suRandomPasswordBtn, &suFormWidget, "Random", ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 16, 11);
 
     
     createTextBox(&suUserNameTb, &suFormWidget, "Username", suEnteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 6, 90);
     createTextBox(&suPasswordTb, &suFormWidget, "Password", suEnteredPssword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 11, 90);
-    createTextBox(&suEmailTb, &suFormWidget, "Email", suEnteredEmail, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 19, 90);
+    createTextBox(&suEmailTb, &suFormWidget, "Email", suEnteredEmail, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 18, 90);
 
     suBackButton.callBack = maineMenu.enter;
     suSignupButton.callBack = &signUp;
+    suRandomPasswordBtn.callBack = &randomPassword;
 }
 
 void enterSignUpMenu(){

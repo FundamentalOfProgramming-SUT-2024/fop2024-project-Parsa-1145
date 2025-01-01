@@ -9,59 +9,80 @@
 #include "../UiElements/Widget.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/TextBox.h"
+#include "../UiElements/PopUp.h"
+#include "../Utilities/cJSON.h"
 
 
 
-char enteredUsername[30];
-char enteredPassword[30];
+char liEnteredUsername[50];
+char liEnteredPassword[50];
 
 TextBox usernameTb, passwordTb;
 TextBox* logInMenuTextBoxList[2] = {&usernameTb, &passwordTb};
 Button limLoginBtn, limBackBtn;
 Button* logInMenuButtonList[2] = {&limLoginBtn, &limBackBtn};
 Widget formWidget;
+PopUp* liInvalidPopup;
 
 EngineState logInMenu = {&enterLogInMenu, &updateLogInMenu, &renderLogInMenu, &exitLogInMenu};
 
+void liCloseInvalidPopup(){
+    deletePopUp(liInvalidPopup);
+    liInvalidPopup = NULL;
+}
+void liReturnToMainMenu(){
+    deletePopUp(liInvalidPopup);
+    liInvalidPopup = NULL;
+
+    enterMainMenu();
+}
+
 void logIn(){
-    FILE* playerDb = fopen(playerDbAddress, "r");
-
-    if(playerDb != NULL){
-        move(0, 0);
-        printw("%s ", playerDbAddress);
-        refresh();
-        char tmp[100];
-        while(!feof(playerDb)){
-            freadBinStr(playerDb, tmp);
-            if(!strcmp(tmp, "#")){
-                freadBinStr(playerDb, NULL);
-                freadBinStr(playerDb, tmp);
-
-                if(!strcmp(tmp, enteredUsername)){
-                    freadBinStr(playerDb, NULL);
-                    fread(tmp,1,  strlen(enteredUsername), playerDb);
-                    
-                    char* tmpHash = hashWithKey(enteredUsername, enteredPassword);
-
-                    if(!strncmp(tmp, tmpHash, strlen(enteredUsername))){
-                        maineMenu.enter();
-                        free(tmpHash);
-                        break;
+    if(liEnteredUsername[0]){
+        char* usersData;
+        if(fileToStr(playerDbAddress, &usersData)){
+            cJSON* json = cJSON_Parse(usersData);
+            cJSON* user;
+            char* buffer;
+            int found = 0;
+            if(json){
+                user = cJSON_GetArrayItem(json, 0);
+                while(user){
+                    buffer = cJSON_GetObjectItem(user, "username")->valuestring;
+                    if(buffer){
+                        if(!strcmp(liEnteredUsername, buffer)){
+                            if(!strcmp(liEnteredPassword, cJSON_GetObjectItem(user, "password")->valuestring)){
+                                found = 1;
+                                liInvalidPopup = createPopUp("Logged in!", NULL, 20, 20, &liReturnToMainMenu);
+                                break;
+                            }
+                        }
                     }
-                    free(tmpHash);
-                }
+                    user = user->next;
+                }   
             }
+
+            if(!found){
+                liInvalidPopup = createPopUp("Username password pair not found.", NULL, 20, 20, &liCloseInvalidPopup);
+            }
+            cJSON_Delete(json);
+        }else{
+            liInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &liCloseInvalidPopup);
+            return;
         }
+        
+    }else{
+        liInvalidPopup = createPopUp("Please enter a username", NULL, 20, 20, &liCloseInvalidPopup);
+        return;
     }
-    fclose(playerDb);
 }
 
 void initLogInMenu(){
-    createWidget(&formWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 50, 20, C_BG_GRAY0);
+    createWidget(&formWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 30, C_BG_GRAY0);
     createButton(&limLoginBtn, &formWidget, "Log In", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60);
     createButton(&limBackBtn, &formWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6);
-    createTextBox(&usernameTb, &formWidget, "Username", enteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 90);
-    createTextBox(&passwordTb, &formWidget, "Password", enteredPassword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 8, 90);
+    createTextBox(&usernameTb, &formWidget, "Username", liEnteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 90);
+    createTextBox(&passwordTb, &formWidget, "Password", liEnteredPassword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 8, 90);
 
     limBackBtn.callBack = maineMenu.enter;
     limLoginBtn.callBack = logIn;
@@ -100,19 +121,27 @@ void updateLogInMenu(){
                     case KEY_MOUSE_MOVE:
                         mousex = mEvent.x;
                         mousey = mEvent.y;
-                        FOR(i, 2){
-                            buttonMouseMoveCallback(logInMenuButtonList[i]);
-                        }
-                        FOR(i, 2){
-                            textBoxMouseMoveCallback(logInMenuTextBoxList[i]);
+                        if(!liInvalidPopup){
+                            FOR(i, 2){
+                                buttonMouseMoveCallback(logInMenuButtonList[i]);
+                            }
+                            FOR(i, 2){
+                                textBoxMouseMoveCallback(logInMenuTextBoxList[i]);
+                            }
+                        }else{
+                            buttonMouseMoveCallback(liInvalidPopup->close);
                         }
                         break;
                     default:
-                        FOR(i, 2){
-                            buttonMouseClickEvent(logInMenuButtonList[i]);
-                        }
-                        FOR(i, 2){
-                            textBoxMouseClickCallback(logInMenuTextBoxList[i]);
+                        if(!liInvalidPopup){
+                            FOR(i, 2){
+                                buttonMouseClickEvent(logInMenuButtonList[i]);
+                            }
+                            FOR(i, 2){
+                                textBoxMouseClickCallback(logInMenuTextBoxList[i]);
+                            }
+                        }else{
+                            buttonMouseClickEvent(liInvalidPopup->close);
                         }
                         break;
                 }
@@ -137,6 +166,9 @@ void renderLogInMenu(){
     }
     FOR(i, 2){
         renderTextBox(logInMenuTextBoxList[i]);
+    }
+    if(liInvalidPopup){
+        renderPopup(liInvalidPopup);
     }
     refresh();
 }

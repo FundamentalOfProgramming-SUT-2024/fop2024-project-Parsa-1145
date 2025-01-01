@@ -1,4 +1,6 @@
 #include <ncurses.h>
+
+//#include "Utilities/cJSON.h"
 #include "ProgramStates/EngineState.h"
 #include "GameObjects/GameSettings.h"
 
@@ -21,6 +23,7 @@ extern int freadBinStr(FILE* file, char* dest);
 extern int randBetween(int min, int max, int seed);
 extern int randIndexWithProb(int n, float* prob,int seed);
 extern void wrapText(char* txt, int w);
-
+extern int fileToStr(char* address, char** buffer);
+extern int saveJsonToFile(char* address, void* json);
 
 extern MEVENT mEvent;

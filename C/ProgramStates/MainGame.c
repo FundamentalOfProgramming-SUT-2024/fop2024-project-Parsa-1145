@@ -63,7 +63,7 @@ void renderUi(){
     FOR(i, 3){
         renderButton(mgButtonList[i]);
     }
-    renderCheckbox(&showCloud);
+    renderCheckBox(&showCloud);
 
 }
 void uiMouseClick(){
@@ -383,7 +383,6 @@ void renderMainGame(){
     }
     
     mvprintw(scrH/2, scrW/2, "@");
-    mvprintw(0, 0, "%llu", time(NULL));
 
     renderUi();
 

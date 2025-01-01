@@ -19,6 +19,8 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     }else{
         textBox->bgColor = COLOR_BLACK;
     }
+
+    textBox->spaceAccepted = 0;
 }
 
 
@@ -44,6 +46,7 @@ void renderTextBox(TextBox* textBox){
         }
         move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + 2);
         printw("%s", textBox->str);
+        textBox->index = strlen(textBox->str);
         if(textBox->focused){
             attron(A_BLINK);
             addch(ACS_VLINE);
@@ -101,7 +104,13 @@ void textBoxKeyPressCallback(TextBox* textBox, int key){
                     if((key == '\n') || (key == '\t')){
                         textBox->focused = 0;
                     }else{
-                        textBox->str[(textBox->index)++] = key;
+                        if(key == ' '){
+                            if(textBox->spaceAccepted){
+                                textBox->str[(textBox->index)++] = key;
+                            }
+                        }else{
+                            textBox->str[(textBox->index)++] = key;
+                        }
                     }
                 }
             }
@@ -117,3 +126,4 @@ void resetTextbox(TextBox* textBox){
     }
     textBox->index++;
 }
+

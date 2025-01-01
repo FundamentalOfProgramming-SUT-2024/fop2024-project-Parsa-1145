@@ -16,68 +16,65 @@ int validForBranching(CharTexture* ground, int x, int y){
 }
 
 int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground){
-    if(cell->attr[0] != NULL){
-        int x = cell->x, y = cell->y;
-        
-        MovingCell* newCell;
+    int x = cell->x, y = cell->y;
+    
+    MovingCell* newCell;
 
-        if(validForBranching(ground, x+1, y)){
-            newCell = malloc(sizeof(MovingCell));
-            newCell->x = x + 1;
-            newCell->y = y;
-            newCell->attr[0] = randBetween(0, 2, 0);
-            newCell->type = 1;
-        ground->data[(int)newCell->y][(int)newCell->x] = '.';
+    if(validForBranching(ground, x+1, y)){
+        newCell = malloc(sizeof(MovingCell));
+        newCell->x = x + 1;
+        newCell->y = y;
+        newCell->attr[0] = randBetween(0, 2, 0);
+        newCell->type = 1;
+    ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
-            linkedListPushBack(list, newCell);
-        }if(validForBranching(ground, x - 1, y)){
-            newCell = malloc(sizeof(MovingCell));
-            newCell->x = x - 1;
-            newCell->y = y;
-            newCell->attr[0] = randBetween(0, 2, 1);
-            newCell->type = 1;
-        ground->data[(int)newCell->y][(int)newCell->x] = '.';
+        linkedListPushBack(list, newCell);
+    }if(validForBranching(ground, x - 1, y)){
+        newCell = malloc(sizeof(MovingCell));
+        newCell->x = x - 1;
+        newCell->y = y;
+        newCell->attr[0] = randBetween(0, 2, 1);
+        newCell->type = 1;
+    ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
-            linkedListPushBack(list, newCell);
+        linkedListPushBack(list, newCell);
 
-        }if(validForBranching(ground, x, y + 1)){
-            newCell = malloc(sizeof(MovingCell));
-            newCell->x = x;
-            newCell->y = y + 1;
-            newCell->attr[0] = randBetween(0, 2, 2);
-            newCell->type = 1;
-        ground->data[(int)newCell->y][(int)newCell->x] = '.';
+    }if(validForBranching(ground, x, y + 1)){
+        newCell = malloc(sizeof(MovingCell));
+        newCell->x = x;
+        newCell->y = y + 1;
+        newCell->attr[0] = randBetween(0, 2, 2);
+        newCell->type = 1;
+    ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
-            linkedListPushBack(list, newCell);
+        linkedListPushBack(list, newCell);
 
-        }if(validForBranching(ground, x, y - 1)){
-            newCell = malloc(sizeof(MovingCell));
-            newCell->x = x;
-            newCell->y = y - 1;
-            newCell->attr[0] = randBetween(0, 2, 3);
-            newCell->type = 1;
-        ground->data[(int)newCell->y][(int)newCell->x] = '.';
+    }if(validForBranching(ground, x, y - 1)){
+        newCell = malloc(sizeof(MovingCell));
+        newCell->x = x;
+        newCell->y = y - 1;
+        newCell->attr[0] = randBetween(0, 2, 3);
+        newCell->type = 1;
+    ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
-            linkedListPushBack(list, newCell);
-        }
-        if((y >= ground->h) || (x >= ground->w)){
-            return 0;
-        }
-        //ground->data[y][x] = '.';
-        float xdir = cell->attr[0] - cell->x, ydir = cell->attr[1] - cell->y, dist;
-        dist = hypot(xdir, ydir);
-        if(dist <= 1.5){
-            free(cell);
-            return 0;
-        }
-        xdir /= dist;
-        ydir /= dist;
-        cell->x += xdir;
-        cell->y += ydir;
-
-        return 1;
+        linkedListPushBack(list, newCell);
     }
+    if((y >= ground->h) || (x >= ground->w)){
+        return 0;
+    }
+    //ground->data[y][x] = '.';
+    float xdir = cell->attr[0] - cell->x, ydir = cell->attr[1] - cell->y, dist;
+    dist = hypot(xdir, ydir);
+    if(dist <= 1.5){
+        free(cell);
+        return 0;
+    }
+    xdir /= dist;
+    ydir /= dist;
+    cell->x += xdir;
+    cell->y += ydir;
 
+    return 1;
 
 }
 
@@ -136,7 +133,7 @@ int iterateMovingCells(LinkedList* list, CharTexture* ground){
     MovingCell* cell;
     int sCopy = list->size;
     FOR(i, sCopy){
-        cell = linkedListGetElement(list, i);
+        cell = (MovingCell*)linkedListGetElement(list, i);
         if(!iterateCellType[((MovingCell*)linkedListGetElement(list, i))->type](list, cell, ground)){
             linkedListDeleteElement(list, i);
             i--;
