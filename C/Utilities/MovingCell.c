@@ -24,7 +24,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground){
         newCell = malloc(sizeof(MovingCell));
         newCell->x = x + 1;
         newCell->y = y;
-        newCell->attr[0] = randBetween(0, 2, 0);
+        newCell->attr[0] = randBetween(0, 1, 0);
         newCell->type = 1;
     ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
@@ -33,7 +33,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground){
         newCell = malloc(sizeof(MovingCell));
         newCell->x = x - 1;
         newCell->y = y;
-        newCell->attr[0] = randBetween(0, 2, 1);
+        newCell->attr[0] = randBetween(0, 1, 1);
         newCell->type = 1;
     ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
@@ -43,7 +43,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground){
         newCell = malloc(sizeof(MovingCell));
         newCell->x = x;
         newCell->y = y + 1;
-        newCell->attr[0] = randBetween(0, 2, 2);
+        newCell->attr[0] = randBetween(0, 1, 2);
         newCell->type = 1;
     ground->data[(int)newCell->y][(int)newCell->x] = '.';
 
@@ -53,7 +53,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground){
         newCell = malloc(sizeof(MovingCell));
         newCell->x = x;
         newCell->y = y - 1;
-        newCell->attr[0] = randBetween(0, 2, 3);
+        newCell->attr[0] = randBetween(0, 1, 3);
         newCell->type = 1;
     ground->data[(int)newCell->y][(int)newCell->x] = '.';
 

@@ -53,15 +53,25 @@ void logIn(){
                         if(!strcmp(liEnteredUsername, buffer)){
                             if(!strcmp(liEnteredPassword, cJSON_GetObjectItem(user, "password")->valuestring)){
                                 found = 1;
+                                account.username = malloc(strlen(cJSON_GetObjectItem(user, "username")->valuestring)+1);
+                                account.password = malloc(strlen(cJSON_GetObjectItem(user, "password")->valuestring)+1);
+                                account.email = malloc(strlen(cJSON_GetObjectItem(user, "email")->valuestring)+1);
+                                strcpy(account.username, cJSON_GetObjectItem(user, "username")->valuestring);
+                                strcpy(account.email, cJSON_GetObjectItem(user, "email")->valuestring);
+                                strcpy(account.password, cJSON_GetObjectItem(user, "password")->valuestring);
+                                account.firstPlayTime = cJSON_GetObjectItem(user, "firstGame")->valuestring;
+                                account.gamesFinished = cJSON_GetObjectItem(user, "gameNum")->valuestring;
+                                account.goldsCollected = cJSON_GetObjectItem(user, "golds")->valuestring;
+                                account.goldRecord = cJSON_GetObjectItem(user, "record")->valuestring;
+
                                 liInvalidPopup = createPopUp("Logged in!", NULL, 20, 20, &liReturnToMainMenu);
                                 break;
                             }
                         }
                     }
                     user = user->next;
-                }   
+                }
             }
-
             if(!found){
                 liInvalidPopup = createPopUp("Username password pair not found.", NULL, 20, 20, &liCloseInvalidPopup);
             }

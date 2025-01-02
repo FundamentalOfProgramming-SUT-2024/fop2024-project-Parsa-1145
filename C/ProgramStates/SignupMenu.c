@@ -101,29 +101,37 @@ void signUp(){
                 char* usersData;
 
                 if(fileToStr(playerDbAddress, &usersData)){
-                    cJSON* json = cJSON_Parse(usersData);
+                    cJSON* json;
                     int new = 1;
                     cJSON* user;
                     char* buffer;
-                    if(json){
-                        user = cJSON_GetArrayItem(json, 0);
-                        while(user){
-                            buffer = cJSON_GetObjectItem(user, "username")->valuestring;
-                            if(buffer){
-                                if(!strcmp(suEnteredUsername, buffer)){
-                                    new = 0;
-                                    break;
+                    if(usersData[0]){
+                        json = cJSON_Parse(usersData);
+                        if(json){
+                            user = cJSON_GetArrayItem(json, 0);
+                            while(user){
+                                buffer = cJSON_GetObjectItem(user, "username")->valuestring;
+                                if(buffer){
+                                    if(!strcmp(suEnteredUsername, buffer)){
+                                        new = 0;
+                                        break;
+                                    }
                                 }
-                            }
-                            user = user->next;
-                        }   
+                                user = user->next;
+                            }   
+                        }
+                    }else{
+                        json = cJSON_CreateArray();
                     }
-                   
                     if(new){
                         user = cJSON_CreateObject();
                         cJSON_AddStringToObject(user, "username", suEnteredUsername);
                         cJSON_AddStringToObject(user, "password", suEnteredPssword);
                         cJSON_AddStringToObject(user, "email", suEnteredEmail);
+                        cJSON_AddNumberToObject(user, "gameNum", 0);
+                        cJSON_AddNumberToObject(user, "firstGame", 0);
+                        cJSON_AddNumberToObject(user, "golds", 0);
+                        cJSON_AddNumberToObject(user, "record", 0);
 
                         cJSON_AddItemToArray(json, user);
                         saveJsonToFile(playerDbAddress, json);

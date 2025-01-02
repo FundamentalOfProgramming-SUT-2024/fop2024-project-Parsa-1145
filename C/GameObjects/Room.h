@@ -1,6 +1,7 @@
 #ifndef ROOM
 #define ROOM
 
+#include "../Utilities/LinkedList.h"
 typedef struct{
     int x, y;
     int w, h;
@@ -9,10 +10,11 @@ typedef struct{
 
     int theme;
 
-    int visited;
+    LinkedList* items;
     
 }Room;
 
 Room* createRoom(int x, int y, int w, int h);
+void deleteRoom(Room* room);
 
 #endif

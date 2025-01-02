@@ -1,21 +1,25 @@
 [{
-		"username":	"ab",
-		"password":	"ab",
-		"email":	"as"
-	}, {
 		"username":	"a",
 		"password":	"",
-		"email":	"a@b.c"
+		"email":	"a@b.c",
+		"gameNum":	0,
+		"firstGame":	0,
+		"golds":	0,
+		"record":	0
 	}, {
-		"username":	"abb",
-		"password":	"X><+;l%V1=PWTQ^Q7",
-		"email":	"a@b.c"
-	}, {
-		"username":	"abbb",
-		"password":	"X><+;l%V1=PWTQ^Q7",
-		"email":	"a@b.c"
+		"username":	"ab",
+		"password":	"Parsa1145",
+		"email":	"p@a.c",
+		"gameNum":	0,
+		"firstGame":	0,
+		"golds":	0,
+		"record":	0
 	}, {
 		"username":	"parsios",
 		"password":	"Parsa1145",
-		"email":	"parsa@gmail.com"
+		"email":	"parsios@gmail.com",
+		"gameNum":	0,
+		"firstGame":	0,
+		"golds":	0,
+		"record":	0
 	}]

@@ -13,7 +13,7 @@ void renderButton(Button* btn){
         btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
     }
     
-    if(isWidgetVisible(btn->widget->parent)){
+    if(isWidgetVisible(btn->widget)){
         if(!btn->clicked){
             if(btn->hovered){
                 attron(A_DIM);
@@ -52,7 +52,7 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->str = str;
 }
 void buttonMouseMoveCallback(Button* btn){
-    if(isWidgetVisible(btn->widget->parent)){
+    if(isWidgetVisible(btn->widget)){
         if(isWidgetHovered(btn->widget, mEvent.x, mEvent. y)){
             btn->hovered = 1;
         }else{
@@ -65,7 +65,7 @@ void buttonMouseMoveCallback(Button* btn){
     }
 }
 void buttonMouseClickEvent(Button* btn){  //// button is still hovered after clicking
-    if(isWidgetVisible(btn->widget->parent)){
+    if(isWidgetVisible(btn->widget)){
         if(btn->hovered){
             if(mEvent.bstate & BUTTON1_PRESSED){
                 btn->clicked = 1;

@@ -6,36 +6,38 @@
 #include "MainGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
-#include "../GameObjects/Player.h"
+
 #include "../Utilities/LinkedList.h"
 #include "../Utilities/PointCloud.h"
 #include "../Utilities/MovingCell.h"
+
 #include "../UiElements/Widget.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/TextBox.h"
 #include "../UiElements/Checkbox.h"
+
+#include "../GameObjects/Player.h"
 #include "../GameObjects/Room.h"
 #include "../GameObjects/GameSettings.h"
 #include "../GameObjects/Floor.h"
 #include "../GameObjects/Camera.h"
 #include "../GameObjects/Renderer.h"
 #include "../GameObjects/Texture.h"
+#include "../GameObjects/GameObject.h"
+#include "../GameObjects/Weapon.h"
 
 void generateMap();
-void createFloor();
-void makePath(float startPos, float endPos, int startRoom, int destRoom);
 
 EngineState mainGame = {&enterMainGame, &updateMainGame, &renderMainGame, &exitMainGame};
 
 Player player;
-Floor floor1;
+
 Camera mainCamera;
 CharTexture* frameBuffer;
 CharTexture* visitedMaskBuffer;
 
-Room** roomList;
-Point** pointCloud;
-CharTexture* visited;
+Floor* floors;
+int floorNum;
 LinkedList PathCells;
 int cellState = 0;
 
@@ -43,35 +45,43 @@ int roomNum = 0;
 
 Widget debugMenu;
 Button mgCloseDebugBtn;
-Button debugTogglePointCloudBtn;
-Button debugToggleNoclipBtn;
-CheckBox showCloud;
+CheckBox mgShowPointCloudCb;
+CheckBox mgNoClipCb;
 
-Button* mgButtonList[3] = {&mgCloseDebugBtn, &debugToggleNoclipBtn, &debugTogglePointCloudBtn};
+Button* mgButtonList[1] = {&mgCloseDebugBtn};
+CheckBox* mgCheckBoxList[2] = {&mgShowPointCloudCb, &mgNoClipCb};
 
 void mgtoggleDegbugMenu(){
     debugMenu.isVisible = !debugMenu.isVisible;
 }
 void uiMouseMove(){
-    FOR(i, 3){
+    FOR(i, 1){
         buttonMouseMoveCallback(mgButtonList[i]);
     }
-    checkBoxMouseMoveCallback(&showCloud);
+    FOR(i, 2){
+        checkBoxMouseMoveCallback(mgCheckBoxList[i]);
+    }
 }
 void renderUi(){
     renderWidget(&debugMenu);
-    FOR(i, 3){
+    FOR(i, 1){
         renderButton(mgButtonList[i]);
     }
-    renderCheckBox(&showCloud);
+    FOR(i, 2){
+        renderCheckBox(mgCheckBoxList[i]);
+    }
 
 }
 void uiMouseClick(){
-    FOR(i, 3){
+    FOR(i, 1){
         buttonMouseClickEvent(mgButtonList[i]);
     }
-    checkBoxMouseClickEvent(&showCloud);
+    FOR(i, 2){
+        checkBoxMouseClickEvent(mgCheckBoxList[i]);
+    }
 }
+
+
 
 void initMainGame(){
     createWidget(&debugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
@@ -80,20 +90,19 @@ void initMainGame(){
     debugMenu.isVisible = 0;
 
     createButton(&mgCloseDebugBtn, &debugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 7);
-    createButton(&debugTogglePointCloudBtn, &debugMenu, "Toggle point cloud", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 5, 20);
-    createButton(&debugToggleNoclipBtn, &debugMenu, "Toggle no clip", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 20);
-    createCheckBox(&showCloud, &debugMenu, "Show Clouds", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 100);
-    linkedListPushBack(debugMenu.children, debugTogglePointCloudBtn.widget);
-    linkedListPushBack(debugMenu.children, debugToggleNoclipBtn.widget);
-    linkedListPushBack(debugMenu.children, showCloud.widget);
-
+    createCheckBox(&mgShowPointCloudCb, &debugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 100);
+    createCheckBox(&mgNoClipCb, &debugMenu, "Toggle noclip", &(gameSettings.noClip), RELATIVE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 100);
+    linkedListPushBack(debugMenu.children, mgShowPointCloudCb.widget);
+    linkedListPushBack(debugMenu.children, mgShowPointCloudCb.widget);
     updateWidgetChildren(&debugMenu);
     mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
 
 
     gameSettings.difficaulity = 0;
-    gameSettings.maxRoomNumber = 15;
-    gameSettings.minRoomNumber = 6;
+    gameSettings.maxRoomNum = 15;
+    gameSettings.minRoomNum = 6;
+    gameSettings.maxFloorNum = 6;
+    gameSettings.minFloorNum = 4;
     gameSettings.minRoomSize = 6;
     gameSettings.maxRoomSize = 8;
     gameSettings.roomSpread = 5;
@@ -109,23 +118,45 @@ void initMainGame(){
     gameSettings.debugShowPointCloud = 1;
     gameSettings.noClip = 0;
 
+    floorNum = 0;
+
     createLinkedList(&PathCells, sizeof(MovingCell*));
 }
+
 void enterMainGame(){
     
     clear();
     refresh();
 
-    FOR(i, roomNum){
-        free(pointCloud[i]);
-        free(roomList[i]);
-    }
 
-    free(roomList);
-    free(pointCloud);
+    FOR(i, floorNum){
+        FOR(j, floors[i].roomNum){
+            deleteRoom(floors[i].roomList[j]);
+            deletePoint(floors[i].pointCloud[j]);
+        }
+        free(floors[i].roomList);
+        free(floors[i].pointCloud);
+
+        GameObject* tmp;
+        FOR(j, floors[i].itemList->size){
+            tmp = linkedListGetElement(floors[i].itemList, 0);
+            tmp->deleteObject(tmp->object);
+            popLinkedList(floors[i].itemList);
+        }
+        free(floors[i].itemList);
+
+        free(floors + i);
+    }
 
     player.x = 0;
     player.y = 0;
+    player.z = 0;
+    FOR(i, player.items.size){
+        GameObject* tmp;
+        tmp = linkedListGetElement(&(player.items), 0);
+        tmp->deleteObject(tmp->object);
+        popLinkedList(&(player.items));
+    }
     mainCamera.h = scrH;
     mainCamera.w = scrW;
 
@@ -140,136 +171,146 @@ void enterMainGame(){
     visitedMaskBuffer = createCharTexture(scrW, scrH);
 }
 
-void makePath(float startPos, float endPos, int startRoom, int destRoom){
-    
+void generateFloor(int index){
+    floors[index].roomNum = randBetween(gameSettings.minRoomNum, gameSettings.maxRoomNum + 1, 1 + index);
+    floors[index].pointCloud = malloc(floors[index].roomNum * sizeof(Point*));
+    floors[index].roomList = malloc(sizeof(Room*) * floors[index].roomNum);
+    floors[index].itemList = malloc(sizeof(LinkedList));
+    createLinkedList(floors[index].itemList, sizeof(GameObject*));
 
-}
+    FOR(i, floors[index].roomNum){
+        floors[index].pointCloud[i] = malloc(sizeof(Point));
+        floors[index].pointCloud[i]->x = 0;
+        floors[index].pointCloud[i]->y = 0;
+        floors[index].pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i + index);
+        floors[index].pointCloud[i]->locked = 0;
+    }
 
-void createFloor(){
-    float lastRatio = 1;
-    FOR(i, roomNum){
-        roomList[i] = createRoom(0, 0, 0, 0);
-        roomList[i]->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1, i);
-        roomList[i]->h = 2 * floor(sqrt(pow(pointCloud[i]->radius, 2) - pow(roomList[i]->w / 2, 2)));
-        
-        if((lastRatio - 1) * ((roomList[i]->w / roomList[i]->h) - 1) > 0){
-            int tmp = roomList[i]->h;
-            roomList[i]->h = roomList[i]->w;
-            roomList[i]->w = tmp;
+    int roomsPlaced = 0;
+    while(roomsPlaced < 1000){
+        FOR(i, 40000){
+            if(iteratePointCloud(floors[index].pointCloud, floors[index].roomNum, gameSettings.roomSpread)){
+                roomsPlaced += 1;
+                if(roomsPlaced == 1000) break;
+            }
+            getmaxyx(stdscr, scrH, scrW);
+            
+            erase();
+            FOR(i, floors[index].roomNum){
+                pointRender(floors[index].pointCloud[i]);
+            }
+            refresh();
         }
-        lastRatio = roomList[i]->w / roomList[i]->h;
-
-        roomList[i]->x = 2 * pointCloud[i]->x- roomList[i]->w/2;
-        roomList[i]->y = pointCloud[i]->y- roomList[i]->h/2;
-        roomList[i]->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb, i);
+        if(roomsPlaced < 1000){
+            gameSettings.roomSpread+= 5;
+            FOR(i, floors[index].roomNum){
+                floors[index].pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i + index);
+                floors[index].pointCloud[i]->x = 0;
+                floors[index].pointCloud[i]->y = 0;
+                floors[index].pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i + index);
+            }
+            roomsPlaced = 0;
+        }
     }
 
-    floor1.minx = INT32_MAX; floor1.miny = INT32_MAX; floor1.maxx = 0; floor1.maxy = 0;
-    FOR(i, roomNum){
-        floor1.minx = min(roomList[i]->x, floor1.minx);
-        floor1.miny = min(roomList[i]->y, floor1.miny);
-        floor1.maxx = max(roomList[i]->x + roomList[i]->w - 1, floor1.maxx);
-        floor1.maxy = max(roomList[i]->y + roomList[i]->h - 1, floor1.maxy);
+    float lastRatio = 1;
+    FOR(i, floors[index].roomNum){
+        floors[index].roomList[i] = malloc(sizeof(Room));
+        floors[index].roomList[i]->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(floors[index].pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1, i + index);
+        floors[index].roomList[i]->h = 2 * floor(sqrt(pow(floors[index].pointCloud[i]->radius, 2) - pow(floors[index].roomList[i]->w / 2, 2)));
+        
+        if((lastRatio - 1) * ((floors[index].roomList[i]->w / floors[index].roomList[i]->h) - 1) > 0){
+            int tmp = floors[index].roomList[i]->h;
+            floors[index].roomList[i]->h = floors[index].roomList[i]->w;
+            floors[index].roomList[i]->w = tmp;
+        }
+        lastRatio = floors[index].roomList[i]->w / floors[index].roomList[i]->h;
+
+        floors[index].roomList[i]->x = 2 * floors[index].pointCloud[i]->x- floors[index].roomList[i]->w/2;
+        floors[index].roomList[i]->y = floors[index].pointCloud[i]->y- floors[index].roomList[i]->h/2;
+        floors[index].roomList[i]->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb, i + index);
+
+        Weapon* w = malloc(sizeof(Weapon));
+        w->sprite = '*';
+        w->x = floors[index].roomList[i]->x + 2;
+        w->y = floors[index].roomList[i]->y + 2;
+        w->z = index;
+        createWeapon(w);
+        linkedListPushBack(floors[index].itemList, w->gameObject);
+    }
+
+    floors[index].minx = INT32_MAX; floors[index].miny = INT32_MAX; floors[index].maxx = 0; floors[index].maxy = 0;
+    FOR(i, floors[index].roomNum){
+        floors[index].minx = min(floors[index].roomList[i]->x, floors[index].minx);
+        floors[index].miny = min(floors[index].roomList[i]->y, floors[index].miny);
+        floors[index].maxx = max(floors[index].roomList[i]->x + floors[index].roomList[i]->w - 1, floors[index].maxx);
+        floors[index].maxy = max(floors[index].roomList[i]->y + floors[index].roomList[i]->h - 1, floors[index].maxy);
     }
 
 
-    floor1.minx -= 5;
-    floor1.maxx += 5;
-    floor1.miny -= 5;
-    floor1.maxy += 5;
-    floor1.roomList = roomList;
-    floor1.groundMesh = createCharTexture(floor1.maxx - floor1.minx, floor1.maxy - floor1.miny);
+    floors[index].minx -= 5;
+    floors[index].maxx += 5;
+    floors[index].miny -= 5;
+    floors[index].maxy += 5;
+    floors[index].groundMesh = createCharTexture(floors[index].maxx - floors[index].minx, floors[index].maxy - floors[index].miny);
 
-    FOR(i, roomNum){
-        for(int j = roomList[i]->x - floor1.minx; j < roomList[i]->x - floor1.minx + roomList[i]->w; j++){
-            for(int z = roomList[i]->y - floor1.miny; z < roomList[i]->y - floor1.miny + roomList[i]->h; z++){
-               floor1.groundMesh->data[z][j] = '.';
+    FOR(i, floors[index].roomNum){
+        for(int j = floors[index].roomList[i]->x - floors[index].minx; j < floors[index].roomList[i]->x - floors[index].minx + floors[index].roomList[i]->w; j++){
+            for(int z = floors[index].roomList[i]->y - floors[index].miny; z < floors[index].roomList[i]->y - floors[index].miny + floors[index].roomList[i]->h; z++){
+               floors[index].groundMesh->data[z][j] = '.';
             }
         }
-        for(int j = roomList[i]->x - floor1.minx - 1; j <= roomList[i]->x - floor1.minx + roomList[i]->w; j++){
-            floor1.groundMesh->data[roomList[i]->y - 1 - floor1.miny][j] = '#';
-            floor1.groundMesh->data[roomList[i]->y + roomList[i]->h - floor1.miny][j] = '#';
+        for(int j = floors[index].roomList[i]->x - floors[index].minx - 1; j <= floors[index].roomList[i]->x - floors[index].minx + floors[index].roomList[i]->w; j++){
+            floors[index].groundMesh->data[floors[index].roomList[i]->y - 1 - floors[index].miny][j] = '#';
+            floors[index].groundMesh->data[floors[index].roomList[i]->y + floors[index].roomList[i]->h - floors[index].miny][j] = '#';
         }
-        for(int j = roomList[i]->y - floor1.miny - 1; j <= roomList[i]->y - floor1.miny + roomList[i]->h; j++){
-            floor1.groundMesh->data[j][roomList[i]->x - 1 - floor1.minx] = '#';
-            floor1.groundMesh->data[j][roomList[i]->x + roomList[i]->w - floor1.minx] = '#';
+        for(int j = floors[index].roomList[i]->y - floors[index].miny - 1; j <= floors[index].roomList[i]->y - floors[index].miny + floors[index].roomList[i]->h; j++){
+            floors[index].groundMesh->data[j][floors[index].roomList[i]->x - 1 - floors[index].minx] = '#';
+            floors[index].groundMesh->data[j][floors[index].roomList[i]->x + floors[index].roomList[i]->w - floors[index].minx] = '#';
         }
     }
 
     Room* p;
 
-    FOR(i, roomNum){
-        FOR(j, roomNum){
-            if(floor1.roomList[i]->x + floor1.roomList[i]->w/2 > floor1.roomList[j]->x + floor1.roomList[i]->w/2){
-                p = floor1.roomList[i];
-                floor1.roomList[i] = floor1.roomList[j];
-                floor1.roomList[j] = p;
+    FOR(i, floors[index].roomNum){
+        FOR(j, floors[index].roomNum){
+            if(floors[index].roomList[i]->x + floors[index].roomList[i]->w/2 > floors[index].roomList[j]->x + floors[index].roomList[i]->w/2){
+                p = floors[index].roomList[i];
+                floors[index].roomList[i] = floors[index].roomList[j];
+                floors[index].roomList[j] = p;
             }
         }
     }
 
     MovingCell* cell;
-    FOR(i, roomNum - 1){
+    FOR(i, floors[index].roomNum - 1){
         cell = malloc(sizeof(MovingCell));
         linkedListPushBack(&PathCells, cell);
-        cell->x = floor1.roomList[i]->x+ floor1.roomList[i]->w/2 - floor1.minx;
-        cell->y = floor1.roomList[i]->y+ floor1.roomList[i]->h/2 - floor1.miny;
+        cell->x = floors[index].roomList[i]->x+ floors[index].roomList[i]->w/2 - floors[index].minx;
+        cell->y = floors[index].roomList[i]->y+ floors[index].roomList[i]->h/2 - floors[index].miny;
         cell->type = 0;
-        cell->attr[0] = floor1.roomList[i+1]->x+ floor1.roomList[i+1]->w/2 - floor1.minx;
-        cell->attr[1] = floor1.roomList[i+1]->y+ floor1.roomList[i+1]->h/2 - floor1.miny;
+        cell->attr[0] = floors[index].roomList[i+1]->x+ floors[index].roomList[i+1]->w/2 - floors[index].minx;
+        cell->attr[1] = floors[index].roomList[i+1]->y+ floors[index].roomList[i+1]->h/2 - floors[index].miny;
+    }
+    while(PathCells.size){
+        iterateMovingCells(&PathCells, floors[index].groundMesh);
     }
 
-    player.x = roomList[0]->x + roomList[0]->w/2;
-    player.y = roomList[0]->y + roomList[0]->h/2;
+    player.x = floors[index].roomList[0]->x + floors[index].roomList[0]->w/2;
+    player.y = floors[index].roomList[0]->y + floors[index].roomList[0]->h/2;
     player.visionRadius = 5;
 
-    visited = createCharTexture(floor1.groundMesh->w, floor1.groundMesh->h);
-    fillCharTexture(visited, 0);
+    floors[index].visited = createCharTexture(floors[index].groundMesh->w, floors[index].groundMesh->h);
+    fillCharTexture(floors[index].visited, 0);
 }
 
 void generateMap(){
-    roomNum = randBetween(gameSettings.minRoomNumber, gameSettings.maxRoomNumber, 0);
+    floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
+    floors = malloc(floorNum * sizeof(Floor));
     
-    pointCloud = malloc(roomNum * sizeof(Point*));
-    roomList = malloc(sizeof(Room*) * roomNum);
-
-    FOR(i, roomNum){
-        pointCloud[i] = malloc(sizeof(Point));
-
-        pointCloud[i]->x = 0;
-        pointCloud[i]->y = 0;
-        pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i);
-        pointCloud[i]->locked = 0;
+    FOR(i, floorNum){
+        generateFloor(i);
     }
-
-    int roomsPlaced = 0;
-    while(roomsPlaced < 100){
-        FOR(i, 40000){
-            if(iteratePointCloud(pointCloud, roomNum, gameSettings.roomSpread)){
-                roomsPlaced += 1;
-                if(roomsPlaced == 100) break;
-            }
-            getmaxyx(stdscr, scrH, scrW);
-            
-            erase();
-            FOR(i, roomNum){
-                pointRender(pointCloud[i]);
-            }
-            refresh();
-        }
-        if(roomsPlaced < 100){
-            gameSettings.roomSpread+= 5;
-            FOR(i, roomNum){
-                pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i);
-                pointCloud[i]->x = 0;
-                pointCloud[i]->y = 0;
-                pointCloud[i]->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4), i);
-            }
-            roomsPlaced = 0;
-        }
-    }
-    
-    createFloor();
 }
 
 int moveValid(int x, int y){
@@ -277,12 +318,12 @@ int moveValid(int x, int y){
     x += player.x;
     y += player.y;
 
-    if((floor1.groundMesh->data[y-floor1.miny][x-floor1.minx] == '.') || (floor1.groundMesh->data[y-floor1.miny][x-floor1.minx] == '#')){
+    if((floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '.') || (floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '#')){
         return 1;
     }else return 0;
 }
 void updatePlayer(){
-    drawCircleOnCharTexture(visited, player.x - floor1.minx, player.y - floor1.miny, player.visionRadius, 1);
+    drawCircleOnCharTexture(floors[player.z].visited, player.x - floors[player.z].minx, player.y - floors[player.z].miny, player.visionRadius, 1);
 }
 void updateMainGame(){
     int ch = getch();
@@ -345,8 +386,19 @@ void updateMainGame(){
                     updatePlayer();
                     }
                     break;
-                case 'i':
-                    iterateMovingCells(&PathCells, floor1.groundMesh);
+                case 'u':
+                    if(player.z != 0){
+                        player.z--;
+                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                    }
+                    break;
+                case 'j':
+                    if(player.z != floorNum-1){
+                        player.z++;
+                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                    }
                     break;
                 case 't':
                     mgtoggleDegbugMenu();
@@ -367,20 +419,29 @@ void renderMainGame(){
 
     //attron(COLOR_PAIR(100));
     
-    mrenderTexture(floor1.groundMesh, NULL, floor1.minx, floor1.miny, frameBuffer, NULL);
-    mrenderTexture(visited, NULL, floor1.minx, floor1.miny, visitedMaskBuffer, NULL);
-    maskFrameBuffer(frameBuffer, NULL, visitedMaskBuffer);
-    renderFrameBuffer(frameBuffer);
+    mrenderTexture(floors[player.z].groundMesh, NULL, floors[player.z].minx, floors[player.z].miny, frameBuffer, NULL);
+    mrenderTexture(floors[player.z].visited, NULL, floors[player.z].minx, floors[player.z].miny, visitedMaskBuffer, NULL);
+    //maskFrameBuffer(frameBuffer, NULL, visitedMaskBuffer);
 
 
     if(gameSettings.debugMode){
         if(gameSettings.debugShowPointCloud){
             FOR(i, roomNum){
-                pointRender(pointCloud[i]);
-                mvprintw(i + 1,2, "%f %f", pointCloud[i]->x, pointCloud[i]->y);
+                pointRender(floors[player.z].pointCloud[i]);
+                mvprintw(i + 1,2, "%f %f", floors[player.z].pointCloud[i]->x, floors[player.z].pointCloud[i]->y);
             }
         }
     }
+
+    void** tmpPtr = floors[player.z].itemList->data;
+    GameObject* tmp;
+    FOR(i, floors[player.z].itemList->size){
+        tmp = tmpPtr[1];
+        tmp->render(tmp->object, frameBuffer, NULL, &mainCamera);
+        if(tmpPtr) tmpPtr = *tmpPtr;
+    }
+
+    renderFrameBuffer(frameBuffer);
     
     mvprintw(scrH/2, scrW/2, "@");
 

@@ -1,5 +1,5 @@
 #include <string.h>
-#include<stdlib.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "Globals.h"
@@ -15,6 +15,8 @@ int mousex;
 int mousey;
 int terminate = 0;
 int colorPairNum = 5;
+Account account;
+
 
 MEVENT mEvent;
 
@@ -141,6 +143,9 @@ int saveJsonToFile(char* address, void* json){
     }
 }
 
+extern int isinRect(float x, float y, float rx, float ry, float w, float h){
+    return ((x >= rx) && (x < rx + w)) && ((y >= ry) && (y < ry + h));
+}
 
 
 

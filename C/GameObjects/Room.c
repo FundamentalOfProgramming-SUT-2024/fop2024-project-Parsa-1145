@@ -13,7 +13,9 @@ Room* createRoom( int x, int y, int w, int h){
     out->h = h;
     out->w = w;
 
-    out->visited = 0;
-
     return out;
+}
+
+void deleteRoom(Room* room){
+    free(room);
 }

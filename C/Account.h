@@ -4,14 +4,14 @@
 
 typedef struct{
     char* username;
-    char* usernameHash;
+    char* password;
     char* email;
 
-    unsigned long long firstPlayTime;
+    long long firstPlayTime;
     int gamesFinished;
     int goldsCollected;
     int goldRecord;
-}PlayerAccount;
+}Account;
 
 
 #endif

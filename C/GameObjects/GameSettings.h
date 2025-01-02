@@ -6,8 +6,10 @@ typedef struct{
 
     int minRoomSize;
     int maxRoomSize;
-    int minRoomNumber;
-    int maxRoomNumber;
+    int minRoomNum;
+    int maxRoomNum;
+    int minFloorNum;
+    int maxFloorNum;
     int roomSpread;
     int roomThemeNum;
     float* roomThemeProb;

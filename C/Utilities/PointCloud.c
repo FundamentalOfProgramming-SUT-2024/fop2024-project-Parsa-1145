@@ -78,3 +78,7 @@ float pointForceFunction(float d, float thresh){
     if(d > thresh) return thresh/2;
     return (d) * (d)/ (powf(thresh, 2));
 }
+
+void deletePoint(Point* point){
+    free(point);
+}
