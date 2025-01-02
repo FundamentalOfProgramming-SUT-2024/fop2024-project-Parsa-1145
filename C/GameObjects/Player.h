@@ -2,7 +2,7 @@
 #define PLAYER
 
 #include "../Utilities/LinkedList.h"
-#include "GameObject.h"
+#include "./Items/ItemBase.h"
 
 typedef struct{
     int x, y, z;

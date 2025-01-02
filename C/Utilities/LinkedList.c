@@ -47,8 +47,9 @@ void linkedListPushBack(LinkedList* list, void* elment){
     }else{
         list->data = tmp;
     }
-    
-    *(tmp + 1) = elment;
+
+    tmp[0] = NULL;
+    tmp[1] = elment;
     list->size++;
 }
 //void insetInLinkedList(LinkedList* list, void* element, int index);
@@ -59,4 +60,26 @@ void popLinkedList(LinkedList* list){
         free(tmp);
         list->size--;
     }
+}
+
+void removeItemFromLinkedList(LinkedList* list, void* element){
+    void** tmp = list->data;
+    void** prev = NULL;
+
+    FOR(i, list->size){
+        if(tmp[1] == element){
+            if(prev){
+                prev[0] = tmp[0];
+                free(tmp);
+                list->size--;
+            }else{
+                popLinkedList(list);
+            }
+            break;
+        }else{
+            prev = tmp;
+            if(i != list->size) tmp = tmp[0];
+        }
+    }
+
 }

@@ -6,6 +6,7 @@
 #include "MainGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
+#include "../GameObjects/Items/ItemTypes.h"
 
 #include "../Utilities/LinkedList.h"
 #include "../Utilities/PointCloud.h"
@@ -23,8 +24,10 @@
 #include "../GameObjects/Camera.h"
 #include "../GameObjects/Renderer.h"
 #include "../GameObjects/Texture.h"
-#include "../GameObjects/GameObject.h"
-#include "../GameObjects/Weapon.h"
+#include "../GameObjects/Items/ItemBase.h"
+#include "../GameObjects/Items/Weapon.h"
+#include "../GameObjects/Items/Ammo.h"
+
 
 void generateMap();
 
@@ -137,7 +140,7 @@ void enterMainGame(){
         free(floors[i].roomList);
         free(floors[i].pointCloud);
 
-        GameObject* tmp;
+        ItemBase* tmp;
         FOR(j, floors[i].itemList->size){
             tmp = linkedListGetElement(floors[i].itemList, 0);
             tmp->deleteObject(tmp->object);
@@ -152,7 +155,7 @@ void enterMainGame(){
     player.y = 0;
     player.z = 0;
     FOR(i, player.items.size){
-        GameObject* tmp;
+        ItemBase* tmp;
         tmp = linkedListGetElement(&(player.items), 0);
         tmp->deleteObject(tmp->object);
         popLinkedList(&(player.items));
@@ -176,7 +179,7 @@ void generateFloor(int index){
     floors[index].pointCloud = malloc(floors[index].roomNum * sizeof(Point*));
     floors[index].roomList = malloc(sizeof(Room*) * floors[index].roomNum);
     floors[index].itemList = malloc(sizeof(LinkedList));
-    createLinkedList(floors[index].itemList, sizeof(GameObject*));
+    createLinkedList(floors[index].itemList, sizeof(ItemBase*));
 
     FOR(i, floors[index].roomNum){
         floors[index].pointCloud[i] = malloc(sizeof(Point));
@@ -231,12 +234,24 @@ void generateFloor(int index){
         floors[index].roomList[i]->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb, i + index);
 
         Weapon* w = malloc(sizeof(Weapon));
-        w->sprite = '*';
+        w->sprite = randBetween('a', 'v', i);
         w->x = floors[index].roomList[i]->x + 2;
         w->y = floors[index].roomList[i]->y + 2;
         w->z = index;
+        w->quantity = 1;
+        w->weaponType = 1;
         createWeapon(w);
         linkedListPushBack(floors[index].itemList, w->gameObject);
+
+        Ammo* a = malloc(sizeof(Ammo));
+        a->ammoType = randBetween(0, 3, i);
+        a->sprite = '0' + a->ammoType;
+        a->x = floors[index].roomList[i]->x + 1;
+        a->y = floors[index].roomList[i]->y + 1;
+        a->z = index;
+        a->quantity = 3;
+        createAmmo(a);
+        linkedListPushBack(floors[index].itemList, a->gameObject);
     }
 
     floors[index].minx = INT32_MAX; floors[index].miny = INT32_MAX; floors[index].maxx = 0; floors[index].maxy = 0;
@@ -315,15 +330,34 @@ void generateMap(){
 
 int moveValid(int x, int y){
     if(gameSettings.noClip) return 1;
+
     x += player.x;
     y += player.y;
 
     if((floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '.') || (floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '#')){
         return 1;
     }else return 0;
+    
 }
 void updatePlayer(){
     drawCircleOnCharTexture(floors[player.z].visited, player.x - floors[player.z].minx, player.y - floors[player.z].miny, player.visionRadius, 1);
+    void** tmpPtr = floors[player.z].itemList->data;
+    void** tmpCopy;
+    ItemBase* tmp;
+    while(tmpPtr){
+        tmp = tmpPtr[1];
+        tmpCopy = *tmpPtr;
+        tmp->update(tmp);
+        tmpPtr = tmpCopy;
+    }
+}
+void movePlayer(int x, int y){
+    if(moveValid(x, y)){
+        player.x += x;
+        player.y += y;
+        updatePlayer();
+    }
+    
 }
 void updateMainGame(){
     int ch = getch();
@@ -361,30 +395,16 @@ void updateMainGame(){
                     gameSettings.debugMode = !gameSettings.debugMode;
                     break;
                 case 'w':
-                    if(moveValid(0, -1)){
-                        player.y--;
-                        updatePlayer();
-                    }
+                    movePlayer(0, -1);
                     break;
                 case 'd':
-                    if(moveValid(1, 0)){
-                        player.x++;
-                        updatePlayer();
-                    }
-
+                    movePlayer(1, 0);
                     break;
                 case 'a':
-                    if(moveValid(-1, 0)){
-                    player.x--;
-                    updatePlayer();
-                    }
-
+                    movePlayer(-1, 0);
                     break;
                 case 's':
-                    if(moveValid(0, 1)){
-                    player.y++;
-                    updatePlayer();
-                    }
+                    movePlayer(0, 1);
                     break;
                 case 'u':
                     if(player.z != 0){
@@ -398,6 +418,12 @@ void updateMainGame(){
                         player.z++;
                         player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
                         player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                    }
+                    break;
+                case 'c':
+                    if(player.items.size){
+                        ItemBase* tmp = linkedListGetElement(&(player.items), 0);
+                        tmp->drop(tmp);
                     }
                     break;
                 case 't':
@@ -434,15 +460,28 @@ void renderMainGame(){
     }
 
     void** tmpPtr = floors[player.z].itemList->data;
-    GameObject* tmp;
+    ItemBase* tmp;
     FOR(i, floors[player.z].itemList->size){
         tmp = tmpPtr[1];
-        tmp->render(tmp->object, frameBuffer, NULL, &mainCamera);
+        tmp->render(tmp, frameBuffer, NULL, &mainCamera);
         if(tmpPtr) tmpPtr = *tmpPtr;
     }
 
     renderFrameBuffer(frameBuffer);
     
+    tmpPtr = player.items.data;
+    FOR(i, player.items.size){
+        tmp = tmpPtr[1];
+        if(tmp->objectType == TYPE_AMMO){
+            Ammo* a = tmp->object;
+            mvprintw(2 + a->ammoType, 2, "%d : %d", a->ammoType, a->quantity);
+        }else if(tmp->objectType == TYPE_WEAPON){
+            Weapon* w = tmp->object;
+            mvprintw(5 + w->weaponType, 2, "%d : %d", w->weaponType, w->quantity);
+        }
+        if(tmpPtr) tmpPtr = *tmpPtr;
+    }
+
     mvprintw(scrH/2, scrW/2, "@");
 
     renderUi();

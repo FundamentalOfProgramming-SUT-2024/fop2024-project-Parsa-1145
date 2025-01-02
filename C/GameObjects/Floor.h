@@ -3,7 +3,7 @@
 
 #include"Room.h"
 #include "Texture.h"
-#include "GameObject.h"
+#include "./Items/ItemBase.h"
 #include "../Utilities/PointCloud.h"
 #include "../Utilities/LinkedList.h"
 

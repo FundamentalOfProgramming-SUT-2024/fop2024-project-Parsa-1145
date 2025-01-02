@@ -20,4 +20,5 @@ typedef struct{
 } GameSettings;
 
 
+
 #endif
