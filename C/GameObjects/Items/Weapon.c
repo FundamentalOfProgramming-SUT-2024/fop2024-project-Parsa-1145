@@ -1,10 +1,26 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "Weapon.h"
 #include "../../ProgramStates/MainGame.h"
 #include "../../Globals.h"
 #include "ItemTypes.h"
 
+
+ItemBase* generateWeapon(cJSON* data){
+    cJSON* weapon = cJSON_GetArrayItem(data, chooseWithWeight(data));
+
+    Weapon* w = malloc(sizeof(Weapon));
+
+    w->quantity = 1;
+    w->name = copyString(cJSON_GetObjectItem(weapon, "name")->valuestring);
+    w->damage = randBetween(cJSON_GetObjectItem(weapon, "minDmg")->valuedouble, cJSON_GetObjectItem(weapon, "maxDmg")->valuedouble, 0);
+    w->sprite = (cJSON_GetObjectItem(weapon, "sprite")->valuestring)[0];
+
+    createWeapon(w);
+
+    return w->gameObject;
+}
 void createWeapon(Weapon* weapon){
     weapon->gameObject = malloc(sizeof(ItemBase));
 
@@ -49,10 +65,11 @@ void updateWeapon(Weapon* w){
     }
 }
 void deleteWeapon(Weapon* w){
+    free(w->name);
     free(w->gameObject);
     free(w);
 }
 
-void isWeaponEqual(Weapon* w1, Weapon* w2){
-    return (w1->weaponType == w2->weaponType);
+int isWeaponEqual(Weapon* w1, Weapon* w2){
+    return (!strcmp(w1->name, w2->name));
 }

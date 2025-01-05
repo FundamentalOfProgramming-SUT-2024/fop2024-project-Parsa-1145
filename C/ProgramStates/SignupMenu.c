@@ -8,6 +8,8 @@
 #include "../UiElements/Button.h"
 #include "../UiElements/PopUp.h"
 #include "../UiElements/Widget.h"
+#include "../UiElements/UiBase.h"
+#include "../Utilities/LinkedList.h"
 #include "../Globals.h"
 
 
@@ -16,14 +18,10 @@ Widget suFormWidget;
 Button suBackButton;
 Button suSignupButton;
 Button suRandomPasswordBtn;
-Button* suButtonList[3] = {&suBackButton, &suSignupButton, &suRandomPasswordBtn};
-int suButtonNum = 3;
 
 TextBox suUserNameTb;
 TextBox suEmailTb;
 TextBox suPasswordTb;
-TextBox* suTextboxList[3] = {&suUserNameTb, &suPasswordTb, &suEmailTb};
-int suTextboxNum = 3;
 
 PopUp* suInvalidPopup;
 
@@ -31,10 +29,12 @@ char suEnteredUsername[40];
 char suEnteredPssword[40];
 char suEnteredEmail[40];
 
+LinkedList suUiList;
 
 EngineState signUpMenu = {&enterSignUpMenu, &updateSignUpMenu, &renderSignUpMenu, &exitSignUpMenu};
 
 void closeInvalidPopup(){
+    removeItemFromLinkedList(&suUiList, suInvalidPopup->uiBase);
     deletePopUp(suInvalidPopup);
     suInvalidPopup = NULL;
 }
@@ -80,6 +80,7 @@ int isPasswordValid(char* pass){
     return ((passSize >= 7) && hasLow && hasCap && hasNum);
 }
 void returnToMainMenu(){
+    removeItemFromLinkedList(&suUiList, suInvalidPopup->uiBase);
     deletePopUp(suInvalidPopup);
     suInvalidPopup = NULL;
 
@@ -88,12 +89,16 @@ void returnToMainMenu(){
 void signUp(){
     if(suEnteredUsername[0] == '\0'){
         suInvalidPopup = createPopUp("Please Enter a username for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
         return;
     }else if(suEnteredPssword[0] == '\0'){
         suInvalidPopup = createPopUp("Please Enter a password for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
         return;
     }else if(suEnteredEmail[0] == '\0'){
         suInvalidPopup = createPopUp("Please Enter a email for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
+
         return;
     }else{
         if(isPasswordValid(suEnteredPssword)){
@@ -136,23 +141,30 @@ void signUp(){
                         cJSON_AddItemToArray(json, user);
                         saveJsonToFile(playerDbAddress, json);
                         suInvalidPopup = createPopUp("User created. you need to log in.", NULL, 20, 20, &returnToMainMenu);
+                        linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
+
 
                     }else{
                         suInvalidPopup = createPopUp("Username exists.", NULL, 20, 20, &closeInvalidPopup);
+                        linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
+
                     }
                     cJSON_free(json);
 
                 }else{
                     suInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &closeInvalidPopup);
+                    linkedListPushBack(&suUiList, suInvalidPopup->uiBase);  
                     return;
                 }
 
             }else{
                 suInvalidPopup = createPopUp("Please enter a valid email.", NULL, 20, 20, &closeInvalidPopup);
+                linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
                 return;
             }
         }else{
             suInvalidPopup = createPopUp("Password should at least be 7 charachters, and contain an uppercase, a lowercase and a digit.", NULL, 20, 20, &closeInvalidPopup);
+            linkedListPushBack(&suUiList, suInvalidPopup->uiBase);
             return;
         }
     }
@@ -183,6 +195,8 @@ void randomPassword(){
     suEnteredPssword[17] = '\0';
 }
 void initSignUpMenu(){
+    createLinkedList(&suUiList, sizeof(UiBase*));
+
     createWidget(&suFormWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 30, C_BG_GRAY0);
     suFormWidget.layoutType = ABSOLUTE;
 
@@ -195,14 +209,29 @@ void initSignUpMenu(){
     createTextBox(&suPasswordTb, &suFormWidget, "Password", suEnteredPssword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 11, 90);
     createTextBox(&suEmailTb, &suFormWidget, "Email", suEnteredEmail, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 18, 90);
 
+    linkedListPushBack(&suUiList, suFormWidget.uiBase);
+    linkedListPushBack(&suUiList, suBackButton.uiBase);
+    linkedListPushBack(&suUiList, suSignupButton.uiBase);
+    linkedListPushBack(&suUiList, suRandomPasswordBtn.uiBase);
+    linkedListPushBack(&suUiList, suUserNameTb.uiBase);
+    linkedListPushBack(&suUiList, suPasswordTb.uiBase);
+    linkedListPushBack(&suUiList, suEmailTb.uiBase);
+
+
     suBackButton.callBack = maineMenu.enter;
     suSignupButton.callBack = &signUp;
     suRandomPasswordBtn.callBack = &randomPassword;
 }
 
 void enterSignUpMenu(){
-    FOR(i, suTextboxNum){
-        resetTextbox(suTextboxList[i]);
+    void** tmp = suUiList.data;
+    UiBase* tmp1;
+    FOR(i, suUiList.size){
+        tmp1 = tmp[1];
+        if(tmp1->type == UI_TYPE_TEXTBOX){
+            resetTextbox(tmp1->object);
+        }
+        tmp = tmp[0];
     }
     clear();
     refresh();
@@ -215,6 +244,8 @@ void enterSignUpMenu(){
 }
 void updateSignUpMenu(){
     int ch = getch();
+    static void** tmp;
+    static UiBase* tmp1;
     
 
     switch(ch){
@@ -232,11 +263,11 @@ void updateSignUpMenu(){
                         if(suInvalidPopup != NULL){
                             buttonMouseMoveCallback(suInvalidPopup->close);
                         }else{
-                            FOR(i, suButtonNum){
-                            buttonMouseMoveCallback(suButtonList[i]);
-                            }
-                            FOR(i, suTextboxNum){
-                                textBoxMouseMoveCallback(suTextboxList[i]);
+                            tmp = suUiList.data;
+                            FOR(i, suUiList.size){
+                                tmp1 = tmp[1];
+                                tmp1->mouseMove(tmp1->object);
+                                tmp = tmp[0];
                             }
                         }
                         
@@ -246,11 +277,11 @@ void updateSignUpMenu(){
                         if(suInvalidPopup != NULL){
                             buttonMouseClickEvent(suInvalidPopup->close);
                         }else{
-                            FOR(i, suButtonNum){
-                                buttonMouseClickEvent(suButtonList[i]);
-                            }
-                            FOR(i, suTextboxNum){
-                                textBoxMouseClickCallback(suTextboxList[i]);
+                            tmp = suUiList.data;
+                            FOR(i, suUiList.size){
+                                tmp1 = tmp[1];
+                                tmp1->mouseClick(tmp1->object);
+                                tmp = tmp[0];
                             }
                         }
                         break;
@@ -261,8 +292,11 @@ void updateSignUpMenu(){
             break;
         default:
             if(suInvalidPopup == NULL){
-                FOR(i, suTextboxNum){
-                    textBoxKeyPressCallback(suTextboxList[i], ch);
+                tmp = suUiList.data;
+                FOR(i, suUiList.size){
+                    tmp1 = tmp[1];
+                    tmp1->keyPress(tmp1->object, ch);
+                    tmp = tmp[0];
                 }
             }
             break;
@@ -270,16 +304,15 @@ void updateSignUpMenu(){
     }
 }
 void renderSignUpMenu(){
-    //erase();
-    renderWidget(&suFormWidget);
-    FOR(i, suButtonNum){
-        renderButton(suButtonList[i]);
-    }
-    FOR(i, suTextboxNum){
-        renderTextBox(suTextboxList[i]);
-    }
-    if(suInvalidPopup != NULL){
-        renderPopup(suInvalidPopup);
+    static void** tmp;
+    static UiBase* tmp1;
+
+    erase();
+    tmp = suUiList.data;
+    FOR(i, suUiList.size){
+        tmp1 = tmp[1];
+        tmp1->render(tmp1->object);
+        tmp = tmp[0];
     }
     refresh();
     

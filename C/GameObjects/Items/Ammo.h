@@ -4,6 +4,7 @@
 #include "ItemBase.h"
 #include "../Camera.h"
 #include "../Texture.h"
+#include "../../Utilities/cJSON.h"
 
 
 typedef struct{
@@ -12,6 +13,7 @@ typedef struct{
     int x, y, z;
     char sprite;
     int color;
+    char* name;
 
     int quantity;
 
@@ -22,6 +24,7 @@ typedef struct{
     int ammoType;
 }Ammo;
 
+ItemBase* generateAmmo(cJSON* data);
 void createAmmo(Ammo* a);
 void pickUpAmmo(Ammo* a);
 void dropAmmo(Ammo* a);

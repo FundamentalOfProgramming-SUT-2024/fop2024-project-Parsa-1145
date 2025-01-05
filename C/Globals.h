@@ -4,6 +4,7 @@
 #include "ProgramStates/EngineState.h"
 #include "GameObjects/GameSettings.h"
 #include "Account.h"
+#include "Utilities/cJSON.h"
 
 
 
@@ -24,9 +25,12 @@ extern char* hashWithKey(char* str, char* key);
 extern int freadBinStr(FILE* file, char* dest);
 extern int randBetween(int min, int max, int seed);
 extern int randIndexWithProb(int n, float* prob,int seed);
+extern int randWithProb(float p);
 extern void wrapText(char* txt, int w);
 extern int fileToStr(char* address, char** buffer);
 extern int saveJsonToFile(char* address, void* json);
 extern int isinRect(float x, float y, float rx, float ry, float w, float h);
+extern int chooseWithWeight(cJSON* json);
+extern char* copyString(char* str);
 
 extern MEVENT mEvent;

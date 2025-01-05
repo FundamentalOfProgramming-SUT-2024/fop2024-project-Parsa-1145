@@ -5,7 +5,7 @@
 #include "stdlib.h"
 #include "time.h"
 
-int iteratePointCloud(Point** points, int n, int spread){
+int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
     float distance, diffrence, desiredDistance;
     float xDir, yDir;
     float force = 0;
@@ -20,7 +20,7 @@ int iteratePointCloud(Point** points, int n, int spread){
                     distance = pointGetDistance(points[i], points[j]);
 
                     srand(time(NULL) + i + j);
-                    desiredDistance = points[i]->radius + points[j]->radius + spread;
+                    desiredDistance = points[i]->radius + points[j]->radius + points[i]->spread + points[j]->spread;
                     diffrence = desiredDistance - distance;
 
                     if(distance < 1.5){
@@ -33,12 +33,14 @@ int iteratePointCloud(Point** points, int n, int spread){
                         xDir = (points[i]->x - points[j]->x) / distance;
                         yDir = (points[i]->y - points[j]->y) / distance;
                     }
-
-                    force = pointForceFunction(diffrence, desiredDistance/2) * diffrence;
-                    
                     if(diffrence > 0){
-                        points[i]->xForce += force * xDir;
-                        points[i]->yForce += force * yDir;
+                        points[i]->xForce += diffrence * xDir;
+                        points[i]->yForce += diffrence * yDir;
+                    }else{
+                        if(adjMat[i][j]){
+                            points[i]->xForce +=  diffrence * diffrence * diffrence * xDir;
+                            points[i]->yForce +=  diffrence * diffrence * diffrence * yDir;
+                        }
                     }
 
                     if(diffrence > 4){
@@ -48,14 +50,11 @@ int iteratePointCloud(Point** points, int n, int spread){
             }
         }
     }
-    if(flag)return 1;
-    else{
-        FOR(i, n){
-            points[i]->x += points[i]->xForce / n;
-            points[i]->y += points[i]->yForce / n;
-        }
-        return 0;
+    FOR(i, n){
+        points[i]->x += points[i]->xForce / n;
+        points[i]->y += points[i]->yForce / n;
     }
+    return flag;
     
 }
 

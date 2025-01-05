@@ -20,7 +20,13 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
         checkBox->colorPair = C_BG_BLACK;
     }
 
-
+    checkBox->uiBase = malloc(sizeof(UiBase));
+    checkBox->uiBase->render = &renderCheckBox;
+    checkBox->uiBase->keyPress = &defaultKeyPressCb;
+    checkBox->uiBase->mouseClick = &CBMouseClickCb;
+    checkBox->uiBase->mouseMove = &CBMouseMoveCb;
+    checkBox->uiBase->object = checkBox;
+    checkBox->uiBase->type = UI_TYPE_CHECKBOX;
 }
 
 void renderCheckBox(CheckBox* cb){
@@ -48,7 +54,7 @@ void renderCheckBox(CheckBox* cb){
 
     }
 }
-void checkBoxMouseMoveCallback(CheckBox* cb){
+void CBMouseMoveCb(CheckBox* cb){
     updateWidgetTopLeft(cb->widget);
 
     if((mEvent.y == cb->widget->topLeftY) && (mEvent.x == cb->widget->topLeftX + cb->widget->wCopy - 2)){
@@ -57,7 +63,7 @@ void checkBoxMouseMoveCallback(CheckBox* cb){
         cb->isHovered = 0;
     }
 }
-void checkBoxMouseClickEvent(CheckBox* cb){
+void CBMouseClickCb(CheckBox* cb){
     if(cb->isHovered){
         if(mEvent.bstate & BUTTON1_PRESSED){
             (*cb->value) = !(*cb->value);

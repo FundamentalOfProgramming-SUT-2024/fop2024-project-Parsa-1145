@@ -1,0 +1,175 @@
+[{
+    "type" : 0,
+    "min" : 5,
+    "max" : 10,
+    "enteries" : [
+        {
+            "type" : 0,
+            "weight" : 5,
+            "pool" : [
+                {
+                    "name" : "Long Sword",
+                    "minDmg" : 4,
+                    "maxDmg" : 6,
+                    "Sprite" : "|",
+                    "weight" : 2
+                },{
+                    "name" : "Dagger",
+                    "minDmg" : 1,
+                    "maxDmg" : 2,
+                    "Sprite" : "^",
+                    "weight" : 5
+                },{
+                    "name" : "Mace",
+                    "minDmg" : 5,
+                    "maxDmg" : 8,
+                    "Sprite" : "*",
+                    "weight" : 1
+                }
+            ]
+        },{
+            "type" : 1,
+            "weight" : 10,
+            "pool" : [
+                {
+                    "name" : "Wooden Arrow",
+                    "dmg" : 1,
+                    "minQuantity" : 4,
+                    "maxQuantity" : 10,
+                    "sprite" : ">",
+                    "weight" : 3
+                },{
+                    "name" : "Iron Tip Arrow",
+                    "dmg" : 13,
+                    "minQuantity" : 2,
+                    "maxQuantity" : 5,
+                    "sprite" : "$",
+                    "weight" : 1
+                }
+            ]
+        },{
+            "type" : 2,
+            "weight" : 15,
+            "pool" : [
+                {
+                    "name" : "Gold Coin",
+                    "minQuantity" : 5,
+                    "maxQuantity" : 15,
+                    "sprite" : "c",
+                    "Value" : 1,
+                    "weight" : 5
+                },{
+                    "name" : "Black Coin",
+                    "minQuantity" : 2,
+                    "maxQuantity" : 5,
+                    "sprite" : "C",
+                    "Value" : 10,
+                    "weight" : 1
+                }
+            ]
+        },{
+            "type" : 3,
+            "weight" : 20,
+            "pool" : [
+                    {
+                        "name" : "Ancient Key",
+                        "sprite" : "A",
+                        "openProb" : 0.9,
+                        "broken" : 0,
+                        "weight" : 1
+                    },{
+                        "name" : "Broken Key",
+                        "sprite" : "%",
+                        "openProb" : 0,
+                        "broken" : 1,
+                        "weight" : 4
+                    }
+                ]
+        }
+    ]
+},{
+    "type" : 1,
+    "min" : 1,
+    "max" : 5,
+    "enteries" : [
+        {
+            "type" : 2,
+            "weight" : 1,
+            "pool" : [
+                {
+                    "name" : "Gold Coin",
+                    "minQuantity" : 5,
+                    "maxQuantity" : 15,
+                    "sprite" : "c",
+                    "Value" : 1,
+                    "weight" : 5
+                },{
+                    "name" : "Black Coin",
+                    "minQuantity" : 2,
+                    "maxQuantity" : 5,
+                    "sprite" : "C",
+                    "Value" : 10,
+                    "weight" : 1
+                }
+            ]
+        }
+    ]
+},{
+    "type" : 2,
+    "min" : 1,
+    "max" : 5,
+    "enteries" : [
+        {
+            "type" : 0,
+            "weight" : 5,
+            "pool" : [
+                {
+                    "name" : "Long Sword",
+                    "minDmg" : 4,
+                    "maxDmg" : 6,
+                    "Sprite" : "|",
+                    "weight" : 2
+                },{
+                    "name" : "Dagger",
+                    "minDmg" : 1,
+                    "maxDmg" : 2,
+                    "Sprite" : "^",
+                    "weight" : 5
+                },{
+                    "name" : "Mace",
+                    "minDmg" : 5,
+                    "maxDmg" : 8,
+                    "Sprite" : "*",
+                    "weight" : 1
+                }
+            ]
+        }
+    ]
+},{
+    "type" : 3,
+    "min" : 5,
+    "max" : 10,
+    "enteries" : [
+        {
+            "type" : 1,
+            "weight" : 10,
+            "pool" : [
+                {
+                    "name" : "Wooden Arrow",
+                    "dmg" : 1,
+                    "minQuantity" : 4,
+                    "maxQuantity" : 10,
+                    "sprite" : ">",
+                    "weight" : 3
+                },{
+                    "name" : "Iron Tip Arrow",
+                    "dmg" : 13,
+                    "minQuantity" : 2,
+                    "maxQuantity" : 5,
+                    "sprite" : "$",
+                    "weight" : 1
+                }
+            ]
+        }
+    ]
+}]

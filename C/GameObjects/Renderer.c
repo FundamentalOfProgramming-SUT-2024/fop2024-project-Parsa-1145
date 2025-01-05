@@ -29,7 +29,7 @@ void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, Cha
         y2 = min(cam->h - 1, y2);
 
         for(y1; y1 <= y2;y1++){
-            mvaddch(y1, x1, c);
+            frameBuffer->data[(int)(y1)][(int)x1] = c;
         }
     }else if(abs(y1 - y2) < 1){
         if(!((y1 >= 0) && (y1 < + cam->h))) return;
@@ -44,7 +44,7 @@ void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, Cha
         x2 = min(cam->w - 1, x2);
 
         for(x1; x1 <= x2; x1++){
-            mvaddch(y1, x1, c);
+            frameBuffer->data[(int)(y1)][(int)x1] = c;
         }
     }else{
         float m = (y2 - y1) / (x2 - x1);
@@ -85,7 +85,7 @@ void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, Cha
                 } 
                 x1 = round(x1);
                 for(x1; x1 <= x2; x1++){
-                    mvaddch(y1, x1, c);
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
                     y1+=m;
                 }
             }else{
@@ -100,7 +100,7 @@ void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, Cha
                 y1 = round(y1);
                 m = 1/m;
                 for(y1; y1 <= y2; y1++){
-                    mvaddch(y1,x1, c);
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
                     x1+=m;
                 }
             }

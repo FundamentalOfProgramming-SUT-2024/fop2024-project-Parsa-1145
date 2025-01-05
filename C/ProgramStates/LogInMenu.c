@@ -10,6 +10,8 @@
 #include "../UiElements/Button.h"
 #include "../UiElements/TextBox.h"
 #include "../UiElements/PopUp.h"
+#include "../UiElements/UiBase.h"
+#include "../Utilities/LinkedList.h"
 #include "../Utilities/cJSON.h"
 
 
@@ -18,19 +20,21 @@ char liEnteredUsername[50];
 char liEnteredPassword[50];
 
 TextBox usernameTb, passwordTb;
-TextBox* logInMenuTextBoxList[2] = {&usernameTb, &passwordTb};
 Button limLoginBtn, limBackBtn;
-Button* logInMenuButtonList[2] = {&limLoginBtn, &limBackBtn};
+LinkedList liUiList;
 Widget formWidget;
 PopUp* liInvalidPopup;
+
 
 EngineState logInMenu = {&enterLogInMenu, &updateLogInMenu, &renderLogInMenu, &exitLogInMenu};
 
 void liCloseInvalidPopup(){
+    removeItemFromLinkedList(&liUiList, liInvalidPopup->uiBase);
     deletePopUp(liInvalidPopup);
     liInvalidPopup = NULL;
 }
 void liReturnToMainMenu(){
+    removeItemFromLinkedList(&liUiList, liInvalidPopup->uiBase);
     deletePopUp(liInvalidPopup);
     liInvalidPopup = NULL;
 
@@ -65,6 +69,7 @@ void logIn(){
                                 account.goldRecord = cJSON_GetObjectItem(user, "record")->valuestring;
 
                                 liInvalidPopup = createPopUp("Logged in!", NULL, 20, 20, &liReturnToMainMenu);
+                                linkedListPushBack(&liUiList, liInvalidPopup->uiBase);
                                 break;
                             }
                         }
@@ -74,33 +79,51 @@ void logIn(){
             }
             if(!found){
                 liInvalidPopup = createPopUp("Username password pair not found.", NULL, 20, 20, &liCloseInvalidPopup);
+                linkedListPushBack(&liUiList, liInvalidPopup->uiBase);
             }
             cJSON_Delete(json);
         }else{
             liInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &liCloseInvalidPopup);
+            linkedListPushBack(&liUiList, liInvalidPopup->uiBase);
             return;
         }
         
     }else{
         liInvalidPopup = createPopUp("Please enter a username", NULL, 20, 20, &liCloseInvalidPopup);
+        linkedListPushBack(&liUiList, liInvalidPopup->uiBase);
         return;
     }
 }
 
 void initLogInMenu(){
+    createLinkedList(&liUiList, sizeof(UiBase*));
+    
     createWidget(&formWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 30, C_BG_GRAY0);
     createButton(&limLoginBtn, &formWidget, "Log In", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 1, 60);
     createButton(&limBackBtn, &formWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 3, 2, 6);
     createTextBox(&usernameTb, &formWidget, "Username", liEnteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 90);
     createTextBox(&passwordTb, &formWidget, "Password", liEnteredPassword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_TOP, 0, 8, 90);
 
+    linkedListPushBack(&liUiList, formWidget.uiBase);
+    linkedListPushBack(&liUiList, limLoginBtn.uiBase);
+    linkedListPushBack(&liUiList, limBackBtn.uiBase);
+    linkedListPushBack(&liUiList, usernameTb.uiBase);
+    linkedListPushBack(&liUiList, passwordTb.uiBase);
+
     limBackBtn.callBack = maineMenu.enter;
     limLoginBtn.callBack = logIn;
 }
 
 void enterLogInMenu(){
-    FOR(i, 2){
-        resetTextbox(logInMenuTextBoxList[i]);
+
+    void** tmp = liUiList.data;
+    UiBase* tmp1;
+    FOR(i, liUiList.size){
+        tmp1 = tmp[1];
+        if(tmp1->type == UI_TYPE_TEXTBOX){
+            resetTextbox(tmp1->object);
+        }
+        tmp = tmp[0];
     }
 
     clear();
@@ -117,6 +140,8 @@ void enterLogInMenu(){
 
 void updateLogInMenu(){
     int ch = getch();
+    static void** tmp;
+    static UiBase* tmp1;
     
 
     switch(ch){
@@ -129,29 +154,27 @@ void updateLogInMenu(){
             if(getmouse(&mEvent) == OK){
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
-                        mousex = mEvent.x;
-                        mousey = mEvent.y;
-                        if(!liInvalidPopup){
-                            FOR(i, 2){
-                                buttonMouseMoveCallback(logInMenuButtonList[i]);
-                            }
-                            FOR(i, 2){
-                                textBoxMouseMoveCallback(logInMenuTextBoxList[i]);
-                            }
+                        if(liInvalidPopup){
+                            popupMouseMove(liInvalidPopup);
                         }else{
-                            buttonMouseMoveCallback(liInvalidPopup->close);
+                            tmp = liUiList.data;
+                            FOR(i, liUiList.size){
+                                tmp1 = tmp[1];
+                                tmp1->mouseMove(tmp1->object);
+                                tmp = tmp[0];
+                            }
                         }
                         break;
                     default:
-                        if(!liInvalidPopup){
-                            FOR(i, 2){
-                                buttonMouseClickEvent(logInMenuButtonList[i]);
-                            }
-                            FOR(i, 2){
-                                textBoxMouseClickCallback(logInMenuTextBoxList[i]);
-                            }
+                        if(liInvalidPopup){
+                            popupMouseClick(liInvalidPopup);
                         }else{
-                            buttonMouseClickEvent(liInvalidPopup->close);
+                            tmp = liUiList.data;
+                            FOR(i, liUiList.size){
+                                tmp1 = tmp[1];
+                                tmp1->mouseClick(tmp1->object);
+                                tmp = tmp[0];
+                            }
                         }
                         break;
                 }
@@ -160,25 +183,28 @@ void updateLogInMenu(){
         case ERR:
             break;
         default:
-            FOR(i, 2){
-                textBoxKeyPressCallback(logInMenuTextBoxList[i], ch);
+            if(!liInvalidPopup){
+                tmp = liUiList.data;
+                FOR(i, liUiList.size){
+                    tmp1 = tmp[1];
+                    tmp1->keyPress(tmp1->object, ch);
+                    tmp = tmp[0];
+                }
             }
             break;
-            
     }
 }
 
 void renderLogInMenu(){
+    static void** tmp;
+    static UiBase* tmp1;
+
     erase();
-    renderWidget(&formWidget);
-    FOR(i, 2){
-        renderButton(logInMenuButtonList[i]);
-    }
-    FOR(i, 2){
-        renderTextBox(logInMenuTextBoxList[i]);
-    }
-    if(liInvalidPopup){
-        renderPopup(liInvalidPopup);
+    tmp = liUiList.data;
+    FOR(i, liUiList.size){
+        tmp1 = tmp[1];
+        tmp1->render(tmp1->object);
+        tmp = tmp[0];
     }
     refresh();
 }

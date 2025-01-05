@@ -21,6 +21,15 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     }
 
     textBox->spaceAccepted = 0;
+    textBox->focused = 0;
+
+    textBox->uiBase = malloc(sizeof(UiBase));
+    textBox->uiBase->render = &renderTextBox;
+    textBox->uiBase->keyPress = &TBKeyPressCb;
+    textBox->uiBase->mouseClick = &TBMouseClickCb;
+    textBox->uiBase->mouseMove = &TBMouseMoveCb;
+    textBox->uiBase->object = textBox;
+    textBox->uiBase->type = UI_TYPE_TEXTBOX;
 }
 
 
@@ -67,30 +76,35 @@ void renderTextBox(TextBox* textBox){
         if(textBox->hovered && !textBox->focused)attroff(A_DIM);
     }
 }
-void textBoxMouseMoveCallback(TextBox* textBox){
+int TBMouseMoveCb(TextBox* textBox){
     if(isWidgetVisible(textBox->widget->parent)){
         if(((mEvent.x >= textBox->widget->topLeftX) && (mEvent.x < textBox->widget->topLeftX + textBox->widget->wCopy)) && 
         ((mEvent.y > textBox->widget->topLeftY) && (mEvent.y < textBox->widget->topLeftY + textBox->widget->hCopy))){
             textBox->hovered = 1;
+            return 1;
         }else{
             textBox->hovered = 0;
+            return 0;
         }
     }
 }
-void textBoxMouseClickCallback(TextBox* textBox){
+int TBMouseClickCb(TextBox* textBox){
     if(isWidgetVisible(textBox->widget->parent)){
         if(mEvent.bstate & BUTTON1_PRESSED){
             if(textBox->hovered){
                 textBox->focused = 1;
+                return 1;
             }else{
                 textBox->focused = 0;
+                return 0;
             }
         }
     }else{
         textBox->focused = 0;
+        return 0;
     }
 }
-void textBoxKeyPressCallback(TextBox* textBox, int key){
+int TBKeyPressCb(TextBox* textBox, int key){
     if(isWidgetVisible(textBox->widget->parent)){
         if(textBox->focused){
             switch(key){
@@ -114,9 +128,11 @@ void textBoxKeyPressCallback(TextBox* textBox, int key){
                     }
                 }
             }
+            return 1;
         }
     }else{
         textBox->focused = 0;
+        return 0;
     }
 }
 

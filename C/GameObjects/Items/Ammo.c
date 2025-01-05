@@ -1,9 +1,25 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "Ammo.h"
 #include "../../ProgramStates/MainGame.h"
 #include "../../Globals.h"
 #include "ItemTypes.h"
+
+ItemBase* generateAmmo(cJSON* data){
+    cJSON* ammo = cJSON_GetArrayItem(data, chooseWithWeight(data));
+
+    Ammo* a = malloc(sizeof(Ammo));
+
+    a->name = copyString(cJSON_GetObjectItem(ammo, "name")->valuestring);
+    a->damage = cJSON_GetObjectItem(ammo, "dmg")->valuedouble;
+    a->quantity = randBetween(cJSON_GetObjectItem(ammo, "minQuantity")->valuedouble, cJSON_GetObjectItem(ammo, "maxQuantity")->valuedouble, 0);
+    a->sprite = (cJSON_GetObjectItem(ammo, "sprite")->valuestring)[0];
+
+    createAmmo(a);
+
+    return a->gameObject;
+}
 
 void createAmmo(Ammo* a){
     a->gameObject = malloc(sizeof(ItemBase));
@@ -26,7 +42,7 @@ void createAmmo(Ammo* a){
 }
 
 int isAmmoEqual(Ammo* a1, Ammo* a2){
-    return((a1->ammoType == a2->ammoType));
+    return(!strcmp(a1->name, a2->name));
 }
 void pickUpAmmo(Ammo* a){
     removeItemFromLinkedList(floors[player.z].itemList, a->gameObject);
@@ -64,6 +80,7 @@ void updateAmmo(Ammo* a){
     }
 }
 void deleteAmmo(Ammo* a){
+    free(a->name);
     free(a->gameObject);
     free(a);
 }

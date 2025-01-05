@@ -31,6 +31,14 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
 
     widget->children = malloc(sizeof(LinkedList));
     createLinkedList(widget->children, sizeof(Widget*));
+
+    widget->uiBase = malloc(sizeof(UiBase));
+    widget->uiBase->keyPress = &defaultKeyPressCb;
+    widget->uiBase->render = &renderWidget;
+    widget->uiBase->mouseClick = &defaultMouseClickCb;
+    widget->uiBase->mouseMove = &defaultMouseMoveCb;
+    widget->uiBase->object = widget;
+    widget->uiBase->type = UI_TYPE_WIDGET;
 }
 int isWidgetVisible(Widget* widget){
     if(widget->parent != NULL){
@@ -194,5 +202,6 @@ void updateWidgetChildren(Widget* widget){
 }
 
 void deleteWidget(Widget* widget){
+    free(widget->uiBase);
     free(widget);
 }

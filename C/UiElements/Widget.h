@@ -2,12 +2,14 @@
 #define WIDGET2
 #include<ncurses.h>
 
+#include "UiBase.h"
 #include"../Utilities/LinkedList.h"
 
 
 
-struct Widget{
+typedef struct Widget{
     struct Widget* parent;
+    UiBase* uiBase;
     int x, y;
     int sizeType[2];
     int w, h;
@@ -28,9 +30,7 @@ struct Widget{
     int wCopy, hCopy;
 
     int colorPair;
-};
-
-typedef struct Widget Widget;
+}Widget;
 
 void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, int alignmentX, int alignmentY , int x, int y, int w, int h, int bgColor);
 int getWidgetTopLeft(Widget* widget, int* x, int* y);

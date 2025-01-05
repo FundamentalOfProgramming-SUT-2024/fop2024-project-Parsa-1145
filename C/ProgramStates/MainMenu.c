@@ -10,6 +10,9 @@
 #include "../GlobalDefines.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/Widget.h"
+#include "../UiElements/UiBase.h"
+#include "../Utilities/LinkedList.h"
+
 
 Button mmExitBtn;
 Button mmNewGameBtn;
@@ -19,9 +22,9 @@ Button mmSocreboardBtn;
 Button mmLoginBtn;
 Button mmNewCharacterBtn;
 Button mmLogOutBtn;
-Button* mainMenuButtonList[8] = {&mmNewGameBtn, &mmLoadGameBtn, &mmSocreboardBtn, &mmSettingsBtn, &mmExitBtn, &mmLoginBtn, &mmNewCharacterBtn, &mmLogOutBtn};
-
 Widget menu;
+
+LinkedList mmUiList;
 
 EngineState maineMenu = {&enterMainMenu, &updateMainMenu, &renderMainMenu, &exitMainMenu};
 
@@ -47,8 +50,8 @@ void logOut(){
     mmLogOutBtn.widget->isVisible = 0;
 }
 void initMainMenu(){
+    createLinkedList(&mmUiList, sizeof(UiBase*));
     createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 30, 12, C_BG_BLACK );
-
 
     createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 0, 100);
     createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 2, 100);
@@ -59,6 +62,16 @@ void initMainMenu(){
     createButton(&mmLogOutBtn, &menu, "Log out", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 8, 100);
     mmLogOutBtn.widget->isVisible = 0;
     createButton(&mmExitBtn, &menu, "Exit"          , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 10, 80);
+
+    linkedListPushBack(&mmUiList, menu.uiBase);
+    linkedListPushBack(&mmUiList, mmNewGameBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmLoadGameBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmSettingsBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmLoginBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmNewCharacterBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmLogOutBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmExitBtn.uiBase);
+    linkedListPushBack(&mmUiList, mmSocreboardBtn.uiBase);
     
     mmExitBtn.callBack = &exitMainMenu;
     mmNewGameBtn.callBack = &mmStartGame;
@@ -100,17 +113,21 @@ void updateMainMenu(){
             break;
         case KEY_MOUSE:
             if(getmouse(&mEvent) == OK){
+                void** tmp = mmUiList.data;
+
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
                         mousex = mEvent.x;
                         mousey = mEvent.y;
-                        FOR(i, 8){
-                            buttonMouseMoveCallback(mainMenuButtonList[i]);
+                        FOR(i, mmUiList.size){
+                            ((UiBase*)tmp[1])->mouseMove(((UiBase*)tmp[1])->object);
+                            tmp = *tmp;
                         }
                         break;
                     default:
-                        FOR(i, 8){
-                            buttonMouseClickEvent(mainMenuButtonList[i]);
+                        FOR(i, mmUiList.size){
+                            ((UiBase*)tmp[1])->mouseClick(((UiBase*)tmp[1])->object);
+                            tmp = *tmp;
                         }
                         break;
                 }
@@ -127,10 +144,13 @@ void updateMainMenu(){
 
 void renderMainMenu(){
     erase();
-    renderWidget(&menu);
-    FOR(i, 8){
-        renderButton(mainMenuButtonList[i]);
+
+    void** tmp = mmUiList.data;
+    FOR(i, mmUiList.size){
+        ((UiBase*)tmp[1])->render(((UiBase*)tmp[1])->object);
+        tmp = *tmp;
     }
+
     if(account.username){
         mvprintw(2, 2, "Logged in as: %s", account.username);
     }else{

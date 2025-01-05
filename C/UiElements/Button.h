@@ -8,6 +8,7 @@
 
 typedef struct {
     Widget* parent;
+    UiBase* uiBase;
     char* str;
     int strLegth;
     int margin;
@@ -20,10 +21,9 @@ typedef struct {
 }Button;
 
 void renderButton(Button* btn);
-//void createButton(Button* btn, int x, int y,int bgC, int c, int clkBgC, int clkC, char* str);
 void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int alignmentX, int alignmentY, int x, int y, int w);
-void buttonMouseMoveCallback(Button* btn);
-void buttonMouseClickEvent(Button* btn);
+int buttonMouseMoveCallback(Button* btn);
+int buttonMouseClickEvent(Button* btn);
 void deleteButton(Button* btn);
 
 #endif

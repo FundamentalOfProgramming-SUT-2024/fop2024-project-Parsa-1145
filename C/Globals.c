@@ -67,18 +67,21 @@ int freadBinStr(FILE* file, char* dest){
 
 }
 
+int randSeed = 0;
 int randBetween(int min, int max, int seed){
-    srand(time(NULL) + seed);
+    srand(time(NULL) + randSeed);
 
+    randSeed++;
     return ((rand()) % (max - min)) + min;
 }
 
 int randIndexWithProb(int n, float* prob,int seed){
-    srand(time(NULL) + seed);
+    srand(time(NULL) + randSeed);
 
     float r = ((float)(rand()) / RAND_MAX);
 
     float tmp = 0;
+    randSeed++;
     for(int i = 0 ; i < n; i++){
         if((r > tmp) && (r < tmp + prob[i])){
             return i;
@@ -86,6 +89,14 @@ int randIndexWithProb(int n, float* prob,int seed){
             tmp += prob[i];
         }
     }
+
+}
+int randWithProb(float p){
+    srand(time(NULL) + randSeed);
+
+    float r = ((float)(rand()) / RAND_MAX);
+    if(r < p) return 1;
+    else return 0;
 }
 void wrapText(char* txt, int w){
     int n = 0;
@@ -143,9 +154,30 @@ int saveJsonToFile(char* address, void* json){
     }
 }
 
-extern int isinRect(float x, float y, float rx, float ry, float w, float h){
+int isinRect(float x, float y, float rx, float ry, float w, float h){
     return ((x >= rx) && (x < rx + w)) && ((y >= ry) && (y < ry + h));
 }
 
+int chooseWithWeight(cJSON* json){
+    int n = cJSON_GetArraySize(json);
 
+    float w = 0;
+    float probs[n];
 
+    cJSON* entery = cJSON_GetArrayItem(json, 0);
+    FOR(i, n){
+        probs[i] = cJSON_GetObjectItem(entery, "weight")->valuedouble;
+        w += probs[i];
+        entery = entery->next;
+    }
+    FOR(i, n){
+        probs[i] /= w;
+    }
+
+    return randIndexWithProb(n, probs, 0);
+}
+char* copyString(char* str){
+    char* out = malloc(strlen(str) + 1);
+    strcpy(out, str);
+    return out;
+}

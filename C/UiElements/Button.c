@@ -48,42 +48,61 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->strLegth = strlen(str);
     btn->margin = (btn->widget->wCopy - btn->strLegth) / 2;
     btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
+    btn->clicked = 0;
+    btn->hovered = 0;
 
     btn->str = str;
+
+    btn->uiBase = malloc(sizeof(UiBase));
+    btn->uiBase->render = &renderButton;
+    btn->uiBase->keyPress = &defaultKeyPressCb;
+    btn->uiBase->mouseClick = &buttonMouseClickEvent;
+    btn->uiBase->mouseMove = &buttonMouseMoveCallback;
+    btn->uiBase->object = btn;
+    btn->uiBase->type = UI_TYPE_BUTTON;
 }
-void buttonMouseMoveCallback(Button* btn){
+int buttonMouseMoveCallback(Button* btn){
     if(isWidgetVisible(btn->widget)){
         if(isWidgetHovered(btn->widget, mEvent.x, mEvent. y)){
             btn->hovered = 1;
+            return 1;
         }else{
             btn->hovered = 0;
             btn->clicked = 0;
+            return 0;
         }
     }else{
         btn->hovered = 0;
         btn->clicked = 0;
+        return 0;
     }
 }
-void buttonMouseClickEvent(Button* btn){  //// button is still hovered after clicking
+int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clicking
     if(isWidgetVisible(btn->widget)){
         if(btn->hovered){
             if(mEvent.bstate & BUTTON1_PRESSED){
                 btn->clicked = 1;
+                return 1;
             }else if((mEvent.bstate & BUTTON1_RELEASED) && btn->clicked){
                 btn->callBack();
                 btn->clicked = 0;
+                return 1;
             }else{
                 btn->clicked = 0;
+                return 0;
             }
         }else{
             btn->clicked = 0;
+            return 0;
         }
     }else{
         btn->hovered = 0;
+        return 0;
     }
 }
 
 void deleteButton(Button* btn){
     deleteWidget(btn->widget);
+    free(btn->uiBase);
     free(btn);
 }

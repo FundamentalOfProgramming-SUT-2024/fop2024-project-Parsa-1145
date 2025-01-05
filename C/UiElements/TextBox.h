@@ -1,12 +1,13 @@
 #ifndef TEXTBOX
 #define TEXTBOX
 #include <ncurses.h>
+
 #include "Widget.h"
 #include "../GlobalDefines.h"
 
 typedef struct{
     Widget* widget;
-    Widget* parent;
+    UiBase* uiBase;
     int x, y;
     int w, h;
     char* label;
@@ -31,9 +32,9 @@ typedef struct{
 
 void createTextBox(TextBox* textBox, Widget* parent, char* label, char* str, int sizePolicyX, int sizePolicyY, int aliignmentX, int alignmentY, int x, int y, int w);
 void renderTextBox(TextBox* textBox);
-void textBoxMouseMoveCallback(TextBox* textBox);
-void textBoxMouseClickCallback(TextBox* textBox);
-void textBoxKeyPressCallback(TextBox* textBox, int key);
+int TBMouseMoveCb(TextBox* textBox);
+int TBMouseClickCb(TextBox* textBox);
+int TBKeyPressCb(TextBox* textBox, int key);
 void resetTextbox(TextBox* textBox);
 
 #endif

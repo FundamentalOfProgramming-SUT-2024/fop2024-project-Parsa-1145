@@ -4,7 +4,7 @@
 #include "ItemBase.h"
 #include "../Camera.h"
 #include "../Texture.h"
-
+#include "../../Utilities/cJSON.h"
 
 typedef struct{
     ItemBase* gameObject;
@@ -12,6 +12,7 @@ typedef struct{
     int x, y, z;
     char sprite;
     int color;
+    char* name;
 
     float damage;
     float range;
@@ -20,12 +21,13 @@ typedef struct{
     int quantity;
 }Weapon;
 
+ItemBase* generateWeapon(cJSON* data);
 void createWeapon(Weapon* w);
 void pickUpWeapon(Weapon* w);
 void dropWeapon(Weapon* w);
 void renderWeapon(Weapon* w, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
 void updateWeapon(Weapon* w);
 void deleteWeapon(Weapon* w);
-void isWeaponEqual(Weapon* w1, Weapon* w2);
+int isWeaponEqual(Weapon* w1, Weapon* w2);
 
 #endif

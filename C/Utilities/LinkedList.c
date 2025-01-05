@@ -40,7 +40,7 @@ void linkedListDeleteElement(LinkedList* list, int index){
         }
     }
 }
-void linkedListPushBack(LinkedList* list, void* elment){
+void linkedListPushBack(LinkedList* list, void* element){
     void** tmp = malloc(sizeof(void*) + list->dataSize);
     if(list->size){
         *(getLinkedListPtr(list, list->size - 1)) = tmp;
@@ -49,10 +49,22 @@ void linkedListPushBack(LinkedList* list, void* elment){
     }
 
     tmp[0] = NULL;
-    tmp[1] = elment;
+    tmp[1] = element;
     list->size++;
 }
-//void insetInLinkedList(LinkedList* list, void* element, int index);
+void linkedListInsert(LinkedList* list, void* element, int index){
+    void** tmp = malloc(list->dataSize + sizeof(void**));
+    if(index == 0){
+        tmp[0] = list->data;
+        list->data = tmp;
+        tmp[1] = element;
+    }else{
+        void** tmp2 = getLinkedListPtr(list, index-1);
+        tmp[0] = tmp2[0];
+        tmp2[0] = tmp;
+        tmp[1] = element;
+    }
+}
 void popLinkedList(LinkedList* list){
     if(list->size){
         void** tmp = list->data;

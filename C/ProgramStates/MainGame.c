@@ -22,11 +22,15 @@
 #include "../GameObjects/GameSettings.h"
 #include "../GameObjects/Floor.h"
 #include "../GameObjects/Camera.h"
+#include "../GameObjects/Line.h"
 #include "../GameObjects/Renderer.h"
 #include "../GameObjects/Texture.h"
 #include "../GameObjects/Items/ItemBase.h"
 #include "../GameObjects/Items/Weapon.h"
 #include "../GameObjects/Items/Ammo.h"
+#include "../GameObjects/Items/Key.h"
+#include "../GameObjects/Items/Coin.h"
+
 
 
 void generateMap();
@@ -44,8 +48,6 @@ int floorNum;
 LinkedList PathCells;
 int cellState = 0;
 
-int roomNum = 0;
-
 Widget debugMenu;
 Button mgCloseDebugBtn;
 CheckBox mgShowPointCloudCb;
@@ -53,6 +55,12 @@ CheckBox mgNoClipCb;
 
 Button* mgButtonList[1] = {&mgCloseDebugBtn};
 CheckBox* mgCheckBoxList[2] = {&mgShowPointCloudCb, &mgNoClipCb};
+
+Point** pointCloud;
+Room** roomList;
+int** adjMat;
+int pointNum = 0;
+int pointPlacement = 0;
 
 void mgtoggleDegbugMenu(){
     debugMenu.isVisible = !debugMenu.isVisible;
@@ -62,7 +70,7 @@ void uiMouseMove(){
         buttonMouseMoveCallback(mgButtonList[i]);
     }
     FOR(i, 2){
-        checkBoxMouseMoveCallback(mgCheckBoxList[i]);
+        CBMouseMoveCb(mgCheckBoxList[i]);
     }
 }
 void renderUi(){
@@ -80,13 +88,14 @@ void uiMouseClick(){
         buttonMouseClickEvent(mgButtonList[i]);
     }
     FOR(i, 2){
-        checkBoxMouseClickEvent(mgCheckBoxList[i]);
+        CBMouseClickCb(mgCheckBoxList[i]);
     }
 }
 
 
 
 void initMainGame(){
+
     createWidget(&debugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
     debugMenu.layoutType = HORIZONTAL_LAYOUT;
     debugMenu.layoutPadding = 1;
@@ -108,7 +117,7 @@ void initMainGame(){
     gameSettings.minFloorNum = 4;
     gameSettings.minRoomSize = 6;
     gameSettings.maxRoomSize = 8;
-    gameSettings.roomSpread = 5;
+    gameSettings.roomSpread = 4;
     gameSettings.roomThemeProb = malloc(4 * 4);
     gameSettings.roomThemeProb[0] = 0.5;
     gameSettings.roomThemeProb[1] = 0.2;
@@ -125,7 +134,125 @@ void initMainGame(){
 
     createLinkedList(&PathCells, sizeof(MovingCell*));
 }
+Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, int maxN, float branchingProb, int depth){
+    Room** branchRoomList;
+    int roomNum = randBetween(minN, maxN+1, 0);
+    branchRoomList = malloc(roomNum * sizeof(Room*));
 
+    FOR(i, roomNum){
+        branchRoomList[i] = malloc(sizeof(Room));
+        branchRoomList[i]->right = 0;
+        branchRoomList[i]->top = 0;
+        branchRoomList[i]->bottom = 0;
+        branchRoomList[i]->left = 0;
+        branchRoomList[i]->visited = 0;
+        branchRoomList[i]->index = 0;
+    }
+
+    int unbranchedLength = 0;
+    FOR(i, roomNum){
+        if(!i){
+            if(roomNum > 1){
+                branchRoomList[i]->right = branchRoomList[i+1];
+            }
+        }else if(i == roomNum-1){
+            branchRoomList[i]->left = branchRoomList[i-1];
+        }else{
+            branchRoomList[i]->right = branchRoomList[i+1];
+            branchRoomList[i]->left = branchRoomList[i-1];
+        }
+    }
+    FOR(i, roomNum){
+        if(randWithProb(branchingProb * unbranchedLength / (depth + 1))){
+            int n;
+            Room* tmp;
+            if(randWithProb(0.5)){
+                tmp = createRoomGraph(branchRoomList[i], 1,  &n,max(1.1,minN / 3), maxN / 3 , branchingProb/3, depth+1);
+                if(tmp){
+                    branchRoomList[(int)(min(roomNum-0.9, i + n))]->top = tmp;
+                    tmp->bottom = branchRoomList[(int)(min(roomNum-0.9, i + n))];
+                }
+            }else{
+                tmp = createRoomGraph(branchRoomList[i], 0, &n, max(1.1,minN / 3), maxN / 3, branchingProb/3, depth+1);
+                if(tmp){
+                    branchRoomList[(int)(min(roomNum-0.9, i + n))]->bottom = tmp;
+                    tmp->top = branchRoomList[(int)(min(roomNum-0.9, i + n))];
+                }
+            }
+            unbranchedLength = 0;
+        }else{
+            unbranchedLength++;
+        }
+    }
+    if(depth!=0){
+        if(branchSide){
+            start->top = branchRoomList[0];
+            branchRoomList[0]->bottom = start;
+        }else{
+            start->bottom = branchRoomList[0];
+            branchRoomList[0]->top = start;
+        }
+        if(randWithProb(roomNum * (depth + 1) * 0.1)){
+            createdNum[0] = roomNum;
+            Room* r = branchRoomList[roomNum-1];
+            free(branchRoomList);
+            return r;
+        }else{
+            return NULL;
+        }
+    }else{
+
+        Room* r = branchRoomList[0];
+        free(branchRoomList);
+        return r;
+    }
+}
+void parseRoomGraph(Room* r,float x, float y){
+    if(!(r->visited)){
+        Point* p = malloc(sizeof(Point));
+        p->x = x;
+        p->y = y + randBetween(0, 3, 0) - 6;
+        p->radius = randBetween((int)(gameSettings.minRoomSize * 1.4), (int)(gameSettings.maxRoomSize * 1.4) + 1, 0);
+        p->spread = randBetween(gameSettings.roomSpread, gameSettings.roomSpread * 2, 0);
+        p->locked = 0;
+        pointCloud = realloc(pointCloud, (++pointNum) * sizeof(Point*));
+        pointCloud[pointNum-1] = p;
+        r->visited = 1;
+
+        roomList = realloc(roomList, pointNum * sizeof(Room*));
+        roomList[pointNum-1] = r;
+        r->point = p;
+        r->index = pointNum-1;
+        if(r->right){
+            parseRoomGraph(r->right, x + p->radius, y);
+        }if(r->top){
+            parseRoomGraph(r->top, x, y + p->radius);
+        }if(r->bottom){
+            parseRoomGraph(r->bottom, x, y-p->radius);
+        }if(r->left){
+            parseRoomGraph(r->left, x-p->radius, y);
+        }
+    }
+}
+void createAdjMat(){
+    adjMat = malloc(pointNum * sizeof(int*));
+    FOR(i, pointNum){
+        adjMat[i] = calloc(pointNum, sizeof(int));
+    }
+
+    FOR(i, pointNum){
+        if(roomList[i]->top){
+            adjMat[i][roomList[i]->top->index] = 1;
+        }if(roomList[i]->right){
+            adjMat[i][roomList[i]->right->index] = 1;
+        }if(roomList[i]->bottom){
+            adjMat[i][roomList[i]->bottom->index] = 1;
+        }if(roomList[i]->left){
+            adjMat[i][roomList[i]->left->index] = 1;
+        }
+    }
+}
+Room* roomRoot;
 void enterMainGame(){
     
     clear();
@@ -139,6 +266,8 @@ void enterMainGame(){
         }
         free(floors[i].roomList);
         free(floors[i].pointCloud);
+        floors[i].pointCloud = NULL;
+        floors[i].roomList = NULL;
 
         ItemBase* tmp;
         FOR(j, floors[i].itemList->size){
@@ -147,9 +276,11 @@ void enterMainGame(){
             popLinkedList(floors[i].itemList);
         }
         free(floors[i].itemList);
+        floors[i].itemList = NULL;
 
         free(floors + i);
     }
+    free(floors);
 
     player.x = 0;
     player.y = 0;
@@ -163,7 +294,11 @@ void enterMainGame(){
     mainCamera.h = scrH;
     mainCamera.w = scrW;
 
-    generateMap();
+    roomRoot = createRoomGraph(NULL, NULL,NULL, 5, 8, 0.1, 0);
+    parseRoomGraph(roomRoot, 0, 0);
+    createAdjMat();
+
+    //generateMap();
 
     engineState = &mainGame;
 
@@ -173,7 +308,56 @@ void enterMainGame(){
     frameBuffer = createCharTexture(scrW, scrH);
     visitedMaskBuffer = createCharTexture(scrW, scrH);
 }
+void generateLoot(){
+    char* lootTableData;
+    if(fileToStr("../Data/LootTable.json", &lootTableData)){
+        cJSON* lootTableJson = cJSON_Parse(lootTableData);
 
+        int themeNum = cJSON_GetArraySize(lootTableJson);
+        cJSON* roomLootTable[themeNum];
+
+        FOR(i, themeNum){
+            roomLootTable[i] = cJSON_GetArrayItem(lootTableJson, i);
+        }
+
+        FOR(j, floorNum){
+            FOR(i, floors[j].roomNum){
+                Room* r = floors[j].roomList[i];
+                int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "min")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "max")->valueint + 1, i + j);
+
+                cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme], "enteries");
+                FOR(z, num){
+                    int tmp = chooseWithWeight(enteries);
+
+                    cJSON* entery = cJSON_GetArrayItem(enteries, tmp);
+
+                    ItemBase* gen;
+                    cJSON* pool = cJSON_GetObjectItem(entery, "pool");
+                    switch(cJSON_GetObjectItem(entery, "type")->valueint){
+                        case 0:
+                            gen = generateWeapon(pool);
+                            break;
+                        case 1:
+                            gen = generateAmmo(pool);
+                            break;
+                        case 2:
+                            gen = generateCoin(pool);
+                            break;
+                        case 3:
+                            gen = generateKey(pool);
+                            break;
+                    }
+                    gen->y[0] = r->y;
+                    gen->x[0] = r->x + z;
+                    gen->z[0] = j;
+                    linkedListPushBack(floors[j].itemList, gen);
+                }
+            }
+        }
+        cJSON_free(lootTableJson);
+
+    }
+}
 void generateFloor(int index){
     floors[index].roomNum = randBetween(gameSettings.minRoomNum, gameSettings.maxRoomNum + 1, 1 + index);
     floors[index].pointCloud = malloc(floors[index].roomNum * sizeof(Point*));
@@ -192,7 +376,7 @@ void generateFloor(int index){
     int roomsPlaced = 0;
     while(roomsPlaced < 1000){
         FOR(i, 40000){
-            if(iteratePointCloud(floors[index].pointCloud, floors[index].roomNum, gameSettings.roomSpread)){
+            if(iteratePointCloud(floors[index].pointCloud, adjMat, floors[index].roomNum, gameSettings.roomSpread)){
                 roomsPlaced += 1;
                 if(roomsPlaced == 1000) break;
             }
@@ -232,26 +416,6 @@ void generateFloor(int index){
         floors[index].roomList[i]->x = 2 * floors[index].pointCloud[i]->x- floors[index].roomList[i]->w/2;
         floors[index].roomList[i]->y = floors[index].pointCloud[i]->y- floors[index].roomList[i]->h/2;
         floors[index].roomList[i]->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb, i + index);
-
-        Weapon* w = malloc(sizeof(Weapon));
-        w->sprite = randBetween('a', 'v', i);
-        w->x = floors[index].roomList[i]->x + 2;
-        w->y = floors[index].roomList[i]->y + 2;
-        w->z = index;
-        w->quantity = 1;
-        w->weaponType = 1;
-        createWeapon(w);
-        linkedListPushBack(floors[index].itemList, w->gameObject);
-
-        Ammo* a = malloc(sizeof(Ammo));
-        a->ammoType = randBetween(0, 3, i);
-        a->sprite = '0' + a->ammoType;
-        a->x = floors[index].roomList[i]->x + 1;
-        a->y = floors[index].roomList[i]->y + 1;
-        a->z = index;
-        a->quantity = 3;
-        createAmmo(a);
-        linkedListPushBack(floors[index].itemList, a->gameObject);
     }
 
     floors[index].minx = INT32_MAX; floors[index].miny = INT32_MAX; floors[index].maxx = 0; floors[index].maxy = 0;
@@ -320,12 +484,14 @@ void generateFloor(int index){
 }
 
 void generateMap(){
-    floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
-    floors = malloc(floorNum * sizeof(Floor));
+    //floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
+    //floors = malloc(floorNum * sizeof(Floor));
     
-    FOR(i, floorNum){
-        generateFloor(i);
-    }
+    //FOR(i, floorNum){
+    //    generateFloor(i);
+    //}
+
+    //generateLoot();
 }
 
 int moveValid(int x, int y){
@@ -339,6 +505,7 @@ int moveValid(int x, int y){
     }else return 0;
     
 }
+
 void updatePlayer(){
     drawCircleOnCharTexture(floors[player.z].visited, player.x - floors[player.z].minx, player.y - floors[player.z].miny, player.visionRadius, 1);
     void** tmpPtr = floors[player.z].itemList->data;
@@ -352,10 +519,30 @@ void updatePlayer(){
     }
 }
 void movePlayer(int x, int y){
-    if(moveValid(x, y)){
+    if(1){
         player.x += x;
         player.y += y;
-        updatePlayer();
+        //updatePlayer();
+    }
+    
+}
+void deleteRoomGraph(Room* r){
+    if(r->visited != 2){
+        r->visited = 2;
+        if(r->top){
+            r->top->bottom = NULL;
+            deleteRoomGraph(r->top);
+        }if(r->bottom){
+            r->bottom->top = NULL;
+            deleteRoomGraph(r->bottom);
+        }if(r->right){
+            r->right->left = NULL;
+            deleteRoomGraph(r->right);
+        }if(r->left){
+            r->left->right = NULL;
+            deleteRoomGraph(r->left);
+        }
+        free(r);
     }
     
 }
@@ -377,12 +564,28 @@ void updateMainGame(){
             if(getmouse(&mEvent) == OK){
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
-                        mousex = mEvent.x;
-                        mousey = mEvent.y;
                         uiMouseMove();
+                        // if(pointNum && pointPlacement){
+                        //     Point* p = pointCloud[pointNum-1];
+                        //     p->radius = hypot(mEvent.x + mainCamera.x - p->x, mEvent.y + mainCamera.y - p->y);
+                        // }
                         break;
                     default:
                         uiMouseClick();
+                        // if(mEvent.bstate & BUTTON1_PRESSED){
+                        //     if(pointPlacement){
+                        //         pointPlacement = 0;
+                        //     }else{
+                        //         Point* p = malloc(sizeof(Point));
+                        //         p->x = mainCamera.x + mEvent.x;
+                        //         p->y = mainCamera.y + mEvent.y;
+                        //         p->locked = 0;
+                        //         pointNum++;
+                        //         pointCloud = realloc(pointCloud ,sizeof(Point*) * pointNum);
+                        //         pointCloud[pointNum-1] = p;
+                        //         pointPlacement = 1;
+                        //     }
+                        // }
                         break;
                 }
             }
@@ -407,24 +610,44 @@ void updateMainGame(){
                     movePlayer(0, 1);
                     break;
                 case 'u':
-                    if(player.z != 0){
-                        player.z--;
-                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
-                    }
+                    // if(player.z != 0){
+                    //     player.z--;
+                    //     player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                    //     player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                    // }
                     break;
                 case 'j':
-                    if(player.z != floorNum-1){
-                        player.z++;
-                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
-                    }
+                    // if(player.z != floorNum-1){
+                    //     player.z++;
+                    //     player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                    //     player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                    // }
+                    break;
+                case 'i':
+                    iteratePointCloud(pointCloud,adjMat, pointNum, 5);
                     break;
                 case 'c':
                     if(player.items.size){
                         ItemBase* tmp = linkedListGetElement(&(player.items), 0);
                         tmp->drop(tmp);
                     }
+                    break;
+                case 'g':
+                    deleteRoomGraph(roomRoot);
+                    FOR(i, pointNum){
+                        free(pointCloud[i]);
+                        free(adjMat[i]);
+                    }
+                    free(adjMat);
+                    adjMat = NULL;
+                    free(pointCloud);
+                    pointCloud = NULL;
+                    free(roomList);
+                    roomList = NULL;
+                    pointNum = 0;
+                    roomRoot = createRoomGraph(NULL, NULL, NULL, 7, 14, 0.2, 0);
+                    parseRoomGraph(roomRoot, 0, 0);
+                    createAdjMat();
                     break;
                 case 't':
                     mgtoggleDegbugMenu();
@@ -438,53 +661,68 @@ void updateMainGame(){
 void renderMainGame(){
     //erase();
     fillCharTexture(frameBuffer, ' ');
-    fillCharTexture(visitedMaskBuffer, 0);
+    //fillCharTexture(visitedMaskBuffer, 0);
 
     mainCamera.x = player.x-mainCamera.w/2;
     mainCamera.y = player.y-mainCamera.h/2;
 
     //attron(COLOR_PAIR(100));
     
-    mrenderTexture(floors[player.z].groundMesh, NULL, floors[player.z].minx, floors[player.z].miny, frameBuffer, NULL);
-    mrenderTexture(floors[player.z].visited, NULL, floors[player.z].minx, floors[player.z].miny, visitedMaskBuffer, NULL);
+    //mrenderTexture(floors[player.z].groundMesh, NULL, floors[player.z].minx, floors[player.z].miny, frameBuffer, NULL);
+    //mrenderTexture(floors[player.z].visited, NULL, floors[player.z].minx, floors[player.z].miny, visitedMaskBuffer, NULL);
     //maskFrameBuffer(frameBuffer, NULL, visitedMaskBuffer);
 
+    // void** tmpPtr = floors[player.z].itemList->data;
+    // ItemBase* tmp;
+    // FOR(i, floors[player.z].itemList->size){
+    //     tmp = tmpPtr[1];
+    //     tmp->render(tmp, frameBuffer, NULL, &mainCamera);
+    //     if(tmpPtr) tmpPtr = *tmpPtr;
+    // }
 
-    if(gameSettings.debugMode){
-        if(gameSettings.debugShowPointCloud){
-            FOR(i, roomNum){
-                pointRender(floors[player.z].pointCloud[i]);
-                mvprintw(i + 1,2, "%f %f", floors[player.z].pointCloud[i]->x, floors[player.z].pointCloud[i]->y);
+    FOR(i, pointNum){
+        drawCircleOnCharTexture(frameBuffer, pointCloud[i]->x - mainCamera.x, pointCloud[i]->y - mainCamera.y, pointCloud[i]->radius, '.');
+    }
+    FOR(i, pointNum){
+        for(int j = i + 1; j < pointNum; j++){
+            if(adjMat[i][j]){
+                renderLine('o', roomList[i]->point->x,  roomList[i]->point->y,  roomList[j]->point->x,  roomList[j]->point->y, &mainCamera, 
+                frameBuffer, NULL);
             }
         }
     }
 
-    void** tmpPtr = floors[player.z].itemList->data;
-    ItemBase* tmp;
-    FOR(i, floors[player.z].itemList->size){
-        tmp = tmpPtr[1];
-        tmp->render(tmp, frameBuffer, NULL, &mainCamera);
-        if(tmpPtr) tmpPtr = *tmpPtr;
+    FOR(i, pointNum){
+        FOR(j, pointNum){
+            frameBuffer->data[j][i] = adjMat[i][j] + '0';
+        }
     }
 
     renderFrameBuffer(frameBuffer);
     
-    tmpPtr = player.items.data;
-    FOR(i, player.items.size){
-        tmp = tmpPtr[1];
-        if(tmp->objectType == TYPE_AMMO){
-            Ammo* a = tmp->object;
-            mvprintw(2 + a->ammoType, 2, "%d : %d", a->ammoType, a->quantity);
-        }else if(tmp->objectType == TYPE_WEAPON){
-            Weapon* w = tmp->object;
-            mvprintw(5 + w->weaponType, 2, "%d : %d", w->weaponType, w->quantity);
-        }
-        if(tmpPtr) tmpPtr = *tmpPtr;
-    }
+    // tmpPtr = player.items.data;
+    // int j = 0;
+    // FOR(i, player.items.size){
+    //     tmp = tmpPtr[1];
+    //     if(tmp->objectType == TYPE_AMMO){
+    //         Ammo* a = tmp->object;
+    //         mvprintw(2 + (j++), 2, "%s : %d", a->name, a->quantity);
+    //     }else if(tmp->objectType == TYPE_WEAPON){
+    //         Weapon* w = tmp->object;
+    //         mvprintw(2 + (j++), 2, "%s : %d", w->name, w->quantity);
+    //     }else if(tmp->objectType == TYPE_KEY){
+    //         Key* k = tmp->object;
+    //         mvprintw(2 + (j++), 2, "%s : %d", k->name, k->quantity);
+    //     }else if(tmp->objectType == TYPE_COIN){
+    //         Coin* c = tmp->object;
+    //         mvprintw(2 + (j++), 2, "%s : %d", c->name, c->quantity);
+    //     }
+    //     if(tmpPtr) tmpPtr = *tmpPtr;
+    // }
 
     mvprintw(scrH/2, scrW/2, "@");
 
-    renderUi();
+    //renderUi();
 
 
     refresh();

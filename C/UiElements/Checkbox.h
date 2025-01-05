@@ -4,6 +4,7 @@
 
 typedef struct{
     Widget* widget;
+    UiBase* uiBase;
     char* label;
     int* value;
 
@@ -20,7 +21,7 @@ typedef struct{
 
 void createCheckBox(CheckBox* cb, Widget* parent, char* label, int* value, int sizePolicyX, int sizePolicyY, int alignmentX, int alignmentY, int x, int y, int w);
 void renderCheckBox(CheckBox* cb);
-void checkBoxMouseMoveCallback(CheckBox* cb);
-void checkBoxMouseClickEvent(CheckBox* cb);
+void CBMouseMoveCb(CheckBox* cb);
+void CBMouseClickCb(CheckBox* cb);
 
 #endif
