@@ -27,5 +27,7 @@ void defaultItemPickup(ItemBase* g);
 void defaultItemDrop(ItemBase* g);
 void defaultItemRender(ItemBase* g, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
 void defaultItemUpdate(ItemBase* g);
+void noPickUp(ItemBase* g);
+void noDrop(ItemBase* g);
 
 #endif

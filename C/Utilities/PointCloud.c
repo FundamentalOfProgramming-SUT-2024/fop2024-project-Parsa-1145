@@ -15,7 +15,7 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
         points[i]->xForce = 0;
         points[i]->yForce = 0;
         if((!points[i]->locked)){
-            for(int j = 0; j < n; j++){
+            for(int j = 0; j < n; j++){//you could shuffle the list, then iterate half of the cloud. this should solve the lock-to-infinite problem
                 if(i != j){
                     distance = pointGetDistance(points[i], points[j]);
 
@@ -34,21 +34,31 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
                         yDir = (points[i]->y - points[j]->y) / distance;
                     }
                     if(diffrence > 0){
-                        points[i]->xForce += diffrence * xDir;
-                        points[i]->yForce += diffrence * yDir;
+                        points[i]->xForce += diffrence * xDir * 2;
+                        points[i]->yForce += diffrence * yDir * 2;
                     }else{
                         if(adjMat[i][j]){
-                            points[i]->xForce +=  diffrence * diffrence * diffrence * xDir;
-                            points[i]->yForce +=  diffrence * diffrence * diffrence * yDir;
+                            points[i]->xForce +=  diffrence * xDir;
+                            points[i]->yForce +=  diffrence * yDir;
                         }
                     }
 
-                    if(diffrence > 4){
+                    if(distance < points[i]->radius + points[j]->radius){
                         flag = 0;
                     }
                 }
             }
         }
+        xDir = - points[i]->x;
+        yDir = - points[i]->y;
+        diffrence = hypot(xDir, yDir);
+
+        if(diffrence > 2){
+            points[i]->xForce +=  2 * xDir / diffrence; 
+            points[i]->yForce +=  2 * yDir / diffrence;
+        }
+        
+
     }
     FOR(i, n){
         points[i]->x += points[i]->xForce / n;

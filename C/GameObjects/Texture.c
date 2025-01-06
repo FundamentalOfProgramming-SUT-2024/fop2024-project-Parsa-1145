@@ -11,10 +11,7 @@ CharTexture* createCharTexture(int w, int h){
 
     out->data = malloc(sizeof(char*) * h);
     FOR(i, h){
-        out->data[i] = malloc(w * sizeof(char));
-        FOR(j, w){
-            out->data[i][j] = '\0';
-        }
+        out->data[i] = calloc(w , sizeof(char));
     }
 
     return out;
@@ -28,10 +25,13 @@ void fillCharTexture(CharTexture* tex, char c){
     }
 }
 void deleteCharTexture(CharTexture* tex){
-    FOR(i, tex->h){
-        free(tex->data[i]);
+    if(tex){
+        FOR(i, tex->h){
+            free(tex->data[i]);
+        }
+        free(tex->data);
+
     }
-    free(tex->data);
 }
 void resizeCharTexture(CharTexture** tex, int w, int h){
     deleteCharTexture(*tex);

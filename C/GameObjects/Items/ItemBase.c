@@ -38,3 +38,5 @@ void defaultItemUpdate(ItemBase* g){
         defaultItemPickup(g);
     }
 }
+void noPickUp(ItemBase* g){}
+void noDrop(ItemBase* g){}

@@ -2,16 +2,17 @@
 #define MOVINGCELL
 #include "LinkedList.h"
 #include "../GameObjects/Texture.h"
+#include "../GameObjects/Floor.h"
 
 typedef struct{
     int type;
-    int attr[5];
+    int attr[7];
     
     float x, y;
 } MovingCell;
 
-int iterateRootCell(LinkedList* list, MovingCell* cell, CharTexture* ground);
-int iteratebranchCell(LinkedList* list, MovingCell* cell, CharTexture* ground);
-int iterateMovingCells(LinkedList* list, CharTexture* ground);
+int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f);
+//int iteratebranchCell(LinkedList* list, MovingCell* cell, Floor* f);
+int iterateMovingCells(LinkedList* list, Floor* f);
 
 #endif

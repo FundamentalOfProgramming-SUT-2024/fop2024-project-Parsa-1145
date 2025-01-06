@@ -7,7 +7,7 @@
       "request": "launch",
       "args": [],
       "stopAtEntry": false,
-      "externalConsole": false,
+      "externalConsole": true,
       "cwd": "/home/parsa/Projects/University/BP/Rouge/C/",
       "program": "/home/parsa/Projects/University/BP/Rouge/C/main",
       "MIMode": "gdb",

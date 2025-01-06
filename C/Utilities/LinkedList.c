@@ -4,6 +4,8 @@
 
 void createLinkedList(LinkedList* linkedList, int dataSize){
     linkedList->dataSize = dataSize;
+    linkedList->data = NULL;
+    linkedList->size = 0;
 }
 
 void** linkedListGetElement(LinkedList* list, int index){

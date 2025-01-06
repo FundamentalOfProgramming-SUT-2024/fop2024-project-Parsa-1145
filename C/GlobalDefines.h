@@ -15,4 +15,6 @@
 
 #define FOR(i, n) for(int i = 0 ; i < n ; i++)
 
+#define PI 3.141592654
+
 typedef  void(*voidCB)();
