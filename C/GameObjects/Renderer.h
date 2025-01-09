@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include "Texture.h"
 
-void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer);
+void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer);
 void renderTexture(CharTexture* tex, ColorTexture* color, float x, float y, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer);
 void renderFrameBuffer(CharTexture* tex);
 void maskFrameBuffer(CharTexture* frb, ColorTexture* clb, CharTexture* mask);

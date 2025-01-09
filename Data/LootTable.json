@@ -11,19 +11,19 @@
                     "name" : "Long Sword",
                     "minDmg" : 4,
                     "maxDmg" : 6,
-                    "Sprite" : "|",
+                    "Sprite" : 10132,
                     "weight" : 2
                 },{
                     "name" : "Dagger",
                     "minDmg" : 1,
                     "maxDmg" : 2,
-                    "Sprite" : "^",
+                    "Sprite" : 10132,
                     "weight" : 5
                 },{
                     "name" : "Mace",
                     "minDmg" : 5,
                     "maxDmg" : 8,
-                    "Sprite" : "*",
+                    "Sprite" : 10132,
                     "weight" : 1
                 }
             ]
@@ -36,14 +36,14 @@
                     "dmg" : 1,
                     "minQuantity" : 4,
                     "maxQuantity" : 10,
-                    "sprite" : ">",
+                    "sprite" : 10132,
                     "weight" : 3
                 },{
                     "name" : "Iron Tip Arrow",
                     "dmg" : 13,
                     "minQuantity" : 2,
                     "maxQuantity" : 5,
-                    "sprite" : "$",
+                    "sprite" : 10132,
                     "weight" : 1
                 }
             ]
@@ -55,14 +55,14 @@
                     "name" : "Gold Coin",
                     "minQuantity" : 5,
                     "maxQuantity" : 15,
-                    "sprite" : "c",
+                    "sprite" : 10132,
                     "Value" : 1,
                     "weight" : 5
                 },{
                     "name" : "Black Coin",
                     "minQuantity" : 2,
                     "maxQuantity" : 5,
-                    "sprite" : "C",
+                    "sprite" : 10132,
                     "Value" : 10,
                     "weight" : 1
                 }
@@ -73,13 +73,13 @@
             "pool" : [
                     {
                         "name" : "Ancient Key",
-                        "sprite" : "A",
+                        "sprite" : 10132,
                         "openProb" : 0.9,
                         "broken" : 0,
                         "weight" : 1
                     },{
                         "name" : "Broken Key",
-                        "sprite" : "%",
+                        "sprite" : 10132,
                         "openProb" : 0,
                         "broken" : 1,
                         "weight" : 4
@@ -91,7 +91,7 @@
             "pool" : [
                     {
                         "name" : "Speed Potion",
-                        "sprite" : "S",
+                        "sprite" : "L",
                         "weight" : 1
                     },{
                         "name" : "Health Potion",
@@ -118,14 +118,14 @@
                     "name" : "Gold Coin",
                     "minQuantity" : 5,
                     "maxQuantity" : 15,
-                    "sprite" : "c",
+                    "sprite" : 10132,
                     "Value" : 1,
                     "weight" : 5
                 },{
                     "name" : "Black Coin",
                     "minQuantity" : 2,
                     "maxQuantity" : 5,
-                    "sprite" : "C",
+                    "sprite" : 10132,
                     "Value" : 10,
                     "weight" : 1
                 }
@@ -145,19 +145,19 @@
                     "name" : "Long Sword",
                     "minDmg" : 4,
                     "maxDmg" : 6,
-                    "Sprite" : "|",
+                    "Sprite" : 10132,
                     "weight" : 2
                 },{
                     "name" : "Dagger",
                     "minDmg" : 1,
                     "maxDmg" : 2,
-                    "Sprite" : "^",
+                    "Sprite" : 10132,
                     "weight" : 5
                 },{
                     "name" : "Mace",
                     "minDmg" : 5,
                     "maxDmg" : 8,
-                    "Sprite" : "*",
+                    "Sprite" : 10132,
                     "weight" : 1
                 }
             ]
@@ -177,14 +177,14 @@
                     "dmg" : 1,
                     "minQuantity" : 4,
                     "maxQuantity" : 10,
-                    "sprite" : ">",
+                    "sprite" : 10132,
                     "weight" : 3
                 },{
                     "name" : "Iron Tip Arrow",
                     "dmg" : 13,
                     "minQuantity" : 2,
                     "maxQuantity" : 5,
-                    "sprite" : "$",
+                    "sprite" : 10132,
                     "weight" : 1
                 }
             ]

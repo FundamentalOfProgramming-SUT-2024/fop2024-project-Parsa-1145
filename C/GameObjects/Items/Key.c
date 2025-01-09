@@ -16,7 +16,7 @@ ItemBase* generateKey(cJSON* data){
     k->broken = cJSON_GetObjectItem(key, "broken")->valueint;
     k->openProb = cJSON_GetObjectItem(key, "openProb")->valuedouble;
     k->quantity = 1;
-    k->sprite = (cJSON_GetObjectItem(key, "sprite")->valuestring)[0];
+    k->sprite = (cJSON_GetObjectItem(key, "sprite")->valueint);
 
     createKey(k);
 

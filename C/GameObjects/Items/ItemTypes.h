@@ -4,3 +4,4 @@
 #define TYPE_KEY 3
 #define TYPE_POTION 4
 #define TYPE_DOOR 5
+#define TYPE_STAIR 6

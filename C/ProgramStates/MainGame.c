@@ -34,6 +34,8 @@
 #include "../GameObjects/Items/Coin.h"
 #include "../GameObjects/Items/Potion.h"
 #include "../GameObjects/Items/Door.h"
+#include "../GameObjects/Items/Stair.h"
+
 
 
 
@@ -111,8 +113,6 @@ void uiMouseClick(){
     }
 }
 
-
-
 void initMainGame(){
     createLinkedList(&mgUiList, sizeof(UiBase*));
 
@@ -179,6 +179,7 @@ Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, in
         branchRoomList[i]->left = 0;
         branchRoomList[i]->visited = 0;
         branchRoomList[i]->index = 0;
+        branchRoomList[i]->stairCandidate = 0;
     }
 
     int unbranchedLength = 0;
@@ -236,6 +237,8 @@ Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, in
     }else{
 
         Room* r = branchRoomList[0];
+        branchRoomList[roomNum-1]->stairCandidate = 1;
+        branchRoomList[0]->stairCandidate = 1;
         free(branchRoomList);
         return r;
     }
@@ -280,6 +283,12 @@ void parseRoomGraph(Room* r, Floor* f, float x, float y){
         }
     }
 }
+void setFloorStairRooms(Floor* f){
+    int k = 0;
+    FOR(i, f->roomNum){
+        if(f->roomList[i]->stairCandidate) f->stairRooms[k++] = i;
+    }
+}
 void createAdjMat(Floor* f){
     f->adjMat = malloc(f->roomNum * sizeof(int*));
     FOR(i, f->roomNum){
@@ -318,8 +327,8 @@ void enterMainGame(){
 
     mainCamera.h = scrH;
     mainCamera.w = scrW;
-    mainCamera.x = - scrW / 2;
-    mainCamera.y = - scrH / 2;
+    mainCamera.h = scrH - 6;
+    mainCamera.w = scrW - 20;
 
 
     
@@ -332,14 +341,32 @@ void enterMainGame(){
     createLinkedList(&(player.items), sizeof(ItemBase*));
 
     getmaxyx(stdscr, scrH, scrW);
-    frameBuffer = createCharTexture(scrW, scrH);
-    visitedMaskBuffer = createCharTexture(scrW, scrH);
+    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
 
     engineState = &mainGame;
 
     timeout(100);
     nodelay(stdscr, FALSE);
 
+}
+int validForItemPosition(int x, int y, Room* r){
+    x += r->x;
+    y += r->y;
+    Floor* f = floors + r->z;
+    if(f->groundMesh->data[y][x] == '.'){
+        void** tmpPtr = f->itemList->data;
+        ItemBase* i;
+        while(tmpPtr){
+            i = tmpPtr[1];
+            if((i->x == x) && (i->y == y)){
+                return 0;
+            }else{
+                tmpPtr = tmpPtr[0];
+            }
+        }
+        return 1;
+    }
 }
 void generateLoot(){
     char* lootTableData;
@@ -354,8 +381,34 @@ void generateLoot(){
         }
 
         FOR(j, floorNum){ 
-            FOR(i, floors[j].roomNum){
-                Room* r = floors[j].roomList[i];
+            Floor* f = floors + j;
+            Floor* nextF = floors + j + 1;
+            if(j!=floorNum-1){
+                int x, y;
+                do{
+                    x = randBetween(0, f->roomList[f->stairRooms[1]]->w, 0);
+                    y = randBetween(0, f->roomList[f->stairRooms[1]]->h, 0);
+                }
+                while((!validForItemPosition(x, y, f->roomList[f->stairRooms[1]])) && (!validForItemPosition(x, y, nextF->roomList[f->stairRooms[0]])));
+                Stair* s1 = malloc(sizeof(Stair));
+                Stair* s2 = malloc(sizeof(Stair));
+                s1->z = j;
+                s1->x = x + f->roomList[f->stairRooms[1]]->x;
+                s1->y = y + f->roomList[f->stairRooms[1]]->y;
+                s1->dest = s2;
+                s1->sprite = '#';
+                createStair(s1);
+                linkedListPushBack(f->itemList, s1->itemBase);
+                s2->z = j+1;
+                s2->x = x + nextF->roomList[nextF->stairRooms[0]]->x;
+                s2->y = y + nextF->roomList[nextF->stairRooms[0]]->y;
+                s2->dest = s1;
+                s2->sprite = '#';
+                createStair(s2);
+                linkedListPushBack(nextF->itemList, s2->itemBase);
+            }
+            FOR(i, f->roomNum){
+                Room* r = f->roomList[i];
                 int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "min")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "max")->valueint + 1, i + j);
 
                 cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme], "enteries");
@@ -383,10 +436,16 @@ void generateLoot(){
                             gen = generatePotion(pool);
                             break;
                     }
-                    gen->y[0] = r->y;
-                    gen->x[0] = r->x + z;
+                    gen->y[0] = randBetween(1, r->h, 0);
+                    gen->x[0] = randBetween(1, r->w, 0);
+                    while(!validForItemPosition(gen->x[0], gen->y[0], r)){
+                        gen->y[0] = randBetween(1, r->h, 0);
+                        gen->x[0] = randBetween(1, r->w, 0);
+                    }
+                    gen->y[0] += r->y;
+                    gen->x[0] += r->x;
                     gen->z[0] = j;
-                    linkedListPushBack(floors[j].itemList, gen);
+                    linkedListPushBack(f->itemList, gen);
                 }
             }
         }
@@ -396,8 +455,8 @@ void generateLoot(){
 }
 void postProccessFloor(Floor* f){
     int tmp = 0;
-    for(int i = 1; i < f->maxy - f->miny -1 ; i++){
-        for(int j = 1; j < f->maxx - f->minx -1; j++){
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
             if(!(f->groundMesh->data[i][j])){
                 tmp = 0;
                 if(f->groundMesh->data[i+1][j] == '.') tmp++;
@@ -408,25 +467,35 @@ void postProccessFloor(Floor* f){
             }else if(f->groundMesh->data[i][j] == 'D'){
                 Door* d = malloc(sizeof(Door));
                 d->sprite = '+';
-                d->x = f->minx + j;
-                d->y = f->miny + i;
+                d->x = j;
+                d->y = i;
                 d->z = f->index;
                 d->hidden = 0;
+                d->locked = 0;
+                createDoor(d);
+                linkedListPushBack(f->itemList, d->itemBase);
+            }else if(f->groundMesh->data[i][j] == 'H'){
+                Door* d = malloc(sizeof(Door));
+                d->sprite = '#';
+                d->x = j;
+                d->y = i;
+                d->z = f->index;
+                d->hidden = 1;
                 d->locked = 0;
                 createDoor(d);
                 linkedListPushBack(f->itemList, d->itemBase);
             }
         }
     }
-    for(int i = 1; i < f->maxy - f->miny -1 ; i++){
-        for(int j = 1; j < f->maxx - f->minx -1; j++){
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
             if(f->groundMesh->data[i][j] == ';'){
                 f->groundMesh->data[i][j] = '.';
             }
         }
     }
-    for(int i = 1; i < f->maxy - f->miny -1 ; i++){
-        for(int j = 1; j < f->maxx - f->minx -1; j++){
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
             if(!(f->groundMesh->data[i][j])){
                 tmp = 0;
                 if(f->groundMesh->data[i+1][j] == '.') tmp++;
@@ -437,9 +506,11 @@ void postProccessFloor(Floor* f){
             }
         }
     }
-    for(int i = 1; i < f->maxy - f->miny -1 ; i++){
-        for(int j = 1; j < f->maxx - f->minx -1; j++){
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
             if(f->groundMesh->data[i][j] == ';'){
+                f->groundMesh->data[i][j] = '.';
+            }else if(f->groundMesh->data[i][j] == 'D' || f->groundMesh->data[i][j] == 'H'){
                 f->groundMesh->data[i][j] = '.';
             }
         }
@@ -453,19 +524,39 @@ void generateFloor(Floor* f){
     f->itemList = malloc(sizeof(LinkedList));
     createLinkedList(f->itemList, sizeof(ItemBase*));
 
-    f->rootRoom = createRoomGraph(NULL, NULL,NULL, gameSettings.minRoomNum, gameSettings.maxRoomNum, 0.5, 0);
-    countRooms(f->rootRoom, f);
-    f->pointCloud = malloc(sizeof(Point*) * f->roomNum);
-    f->roomList = malloc(sizeof(Room*) * f->roomNum);
-    f->roomNum = -1;
-    parseRoomGraph(f->rootRoom, f,  0, 0);
-    f->roomNum++;
-    createAdjMat(f);
-    
-
-    
     int roomsPlaced = 0;
-    while(1){
+    while(roomsPlaced < 1000){
+        if(roomsPlaced != 0){
+            roomsPlaced = 0;
+            FOR(i, f->roomNum){
+                free(f->roomList[i]);
+                free(f->pointCloud[i]);
+                free(f->adjMat[i]);
+            }
+            free(f->adjMat);
+            f->adjMat = NULL;
+            free(f->pointCloud);
+            f->pointCloud = NULL;
+            free(f->roomList);
+            f->roomList = NULL;
+            f->roomNum = 0;
+        }
+
+        f->rootRoom = createRoomGraph(NULL, NULL,NULL, gameSettings.minRoomNum, gameSettings.maxRoomNum, 0.7, 0);
+        countRooms(f->rootRoom, f);
+        f->pointCloud = malloc(sizeof(Point*) * f->roomNum);
+        f->roomList = malloc(sizeof(Room*) * f->roomNum);
+        f->roomNum = -1;
+        parseRoomGraph(f->rootRoom,f,  0, 0);
+        f->roomNum++;
+        createAdjMat(f);
+        setFloorStairRooms(f);
+
+        if(f->index != 0){
+            Floor* prevF = floors + f->index -1;
+            f->pointCloud[f->stairRooms[0]]->radius = prevF->pointCloud[prevF->stairRooms[1]]->radius;
+        }
+
         int z = 1;
 
         FOR(i, 4000){
@@ -496,100 +587,81 @@ void generateFloor(Floor* f){
 
             // }
         }
-        if(roomsPlaced > 1000){
-            break;
-        }else{
-            z = 1;
-
-            roomsPlaced = 0;
-            FOR(i, f->roomNum){
-                free(f->roomList[i]);
-                free(f->pointCloud[i]);
-                free(f->adjMat[i]);
-            }
-            free(f->adjMat);
-            f->adjMat = NULL;
-            free(f->pointCloud);
-            f->pointCloud = NULL;
-            free(f->roomList);
-            f->roomList = NULL;
-            f->roomNum = 0;
-
-            f->rootRoom = createRoomGraph(NULL, NULL,NULL, gameSettings.minRoomNum, gameSettings.maxRoomNum, 0.7, 0);
-            countRooms(f->rootRoom, f);
-            f->pointCloud = malloc(sizeof(Point*) * f->roomNum);
-            f->roomList = malloc(sizeof(Room*) * f->roomNum);
-            f->roomNum = -1;
-            parseRoomGraph(f->rootRoom,f,  0, 0);
-            f->roomNum++;
-            createAdjMat(f);
-        }
     }
-
 
     float lastRatio = 1;
     FOR(i, f->roomNum){
-        f->roomList[i]->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1,0);
-        f->roomList[i]->h = 2 * floor(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(f->roomList[i]->w / 2, 2)));
-        
-        if((lastRatio - 1) * ((f->roomList[i]->w / f->roomList[i]->h) - 1) > 0){
-            int tmp = f->roomList[i]->h;
-            f->roomList[i]->h = f->roomList[i]->w;
-            f->roomList[i]->w = tmp;
+        Room* r = f->roomList[i];
+        r->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1,0);
+        r->h = 2 * floor(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(r->w / 2, 2)));
+        r->z = f->index;
+        if((lastRatio - 1) * ((r->w / r->h) - 1) > 0){
+            int tmp = r->h;
+            r->h = r->w;
+            r->w = tmp;
         }
-        lastRatio = f->roomList[i]->w / f->roomList[i]->h;
+        lastRatio = r->w / r->h;
 
-        f->roomList[i]->x = 2 * f->pointCloud[i]->x- f->roomList[i]->w/2;
-        f->roomList[i]->y = f->pointCloud[i]->y- f->roomList[i]->h/2;
-        f->roomList[i]->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb,0);
+        r->x = 2 * f->pointCloud[i]->x- r->w/2;
+        r->y = f->pointCloud[i]->y- r->h/2;
+        r->theme = randIndexWithProb(gameSettings.roomThemeNum, gameSettings.roomThemeProb,0);
+    }
+    if(f->index != 0){
+        Floor* prevF = floors + f->index -1;
+        f->roomList[f->stairRooms[0]]->w = prevF->roomList[prevF->stairRooms[1]]->w;
+        f->roomList[f->stairRooms[0]]->h = prevF->roomList[prevF->stairRooms[1]]->h;
     }
 
-    f->minx = 0; f->miny = 0; f->maxx = 0; f->maxy = 0;
+    int minx = 0, miny = 0, maxx = 0, maxy = 0;
     FOR(i, f->roomNum){
-        if(!(f->minx)) f->minx = f->roomList[i]->x;
-        else f->minx = min(f->roomList[i]->x, f->minx);
-        if(!(f->miny)) f->miny = f->roomList[i]->y;
-        else f->miny = min(f->roomList[i]->y, f->miny);
-        f->maxx = max(f->roomList[i]->x + f->roomList[i]->w - 1, f->maxx);
-        f->maxy = max(f->roomList[i]->y + f->roomList[i]->h - 1, f->maxy);
+        if(!(minx)) minx = f->roomList[i]->x;
+        else minx = min(f->roomList[i]->x, minx);
+        if(!(miny)) miny = f->roomList[i]->y;
+        else miny = min(f->roomList[i]->y, miny);
+        maxx = max(f->roomList[i]->x + f->roomList[i]->w - 1, maxx);
+        maxy = max(f->roomList[i]->y + f->roomList[i]->h - 1, maxy);
     }
+   
+    minx -= 5;
+    maxx += 5;
+    miny -= 5;
+    maxy += 5;
+    FOR(i, f->roomNum){
+        f->roomList[i]->x -= minx;
+        f->roomList[i]->y -= miny;
+        f->pointCloud[i]->x -= minx;
+        f->pointCloud[i]->y -= miny;
+    }
+    f->w = maxx - minx;
+    f->h = maxy - miny;
 
-
-    f->minx -= 5;
-    f->maxx += 5;
-    f->miny -= 5;
-    f->maxy += 5;
-    f->groundMesh = createCharTexture(f->maxx - f->minx, f->maxy - f->miny);
-    f->featureMesh = createCharTexture(f->maxx - f->minx, f->maxy - f->miny);
+    f->groundMesh = createCharTexture(f->w, f->h);
+    f->featureMesh = createCharTexture(f->w, f->h);
 
     FOR(i, f->roomNum){
-        for(int j = f->roomList[i]->x - f->minx - 1; j <= f->roomList[i]->x - f->minx + f->roomList[i]->w ; j++){
-            for(int z = f->roomList[i]->y - f->miny - 1; z <= f->roomList[i]->y - f->miny + f->roomList[i]->h; z++){
+        for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
+            for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
                f->groundMesh->data[z][j] = '#';
                f->featureMesh->data[z][j] = i + 1;
             }
         }
-        f->featureMesh->data[f->roomList[i]->y - f->miny - 1][f->roomList[i]->x - f->minx - 1] = 0;
-        f->featureMesh->data[f->roomList[i]->y - f->miny - 1][f->roomList[i]->x - f->minx + f->roomList[i]->w ] = 0;
-        f->featureMesh->data[f->roomList[i]->y - f->miny + f->roomList[i]->h][f->roomList[i]->x - f->minx - 1] = 0;
-        f->featureMesh->data[f->roomList[i]->y - f->miny + f->roomList[i]->h][f->roomList[i]->x - f->minx + f->roomList[i]->w ] = 0;
+        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x - 1] = 0;
+        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x + f->roomList[i]->w ] = 0;
+        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x - 1] = 0;
+        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x + f->roomList[i]->w ] = 0;
 
-
-        for(int j = f->roomList[i]->x - f->minx; j < f->roomList[i]->x - f->minx + f->roomList[i]->w; j++){
-            for(int z = f->roomList[i]->y - f->miny; z < f->roomList[i]->y - f->miny + f->roomList[i]->h; z++){
+        for(int j = f->roomList[i]->x; j < f->roomList[i]->x + f->roomList[i]->w; j++){
+            for(int z = f->roomList[i]->y; z < f->roomList[i]->y + f->roomList[i]->h; z++){
                f->groundMesh->data[z][j] = '.';
                f->featureMesh->data[z][j] = 0;
 
             }
         }
-        // for(int j = f->roomList[i]->x - f->minx - 1; j <= f->roomList[i]->x - f->minx + f->roomList[i]->w; j++){
-        //     f->groundMesh->data[f->roomList[i]->y - 1 - f->miny][j] = '#';
-        //     f->groundMesh->data[f->roomList[i]->y + f->roomList[i]->h - f->miny][j] = '#';
-        // }
-        // for(int j = f->roomList[i]->y - f->miny - 1; j <= f->roomList[i]->y - f->miny + f->roomList[i]->h; j++){
-        //     f->groundMesh->data[j][f->roomList[i]->x - 1 - f->minx] = '#';
-        //     f->groundMesh->data[j][f->roomList[i]->x + f->roomList[i]->w - f->minx] = '#';
-        // }
+        f->roomList[i]->neighbours = 0;
+        if(f->roomList[i]->right) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->left) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->bottom) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->top) f->roomList[i]->neighbours++;
     }
 
     MovingCell* cell;
@@ -623,16 +695,21 @@ void generateFloor(Floor* f){
 
                 cell = malloc(sizeof(MovingCell));
                 linkedListPushBack(&PathCells, cell);
-                cell->x = f->roomList[i]->x+ f->roomList[i]->w/2 - f->minx;
-                cell->y = f->roomList[i]->y+ f->roomList[i]->h/2 - f->miny;
+                cell->x = f->roomList[i]->x+ f->roomList[i]->w/2;
+                cell->y = f->roomList[i]->y+ f->roomList[i]->h/2;
                 cell->type = 0;
-                cell->attr[0] = f->roomList[j]->x+ f->roomList[j]->w/2 - f->minx;
-                cell->attr[1] = f->roomList[j]->y+ f->roomList[j]->h/2 - f->miny;
+                cell->attr[0] = f->roomList[j]->x+ f->roomList[j]->w/2;
+                cell->attr[1] = f->roomList[j]->y+ f->roomList[j]->h/2;
                 cell->attr[2] = 0;
                 cell->attr[3] = randBetween(0, 2, 0);
                 cell->attr[4] = j+1;
                 cell->attr[5] = i+1;
                 cell->attr[6] = 0;
+                if(f->roomList[i]->neighbours == 2 && f->roomList[j]->neighbours == 1){
+                    cell->attr[7] = 1;
+                }else{
+                    cell->attr[7] = 0;
+                }
             }
         }
     }
@@ -644,7 +721,6 @@ void generateFloor(Floor* f){
     fillCharTexture(f->visited, 0);
 
 }
-
 void generateMap(){
     floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
     floors = malloc(floorNum * sizeof(Floor));
@@ -663,14 +739,14 @@ int moveValid(int x, int y){
     x += player.x;
     y += player.y;
 
-    if((floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '.') || (floors[player.z].groundMesh->data[y-floors[player.z].miny][x-floors[player.z].minx] == '#')){
+    if((floors[player.z].groundMesh->data[y][x] == '.')){
         return 1;
     }else return 0;
     
 }
 
 void updatePlayer(){
-    drawCircleOnCharTexture(floors[player.z].visited, player.x - floors[player.z].minx, player.y - floors[player.z].miny, player.visionRadius, 1);
+    drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
     void** tmpPtr = floors[player.z].itemList->data;
     void** tmpCopy;
     ItemBase* tmp;
@@ -698,11 +774,11 @@ void updateMainGame(){
             clear();
             refresh();
 
-            mainCamera.h = scrH;
-            mainCamera.w = scrW;
+            mainCamera.h = scrH - 6;
+            mainCamera.w = scrW - 20;
 
-            resizeCharTexture(&frameBuffer, scrW, scrH);
-            resizeCharTexture(&visitedMaskBuffer, scrW, scrH);
+            resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+            resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
             break;
         case KEY_MOUSE:
             if(getmouse(&mEvent) == OK){
@@ -773,8 +849,8 @@ void renderMainGame(){
     mainCamera.y = player.y-mainCamera.h/2;
 
     
-    mrenderTexture(floors[player.z].groundMesh, NULL, floors[player.z].minx, floors[player.z].miny, frameBuffer, NULL);
-    mrenderTexture(floors[player.z].visited, NULL, floors[player.z].minx, floors[player.z].miny, visitedMaskBuffer, NULL);
+    mrenderTexture(floors[player.z].groundMesh, NULL, 0, 0, frameBuffer, NULL);
+    mrenderTexture(floors[player.z].visited, NULL, 0, 0, visitedMaskBuffer, NULL);
 
     void** tmpPtr = floors[player.z].itemList->data;
     ItemBase* tmp;
@@ -807,7 +883,7 @@ void renderMainGame(){
         if(tmpPtr) tmpPtr = *tmpPtr;
     }
 
-    mvprintw(scrH/2, scrW/2, "@");
+    mvprintw(mainCamera.h/2, mainCamera.w/2, "@");
 
     renderUi();
 

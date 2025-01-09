@@ -11,7 +11,7 @@ ItemBase* generatePotion(cJSON* data){
 
     p->quantity = 1;
     p->name = copyString(cJSON_GetObjectItem(potion, "name")->valuestring);
-    p->sprite = (cJSON_GetObjectItem(potion, "sprite")->valuestring)[0];
+    p->sprite = (cJSON_GetObjectItem(potion, "sprite")->valueint);
 
     createPotion(p);
 

@@ -25,16 +25,15 @@ void createDoor(Door* d){
 }
 void renderDoor(ItemBase* o, CharTexture* frameBuffer, ColorTexture* colorBuffer, Camera* cam){
     Door* d = o->object;
-    if(!(d->hidden)){
-        if(isinRect(d->x, d->y, cam->x, cam->y, cam->w, cam->h)){
-            frameBuffer->data[d->y - cam->y][d->x - cam->x] = d->sprite;
-        }
+    if(isinRect(d->x, d->y, cam->x, cam->y, cam->w, cam->h)){
+        frameBuffer->data[d->y - cam->y][d->x - cam->x] = d->sprite;
     }
 }
 void updateDoor(ItemBase* o){
     Door* d = o->object;
 
     if((player.x == d->x) && (player.y == d->y)){
+        d->sprite = '+';
         d->hidden = 0;
     }
 }

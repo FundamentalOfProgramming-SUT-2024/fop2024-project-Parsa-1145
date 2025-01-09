@@ -15,7 +15,7 @@ ItemBase* generateWeapon(cJSON* data){
     w->quantity = 1;
     w->name = copyString(cJSON_GetObjectItem(weapon, "name")->valuestring);
     w->damage = randBetween(cJSON_GetObjectItem(weapon, "minDmg")->valuedouble, cJSON_GetObjectItem(weapon, "maxDmg")->valuedouble, 0);
-    w->sprite = (cJSON_GetObjectItem(weapon, "sprite")->valuestring)[0];
+    w->sprite = (cJSON_GetObjectItem(weapon, "sprite")->valueint);
 
     createWeapon(w);
 

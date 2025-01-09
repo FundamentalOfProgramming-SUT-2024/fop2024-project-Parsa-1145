@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <ncurses.h>
+#include <locale.h>
+#include <wchar.h>
 
 #include "ProgramStates/MainMenu.h"
 #include "ProgramStates/NewGameMenu.h"
@@ -13,6 +15,7 @@
 
 
 int main(){
+    setlocale(LC_ALL, "");
     initscr();
     start_color();
     init_color(10, 150, 150, 150);

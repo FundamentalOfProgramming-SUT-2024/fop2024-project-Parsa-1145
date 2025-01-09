@@ -7,7 +7,7 @@ typedef struct{
     ItemBase* gameObject;
 
     int x, y, z;
-    char sprite;
+    wchar_t sprite;
     int color;
     char* name;
 

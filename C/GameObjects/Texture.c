@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
+#include <wchar.h>
+
 
 #include "Texture.h"
 #include "../Globals.h"
@@ -9,15 +11,15 @@ CharTexture* createCharTexture(int w, int h){
     out->w = w;
     out->h = h;
 
-    out->data = malloc(sizeof(char*) * h);
+    out->data = malloc(sizeof(wchar_t*) * h);
     FOR(i, h){
-        out->data[i] = calloc(w , sizeof(char));
+        out->data[i] = calloc(w , sizeof(wchar_t));
     }
 
     return out;
     
 }
-void fillCharTexture(CharTexture* tex, char c){
+void fillCharTexture(CharTexture* tex, wchar_t c){
     FOR(i, tex->h){
         FOR(j, tex->w){
             tex->data[i][j] = c;
@@ -39,7 +41,7 @@ void resizeCharTexture(CharTexture** tex, int w, int h){
     *tex = createCharTexture(scrW, scrH);
     fillCharTexture(*tex, '\0');
 }
-void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, char c){
+void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, wchar_t c){
     int tx, ty;
     for(int i = -radius; i <= radius; i++){
         for(int j = -radius; j <= radius; j++){
@@ -54,5 +56,5 @@ void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, ch
         }
     }
 }
-void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, char c);
+void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, wchar_t c);
 ColorTexture* createColorTexture(int w, int h);

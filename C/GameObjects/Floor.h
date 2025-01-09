@@ -8,7 +8,7 @@
 #include "../Utilities/LinkedList.h"
 
 typedef struct{
-    int minx, miny, maxx, maxy;
+    int w, h;
 
     Room** roomList;
     Room* rootRoom;
@@ -17,6 +17,7 @@ typedef struct{
     int** adjMat;
     int roomNum;
     int index;
+    int stairRooms[2];
     
     CharTexture* groundMesh;
     CharTexture* featureMesh;

@@ -19,7 +19,7 @@ typedef struct ItemBase{
     objectCb deleteObject;
 
     int *x, *y, *z;
-    char* sprite;
+    wchar_t* sprite;
     int* quantity;
 }ItemBase;
 

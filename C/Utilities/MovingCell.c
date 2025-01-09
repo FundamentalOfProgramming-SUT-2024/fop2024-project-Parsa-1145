@@ -64,7 +64,8 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
         free(cell);
         return 0;
     }else if((f->featureMesh->data[y][x] == cell->attr[5]) && (!cell->attr[6])){
-        f->groundMesh->data[y][x] = 'D';
+        if(cell->attr[7]) f->groundMesh->data[y][x] = 'H';
+        else f->groundMesh->data[y][x] = 'D';
         //f->featureMesh->data[y][x] = cell->attr[5];
         cell->attr[6] = 1;
     }

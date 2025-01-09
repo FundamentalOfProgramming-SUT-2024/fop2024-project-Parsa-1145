@@ -4,6 +4,7 @@
 
 typedef struct{
     void* object;
+    void* widget;
     
     int type;
 

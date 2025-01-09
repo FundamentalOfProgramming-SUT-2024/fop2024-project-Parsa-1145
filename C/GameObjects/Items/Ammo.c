@@ -14,7 +14,7 @@ ItemBase* generateAmmo(cJSON* data){
     a->name = copyString(cJSON_GetObjectItem(ammo, "name")->valuestring);
     a->damage = cJSON_GetObjectItem(ammo, "dmg")->valuedouble;
     a->quantity = randBetween(cJSON_GetObjectItem(ammo, "minQuantity")->valuedouble, cJSON_GetObjectItem(ammo, "maxQuantity")->valuedouble, 0);
-    a->sprite = (cJSON_GetObjectItem(ammo, "sprite")->valuestring)[0];
+    a->sprite = (cJSON_GetObjectItem(ammo, "sprite")->valueint);
 
     createAmmo(a);
 

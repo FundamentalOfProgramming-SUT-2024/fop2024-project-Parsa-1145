@@ -8,7 +8,7 @@
 
 #include "Renderer.h"
 
-void renderLine(char c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer){
+void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer){
     if(cam == NULL) cam = &mainCamera;
 
     x1 = x1 - cam->x;
@@ -146,7 +146,7 @@ void renderFrameBuffer(CharTexture* tex){
         move(i, 0);
         FOR(j, tex->w){
             if(tex->data[i][j]){
-                addch(tex->data[i][j]);
+                printw("%lc", tex->data[i][j]);
             }else{
                 addch(' ');
             }

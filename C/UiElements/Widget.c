@@ -30,7 +30,7 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->isVisible = 1;
 
     widget->children = malloc(sizeof(LinkedList));
-    createLinkedList(widget->children, sizeof(Widget*));
+    createLinkedList(widget->children, sizeof(UiBase*));
 
     widget->uiBase = malloc(sizeof(UiBase));
     widget->uiBase->keyPress = &defaultKeyPressCb;
@@ -187,21 +187,64 @@ int isWidgetHovered(Widget* widget, int x, int y){
     return (((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
 }
 
-void updateWidgetChildren(Widget* widget){
-    if(widget->layoutType == HORIZONTAL_LAYOUT){
-        if(widget->children->size){
-            Widget* ch = ((Widget*)linkedListGetElement(widget->children, 0));
-            int tmp = ch->y + ch->h;
-            for(int i = 1; i < widget->children->size; i++){
-                ch = ((Widget*)linkedListGetElement(widget->children, i));
-                ch->y = tmp + widget->layoutPadding;
-                tmp += ch->h + widget->layoutPadding;
-            }
+void updateWidgetChildren(Widget* w){
+    updateWidgetTopLeft(w);
+    w->tmpIterPtr = w->children->data;
+    Widget* ch;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        ch = w->iterPtr->widget;
+        updateWidgetTopLeft(ch);
+        w->iterPtr->mouseMove(w->iterPtr->object);
+        w->tmpIterPtr = w->tmpIterPtr[0];
+    }
+    if(w->layoutType == VERTICAL_LAYOUT){
+        w->tmpIterPtr = w->children->data;
+        int tmp = ch->y + 1;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            ch = w->iterPtr->widget;
+            w->topLeftY = tmp;
+            tmp = ch->y + ch->h + w->layoutPadding;
+            w->tmpIterPtr = w->tmpIterPtr[0];
         }
+    }
+    w->tmpIterPtr = w->children->data;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        ch = w->iterPtr->widget;
+        if(ch->children->size){
+            updateWidgetChildren(ch);
+        }
+        w->tmpIterPtr = w->tmpIterPtr[0];
     }
 }
 
 void deleteWidget(Widget* widget){
     free(widget->uiBase);
     free(widget);
+}
+int WMouseMoveCb(Widget* w){
+    w->tmpIterPtr = w->children->data;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        w->iterPtr->mouseMove(w->iterPtr->object);
+        w->tmpIterPtr = w->tmpIterPtr[0];
+    }
+}
+int WMouseClickCb(Widget* w){
+    w->tmpIterPtr = w->children->data;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        w->iterPtr->mouseClick(w->iterPtr->object);
+        w->tmpIterPtr = w->tmpIterPtr[0];
+    }
+}
+int WKeyPressCb(Widget* w, int key){
+    w->tmpIterPtr = w->children->data;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        w->iterPtr->keyPress(w->iterPtr->object, key);
+        w->tmpIterPtr = w->tmpIterPtr[0];
+    }
 }

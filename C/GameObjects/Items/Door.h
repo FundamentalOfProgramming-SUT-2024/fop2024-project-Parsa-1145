@@ -8,7 +8,7 @@ typedef struct{
     ItemBase* itemBase;
 
     int x, y, z;
-    char sprite;
+    wchar_t sprite;
     int color;
 
     int hidden;

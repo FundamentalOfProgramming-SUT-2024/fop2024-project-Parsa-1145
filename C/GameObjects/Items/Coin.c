@@ -14,7 +14,7 @@ ItemBase* generateCoin(cJSON* data){
 
     c->name = copyString(cJSON_GetObjectItem(coin, "name")->valuestring);
     c->quantity = randBetween(cJSON_GetObjectItem(coin, "minQuantity")->valuedouble, cJSON_GetObjectItem(coin, "maxQuantity")->valuedouble, 0);
-    c->sprite = (cJSON_GetObjectItem(coin, "sprite")->valuestring)[0];
+    c->sprite = (cJSON_GetObjectItem(coin, "sprite")->valueint);
     c->value = cJSON_GetObjectItem(coin, "value")->valueint;
 
     createCoin(c);

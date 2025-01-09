@@ -6,7 +6,7 @@
 
 typedef struct{
     int type;
-    int attr[7];
+    int attr[10];
     
     float x, y;
 } MovingCell;

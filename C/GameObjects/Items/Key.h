@@ -9,7 +9,7 @@ typedef struct{
     char* name;
 
     int x, y, z;
-    char sprite;
+    wchar_t sprite;
     int color;
     int quantity;
     

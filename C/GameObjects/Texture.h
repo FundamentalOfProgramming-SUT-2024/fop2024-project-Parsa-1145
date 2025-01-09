@@ -1,8 +1,9 @@
 #ifndef TEXTURE
 #define TEXTURE
+#include "wchar.h"
 
 typedef struct{
-    char** data;
+    wchar_t** data;
     int w, h;
 }CharTexture;
 typedef struct{
@@ -12,9 +13,9 @@ typedef struct{
 
 CharTexture* createCharTexture(int w, int h);
 ColorTexture* createColorTexture(int w, int h);
-void fillCharTexture(CharTexture* tex, char c);
-void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, char c);
-void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, char c);
+void fillCharTexture(CharTexture* tex, wchar_t c);
+void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, wchar_t c);
+void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, wchar_t c);
 void deleteCharTexture(CharTexture* tex);
 void resizeCharTexture(CharTexture** tex, int w, int h);
 
