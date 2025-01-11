@@ -14,7 +14,7 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     textBox->label = label;
     textBox->index = strlen(str);
 
-    if(parent != NULL){
+    if((parent) && (parent->bgColor)){
         textBox->bgColor = parent->bgColor;
     }else{
         textBox->bgColor = COLOR_BLACK;
@@ -28,32 +28,34 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     textBox->uiBase->keyPress = &TBKeyPressCb;
     textBox->uiBase->mouseClick = &TBMouseClickCb;
     textBox->uiBase->mouseMove = &TBMouseMoveCb;
+    textBox->uiBase->update = &updateTextBox;
+
     textBox->uiBase->object = textBox;
+    textBox->uiBase->widget = textBox->widget;
     textBox->uiBase->type = UI_TYPE_TEXTBOX;
 }
 
 
 void renderTextBox(TextBox* textBox){
-    updateWidgetTopLeft(textBox->widget);
     if(isWidgetVisible(textBox->widget->parent)){
         attron(COLOR_PAIR(textBox->bgColor));
-        move(textBox->widget->topLeftY, textBox->widget->topLeftX + 2);
+        move(textBox->widget->topLeftY, textBox->widget->topLeftX + 1);
         printw("%s:", textBox->label);
 
         if(textBox->hovered && !textBox->focused)attron(A_DIM);
-        move(textBox->widget->topLeftY+1, textBox->widget->topLeftX+1);
+        move(textBox->widget->topLeftY+1, textBox->widget->topLeftX);
         addch(ACS_ULCORNER);
         FOR(i, textBox->widget->wCopy-2){
             addch(ACS_HLINE);
         }
         addch(ACS_URCORNER);
 
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX+1);
+        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX);
         addch(ACS_VLINE);
         FOR(i, textBox->widget->wCopy-2){
             addch(' ');
         }
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + 2);
+        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + 1);
         printw("%s", textBox->str);
         textBox->index = strlen(textBox->str);
         if(textBox->focused){
@@ -63,10 +65,10 @@ void renderTextBox(TextBox* textBox){
         }else{
             addch(' ');
         }
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + textBox->widget->wCopy);
+        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + textBox->widget->wCopy-1);
         addch(ACS_VLINE);
         
-        move(textBox->widget->topLeftY+3, textBox->widget->topLeftX+1);
+        move(textBox->widget->topLeftY+3, textBox->widget->topLeftX);
         addch(ACS_LLCORNER);
         FOR(i, textBox->widget->wCopy-2){
             addch(ACS_HLINE);
@@ -143,3 +145,6 @@ void resetTextbox(TextBox* textBox){
     textBox->index++;
 }
 
+void updateTextBox(TextBox* t){
+    updateWidgetTopLeft(t->widget);
+}

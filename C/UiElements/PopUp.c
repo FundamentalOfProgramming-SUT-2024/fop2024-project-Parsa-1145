@@ -9,7 +9,7 @@ PopUp* createPopUp(char* message, Widget* parent, int w, int h, voidCB closeCall
     PopUp* out = malloc(sizeof(PopUp));
     out->msg =  malloc(strlen(message) + 1);
     strcpy(out->msg, message);
-    wrapText(out->msg, w - 2);
+    wrapText(out->msg, w - 3);
     out->msgLen = strlen(out->msg);
 
     out->widget = malloc(sizeof(Widget));
@@ -38,6 +38,8 @@ int popupMouseClick(PopUp* p){
 
 
 void renderPopup(PopUp* popUp){
+    updateWidgetChildren(popUp->widget);
+    updateWidgetTopLeft(popUp->close->widget);
     renderWidget(popUp->widget);
     renderButton(popUp->close);
     attron(COLOR_PAIR(popUp->widget->bgColor));

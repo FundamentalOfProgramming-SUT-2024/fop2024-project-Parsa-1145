@@ -97,3 +97,13 @@ void removeItemFromLinkedList(LinkedList* list, void* element){
     }
 
 }
+void deleteLinkedList(LinkedList* list){
+    void** tmp = list->data;
+    void** tmp2;
+
+    while(tmp){
+        tmp2 = tmp[0];
+        free(tmp);
+        tmp = tmp2;
+    }
+}

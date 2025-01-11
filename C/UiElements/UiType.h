@@ -2,3 +2,4 @@
 #define UI_TYPE_TEXTBOX 1
 #define UI_TYPE_WIDGET 2
 #define UI_TYPE_CHECKBOX 3
+#define UI_TYPE_TABWIDGET 4

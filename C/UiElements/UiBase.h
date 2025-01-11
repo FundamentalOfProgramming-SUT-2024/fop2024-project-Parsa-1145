@@ -12,6 +12,7 @@ typedef struct{
     int (*mouseClick)(void*);
     int (*mouseMove)(void*);
     int (*keyPress)(void*, int);
+    void (*update)(void*);
 }UiBase;
 
 void defaultMouseClickCb(void*);

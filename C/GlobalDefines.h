@@ -8,6 +8,7 @@
 #define ALIGN_TOP 1
 #define ALIGN_BOTTOM 3
 #define VERTICAL_LAYOUT 1
+#define WITH_PARENT 4
 
 #define C_BG_GRAY0 10
 #define C_BG_GRAY1 12

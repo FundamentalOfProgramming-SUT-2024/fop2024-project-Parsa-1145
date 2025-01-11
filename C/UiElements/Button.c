@@ -8,10 +8,8 @@
 
 
 void renderButton(Button* btn){
-    if(updateWidgetTopLeft(btn->widget)){
-        btn->margin = (btn->widget->wCopy - btn->strLegth) / 2;
-        btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
-    }
+    btn->margin = (btn->widget->wCopy - btn->strLegth) / 2;
+    btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
     
     if(isWidgetVisible(btn->widget)){
         if(!btn->clicked){
@@ -58,12 +56,14 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->uiBase->keyPress = &defaultKeyPressCb;
     btn->uiBase->mouseClick = &buttonMouseClickEvent;
     btn->uiBase->mouseMove = &buttonMouseMoveCallback;
+    btn->uiBase->update = &updateButton;
     btn->uiBase->object = btn;
+    btn->uiBase->widget = btn->widget;
     btn->uiBase->type = UI_TYPE_BUTTON;
 }
 int buttonMouseMoveCallback(Button* btn){
     if(isWidgetVisible(btn->widget)){
-        if(isWidgetHovered(btn->widget, mEvent.x, mEvent. y)){
+        if(isWidgetHovered(btn->widget, mEvent.x, mEvent.y)){
             btn->hovered = 1;
             return 1;
         }else{
@@ -79,12 +79,16 @@ int buttonMouseMoveCallback(Button* btn){
 }
 int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clicking
     if(isWidgetVisible(btn->widget)){
-        if(btn->hovered){
+        if(isWidgetHovered(btn->widget, mEvent.x, mEvent.y)){
             if(mEvent.bstate & BUTTON1_PRESSED){
                 btn->clicked = 1;
                 return 1;
             }else if((mEvent.bstate & BUTTON1_RELEASED) && btn->clicked){
-                btn->callBack();
+                if(btn->contextCallback){
+                    btn->contextCallback(btn->contextObject);
+                }else if(btn->callBack){
+                    btn->callBack();
+                }
                 btn->clicked = 0;
                 return 1;
             }else{
@@ -92,6 +96,7 @@ int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clic
                 return 0;
             }
         }else{
+            btn->hovered = 0;
             btn->clicked = 0;
             return 0;
         }
@@ -105,4 +110,7 @@ void deleteButton(Button* btn){
     deleteWidget(btn->widget);
     free(btn->uiBase);
     free(btn);
+}
+void updateButton(Button* btn){
+    updateWidgetTopLeft(btn->widget);
 }

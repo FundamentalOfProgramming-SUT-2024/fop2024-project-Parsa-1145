@@ -18,6 +18,8 @@
 #include "../UiElements/TextBox.h"
 #include "../UiElements/Checkbox.h"
 #include "../UiElements/UiBase.h"
+#include "../UiElements/TabWidget.h"
+
 
 #include "../GameObjects/Player.h"
 #include "../GameObjects/Room.h"
@@ -55,30 +57,52 @@ int floorNum;
 LinkedList PathCells;
 int cellState = 0;
 
-Widget debugMenu;
-Widget pauseMenu;
+Widget mgPauseMenu;
 Button mgOptionsBtn;
 Button mgSaveBtn;
 Button mgExitBtn;
 Button mgResumeButton;
 
 
+Widget mgDebugMenu;
 Button mgCloseDebugBtn;
 CheckBox mgShowPointCloudCb;
 CheckBox mgNoClipCb;
+
+Widget mgSidePane;
+Widget mgTerminalWidget;
+Widget mgStatusWidget;
+Widget mgItemWidget;
+
+TabWidget mgTabWidget;
+Widget mgStatsTab;
+Widget mgWeaponsTab;
+Widget mgPotionsTab;
+Widget mgFoodTab;
+
+Button tmpBtn1;
+Button tmpBtn2;
+Button tmpBtn3;
+Button tmpBtn4;
+Button tmpBtn5;
 
 LinkedList mgUiList;
 
 Button* mgButtonList[1] = {&mgCloseDebugBtn};
 CheckBox* mgCheckBoxList[2] = {&mgShowPointCloudCb, &mgNoClipCb};
 
+void mgToggleStatMenu(){
+    mgStatusWidget.isVisible =! mgStatusWidget.isVisible;
+    mgItemWidget.isVisible =! mgItemWidget.isVisible;
 
+    renderMainGame();
+}
 void mgToggleExitMenu(){
-    pauseMenu.isVisible = !pauseMenu.isVisible;
-    debugMenu.isVisible = 0;
+    mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
+    mgDebugMenu.isVisible = 0;
 }
 void mgtoggleDegbugMenu(){
-    debugMenu.isVisible = !debugMenu.isVisible;
+    mgDebugMenu.isVisible = !mgDebugMenu.isVisible;
 }
 void uiMouseMove(){
     static UiBase* tmp;
@@ -112,35 +136,107 @@ void uiMouseClick(){
         tmp1 = tmp1[0];
     }
 }
+void updateUi(){
+    static UiBase* tmp;
+    static void** tmp1;
+    tmp1 = mgUiList.data;
+    while(tmp1){
+        tmp = tmp1[1];
+        tmp->update(tmp->object);
+        tmp1 = tmp1[0];
+    }
+}
 
 void initMainGame(){
     createLinkedList(&mgUiList, sizeof(UiBase*));
 
-    createWidget(&debugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
-    debugMenu.isVisible = 0;
+    createWidget(&mgDebugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
+    mgDebugMenu.isVisible = 0;
+    mgDebugMenu.layoutType = VERTICAL_LAYOUT;
+    mgDebugMenu.layoutPadding = 1;
+    mgDebugMenu.bordered = 1;
 
-    createButton(&mgCloseDebugBtn, &debugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 7);
-    createCheckBox(&mgShowPointCloudCb, &debugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 5, 100);
-    createCheckBox(&mgNoClipCb, &debugMenu, "Toggle noclip", &(gameSettings.noClip), ABSOLUTE, ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 7, 100);
+    createButton(&mgCloseDebugBtn, &mgDebugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 7);
+    createCheckBox(&mgShowPointCloudCb, &mgDebugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
+    createCheckBox(&mgNoClipCb, &mgDebugMenu, "Toggle noclip", &(gameSettings.noClip), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 5, 100);
 
-    createWidget(&pauseMenu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 21, 11, C_BG_GRAY0);
-    createButton(&mgResumeButton, &pauseMenu, "Resume", RELATIVE, ALIGN_CENTER, RELATIVE, 0, 2, 80);
-    createButton(&mgOptionsBtn, &pauseMenu, "Options", RELATIVE, ALIGN_CENTER, RELATIVE, 0, 4, 80);
-    createButton(&mgSaveBtn, &pauseMenu, "Save", RELATIVE, ALIGN_CENTER, RELATIVE, 0, 6, 80);
-    createButton(&mgExitBtn, &pauseMenu, "Exit", RELATIVE, ALIGN_CENTER, RELATIVE, 0, 8, 80);
-    linkedListPushBack(&mgUiList, debugMenu.uiBase);
-    linkedListPushBack(&mgUiList, mgCloseDebugBtn.uiBase);
-    linkedListPushBack(&mgUiList, mgShowPointCloudCb.uiBase);
-    linkedListPushBack(&mgUiList, mgNoClipCb.uiBase);
-    linkedListPushBack(&mgUiList, pauseMenu.uiBase);
-    linkedListPushBack(&mgUiList, mgResumeButton.uiBase);
-    linkedListPushBack(&mgUiList, mgOptionsBtn.uiBase);
-    linkedListPushBack(&mgUiList, mgSaveBtn.uiBase);
-    linkedListPushBack(&mgUiList, mgExitBtn.uiBase);
+    linkedListPushBack(mgDebugMenu.children, mgNoClipCb.uiBase);
+    linkedListPushBack(mgDebugMenu.children, mgShowPointCloudCb.uiBase);
+    linkedListPushBack(mgDebugMenu.children, mgCloseDebugBtn.uiBase);
+
+
+    createWidget(&mgPauseMenu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 21, 11, C_BG_GRAY0);
+    mgPauseMenu.isVisible = 0;
+    mgPauseMenu.bordered = 1;
+    mgPauseMenu.layoutType = VERTICAL_LAYOUT;
+    mgPauseMenu.layoutPadding = 1;
+
+    createButton(&mgResumeButton, &mgPauseMenu, "Resume", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 2, 80);
+    createButton(&mgOptionsBtn, &mgPauseMenu, "Options", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+    createButton(&mgSaveBtn, &mgPauseMenu, "Save", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+    createButton(&mgExitBtn, &mgPauseMenu, "Exit", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+
+    linkedListPushBack(mgPauseMenu.children, mgResumeButton.uiBase);
+    linkedListPushBack(mgPauseMenu.children, mgOptionsBtn.uiBase);
+    linkedListPushBack(mgPauseMenu.children, mgSaveBtn.uiBase);
+    linkedListPushBack(mgPauseMenu.children, mgExitBtn.uiBase);
 
     mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
     mgResumeButton.callBack = &mgToggleExitMenu;
     mgExitBtn.callBack = &enterMainMenu;
+
+
+    createWidget(&mgSidePane, NULL, ABSOLUTE, RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 0, 30, 100, NULL);
+    mgSidePane.layoutType = VERTICAL_LAYOUT;
+    mgSidePane.layoutPadding = 0;
+    createWidget(&mgStatusWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 45, C_BG_BLACK);
+    createWidget(&mgItemWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 20, C_BG_BLACK);
+    createWidget(&mgTerminalWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_BOTTOM, 0, 0, 100, 35, C_BG_BLACK);
+    mgTerminalWidget.bordered = 1;
+    mgItemWidget.bordered = 1;
+    mgStatusWidget.bordered = 1;
+
+    createTabWidget(&mgTabWidget, &mgStatusWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 1, 1, 100, 100, NULL);
+    
+
+    createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+    mgStatsTab.layoutType = VERTICAL_LAYOUT;
+    mgStatsTab.bordered = 1;
+    createButton(&tmpBtn3, &mgStatsTab, "3", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 1, 50);
+    linkedListPushBack(mgStatsTab.children, tmpBtn3.uiBase);
+
+    createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+    mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
+    createButton(&tmpBtn4, &mgWeaponsTab, "4", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 1, 30);
+    linkedListPushBack(mgWeaponsTab.children, tmpBtn4.uiBase);
+
+    createWidget(&mgFoodTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
+    mgFoodTab.layoutType = VERTICAL_LAYOUT;
+    createButton(&tmpBtn5, &mgFoodTab, "5", RELATIVE, ALIGN_RIGHT, WITH_PARENT, 0, 1, 30);
+    linkedListPushBack(mgFoodTab.children, tmpBtn5.uiBase);
+
+    createWidget(&mgPotionsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
+    mgPotionsTab.layoutType = VERTICAL_LAYOUT;
+    createButton(&tmpBtn1, &mgPotionsTab, "1", RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 1, 80);
+    createButton(&tmpBtn2, &mgPotionsTab, "2", RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 80);
+    linkedListPushBack(mgPotionsTab.children, tmpBtn1.uiBase);
+    linkedListPushBack(mgPotionsTab.children, tmpBtn2.uiBase);
+
+    tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab);
+    tabWidgetAddTab(&mgTabWidget, "Weaopns", &mgWeaponsTab);
+    tabWidgetAddTab(&mgTabWidget, "Food", &mgFoodTab);
+    tabWidgetAddTab(&mgTabWidget, "Potions", &mgPotionsTab);
+
+    linkedListPushBack(mgStatusWidget.children, mgTabWidget.uiBase);
+
+    linkedListPushBack(mgSidePane.children, mgStatusWidget.uiBase);
+    linkedListPushBack(mgSidePane.children, mgItemWidget.uiBase);
+    linkedListPushBack(mgSidePane.children, mgTerminalWidget.uiBase);
+
+    linkedListPushBack(&mgUiList, mgSidePane.uiBase);
+    linkedListPushBack(&mgUiList, mgPauseMenu.uiBase);
+    linkedListPushBack(&mgUiList, mgDebugMenu.uiBase);
+
 
     gameSettings.difficaulity = 0;
     gameSettings.maxRoomNum = 7;
@@ -348,6 +444,7 @@ void enterMainGame(){
 
     timeout(100);
     nodelay(stdscr, FALSE);
+    
 
 }
 int validForItemPosition(int x, int y, Room* r){
@@ -768,14 +865,15 @@ void movePlayer(int x, int y){
 
 void updateMainGame(){
     int ch = getch();
+    
     switch(ch){
         case KEY_RESIZE:
             getmaxyx(stdscr, scrH, scrW);
             clear();
             refresh();
 
-            mainCamera.h = scrH - 6;
-            mainCamera.w = scrW - 20;
+            mainCamera.h = scrH;
+            mainCamera.w = scrW;
 
             resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
             resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
@@ -831,6 +929,9 @@ void updateMainGame(){
                         tmp->drop(tmp);
                     }
                     break;
+                case 'i':
+                    mgToggleStatMenu();
+                    break;
                 case 't':
                     mgtoggleDegbugMenu();
                     break;  
@@ -842,6 +943,7 @@ void updateMainGame(){
 
 void renderMainGame(){
     erase();
+    updateUi();
     fillCharTexture(frameBuffer, ' ');
     fillCharTexture(visitedMaskBuffer, 0);
 

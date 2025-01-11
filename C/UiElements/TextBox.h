@@ -36,5 +36,6 @@ int TBMouseMoveCb(TextBox* textBox);
 int TBMouseClickCb(TextBox* textBox);
 int TBKeyPressCb(TextBox* textBox, int key);
 void resetTextbox(TextBox* textBox);
+void updateTextBox(TextBox* t);
 
 #endif

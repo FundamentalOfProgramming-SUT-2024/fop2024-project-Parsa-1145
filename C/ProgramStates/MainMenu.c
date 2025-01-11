@@ -51,27 +51,29 @@ void logOut(){
 }
 void initMainMenu(){
     createLinkedList(&mmUiList, sizeof(UiBase*));
-    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 10, 10, 30, 12, C_BG_BLACK );
+    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 15, NULL);
+    menu.bordered = 1;
 
-    createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 0, 100);
-    createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 2, 100);
-    createButton(&mmSettingsBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 4, 100);
-    createButton(&mmSocreboardBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 6, 100);
-    createButton(&mmLoginBtn, &menu, "Log in", RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 8, 48);
-    createButton(&mmNewCharacterBtn, &menu, "Sign up", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 8, 48);
-    createButton(&mmLogOutBtn, &menu, "Log out", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 8, 100);
+    createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 2, 100);
+    createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 4, 100);
+    createButton(&mmSettingsBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 6, 100);
+    createButton(&mmSocreboardBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 8, 100);
+    createButton(&mmLoginBtn, &menu, "Log in", RELATIVE, ALIGN_LEFT, ALIGN_TOP, 2, 10, 41);
+    createButton(&mmNewCharacterBtn, &menu, "Sign up", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 2, 10, 41);
+    createButton(&mmLogOutBtn, &menu, "Log out", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 10, 100);
     mmLogOutBtn.widget->isVisible = 0;
-    createButton(&mmExitBtn, &menu, "Exit"          , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 0, 10, 80);
+    createButton(&mmExitBtn, &menu, "Exit"          , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 12, 80);
+
 
     linkedListPushBack(&mmUiList, menu.uiBase);
-    linkedListPushBack(&mmUiList, mmNewGameBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmLoadGameBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmSettingsBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmLoginBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmNewCharacterBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmLogOutBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmExitBtn.uiBase);
-    linkedListPushBack(&mmUiList, mmSocreboardBtn.uiBase);
+    linkedListPushBack(menu.children, mmNewGameBtn.uiBase);
+    linkedListPushBack(menu.children, mmLoadGameBtn.uiBase);
+    linkedListPushBack(menu.children, mmSettingsBtn.uiBase);
+    linkedListPushBack(menu.children, mmLoginBtn.uiBase);
+    linkedListPushBack(menu.children, mmNewCharacterBtn.uiBase);
+    linkedListPushBack(menu.children, mmLogOutBtn.uiBase);
+    linkedListPushBack(menu.children, mmExitBtn.uiBase);
+    linkedListPushBack(menu.children, mmSocreboardBtn.uiBase);
     
     mmExitBtn.callBack = &exitMainMenu;
     mmNewGameBtn.callBack = &mmStartGame;
@@ -144,6 +146,8 @@ void updateMainMenu(){
 
 void renderMainMenu(){
     erase();
+    updateWidgetChildren(&menu);
+
 
     void** tmp = mmUiList.data;
     FOR(i, mmUiList.size){

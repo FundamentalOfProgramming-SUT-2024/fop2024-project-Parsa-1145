@@ -1,5 +1,6 @@
 #ifndef WIDGET2
 #define WIDGET2
+#define _XOPEN_SOURCE_EXTENDED
 #include<ncurses.h>
 
 #include "UiBase.h"
@@ -30,6 +31,8 @@ typedef struct Widget{
     int wCopy, hCopy;
 
     int colorPair;
+    int borderColor;
+    int bordered;
 
     void** tmpIterPtr;
     UiBase* iterPtr;
@@ -49,7 +52,6 @@ void deleteWidget(Widget* widget);
 int WMouseMoveCb(Widget* textBox);
 int WMouseClickCb(Widget* textBox);
 int WKeyPressCb(Widget* textBox, int key);
-
 
 /*TODO
     first implement vertical layout and scrolling. shouldnt be hard. check if the start of each widget is in the area. dont need to implement a text area for multiple lines

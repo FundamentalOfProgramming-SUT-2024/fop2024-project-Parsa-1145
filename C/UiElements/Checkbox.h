@@ -23,5 +23,6 @@ void createCheckBox(CheckBox* cb, Widget* parent, char* label, int* value, int s
 void renderCheckBox(CheckBox* cb);
 void CBMouseMoveCb(CheckBox* cb);
 void CBMouseClickCb(CheckBox* cb);
+void updateCheckBox(CheckBox* cb);
 
 #endif

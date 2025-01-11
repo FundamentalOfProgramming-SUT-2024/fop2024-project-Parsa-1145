@@ -14,6 +14,8 @@ typedef struct {
     int margin;
     int marginCarry;
     voidCB callBack;
+    void(*contextCallback)(void*);
+    void* contextObject;
     int hovered;
     int clicked;
 
@@ -25,5 +27,6 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
 int buttonMouseMoveCallback(Button* btn);
 int buttonMouseClickEvent(Button* btn);
 void deleteButton(Button* btn);
+void updateButton(Button* btn);
 
 #endif

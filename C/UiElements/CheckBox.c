@@ -14,7 +14,7 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
 
     createWidget(checkBox->widget, parent, sizePolicyX, sizePolicyY, alignmentX, alignmentY, x, y, w, 1, COLOR_BLACK);
 
-    if(parent!= NULL){
+    if((parent) && (parent->bgColor)){
         checkBox->colorPair = parent->bgColor;
     }else{
         checkBox->colorPair = C_BG_BLACK;
@@ -25,19 +25,19 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
     checkBox->uiBase->keyPress = &defaultKeyPressCb;
     checkBox->uiBase->mouseClick = &CBMouseClickCb;
     checkBox->uiBase->mouseMove = &CBMouseMoveCb;
+    checkBox->uiBase->update = &updateCheckBox;
+    checkBox->uiBase->widget = checkBox->widget;
     checkBox->uiBase->object = checkBox;
     checkBox->uiBase->type = UI_TYPE_CHECKBOX;
 }
 
 void renderCheckBox(CheckBox* cb){
-    updateWidgetTopLeft(cb->widget);
-
     if(isWidgetVisible(cb->widget)){
         attron(COLOR_PAIR(cb->colorPair));
         move(cb->widget->topLeftY, cb->widget->topLeftX);
         printw("%s", cb->label);
         
-        move(cb->widget->topLeftY, cb->widget->topLeftX + cb->widget->wCopy - 2);
+        move(cb->widget->topLeftY, cb->widget->topLeftX + cb->widget->wCopy - 1);
 
         if(cb->isHovered){
             attron(A_DIM);
@@ -55,9 +55,8 @@ void renderCheckBox(CheckBox* cb){
     }
 }
 void CBMouseMoveCb(CheckBox* cb){
-    updateWidgetTopLeft(cb->widget);
 
-    if((mEvent.y == cb->widget->topLeftY) && (mEvent.x == cb->widget->topLeftX + cb->widget->wCopy - 2)){
+    if((mEvent.y == cb->widget->topLeftY) && (mEvent.x == cb->widget->topLeftX + cb->widget->wCopy - 1)){
         cb->isHovered = 1;
     }else{
         cb->isHovered = 0;
@@ -71,4 +70,7 @@ void CBMouseClickCb(CheckBox* cb){
     }else{
         cb->isHovered = 0;
     }
+}
+void updateCheckBox(CheckBox* cb){
+    updateWidgetTopLeft(cb->widget);
 }

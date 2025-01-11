@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <math.h>
 
 #include "Widget.h"
 #include "../Globals.h"
@@ -21,23 +22,28 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->alignment[1] = alignmentY;
 
     widget->parent = parent;
-    
-    int tmpx, tmpy;
-    getWidgetTopLeft(widget, &tmpx, &tmpy);
+    updateWidgetSize(widget);
 
     widget->colorPair = bgColor;
+    widget->bordered = 0;
 
     widget->isVisible = 1;
+    widget->layoutType = 0;
 
     widget->children = malloc(sizeof(LinkedList));
     createLinkedList(widget->children, sizeof(UiBase*));
+    widget->layoutOffset = 0;
+    widget->layoutPadding = 1;
+    widget->layoutType = 0;
 
     widget->uiBase = malloc(sizeof(UiBase));
-    widget->uiBase->keyPress = &defaultKeyPressCb;
+    widget->uiBase->keyPress = &WKeyPressCb;
     widget->uiBase->render = &renderWidget;
-    widget->uiBase->mouseClick = &defaultMouseClickCb;
-    widget->uiBase->mouseMove = &defaultMouseMoveCb;
+    widget->uiBase->mouseClick = &WMouseClickCb;
+    widget->uiBase->mouseMove = &WMouseMoveCb;
+    widget->uiBase->update = &updateWidgetChildren;
     widget->uiBase->object = widget;
+    widget->uiBase->widget = widget;
     widget->uiBase->type = UI_TYPE_WIDGET;
 }
 int isWidgetVisible(Widget* widget){
@@ -48,18 +54,19 @@ int isWidgetVisible(Widget* widget){
         return widget->isVisible;
     }
 }
-int getWidgetTopLeft(Widget* widget, int*x, int* y){
+int updateWidgetTopLeft(Widget* widget){
     if(widgetParentResized(widget)){
-        int pw, ph;
+        int pw, ph, x, y;
 
         if(widget->parent != NULL){
-            getWidgetTopLeft(widget->parent, x, y);
+            x = widget->parent->topLeftX;
+            y = widget->parent->topLeftY;
         }else{
-            *x = 0;
-            *y = 0;
+            x = 0;
+            y = 0;
         }
 
-        getWidgetSize(widget, &(widget->wCopy), &(widget->hCopy));
+        updateWidgetSize(widget);
         
 
         widget->scrHCopy = scrH;
@@ -67,7 +74,8 @@ int getWidgetTopLeft(Widget* widget, int*x, int* y){
 
 
         if(widget->parent != NULL){
-            getWidgetSize(widget->parent, &pw, &ph);
+            pw = widget->parent->wCopy;
+            ph = widget->parent->hCopy;
         }else{
             pw = scrW;
             ph = scrH;
@@ -75,153 +83,134 @@ int getWidgetTopLeft(Widget* widget, int*x, int* y){
 
         switch(widget->alignment[0]){
             case ABSOLUTE:
-                *x = *x + widget->x;
+                widget->topLeftX = x + widget->x;
                 break;
             case ALIGN_LEFT:
-                *x = *x + widget->x;
+                widget->topLeftX = x + widget->x;
                 break;
             case ALIGN_CENTER:
-                *x = *x + ((pw - widget->wCopy) / 2);
+                widget->topLeftX = x + ((pw - widget->wCopy) / 2);
                 break;
             case ALIGN_RIGHT:
-                *x = *x + pw - widget->wCopy + widget->x;
+                widget->topLeftX = x + pw - widget->wCopy - widget->x;
                 break;
         }
-
         switch(widget->alignment[1]){
             case ABSOLUTE:
-                *y = *y + widget->y;
+                widget->topLeftY = y + widget->y;
                 break;
             case ALIGN_TOP:
-                *y = *y + widget->y;
+                widget->topLeftY = y + widget->y;
                 break;
             case ALIGN_CENTER:
-                *y = *y + ((ph - widget->hCopy) / 2);
+                widget->topLeftY = y + ((ph - widget->hCopy) / 2);
                 break;
             case ALIGN_BOTTOM:
-                *y = (*y + ph) - (widget->y) - (widget->hCopy);
+                widget->topLeftY = (y + ph) - (widget->y) - (widget->hCopy);
+                break;
+            case WITH_PARENT:
                 break;
         }
-        widget->topLeftX = *x;
-        widget->topLeftY = *y;
         return 1;
     }else{
-        *x = widget->topLeftX;
-        *y = widget->topLeftY;
         return 0;
-    }
-}
-
-int getWidgetSize(Widget* widget, int* w, int* h){
-    if(widgetParentResized(widget)){
-
-        widget->scrHCopy = scrH;
-        widget->scrWCopy = scrW;
-
-        if(widget->parent != NULL){
-            getWidgetSize(widget->parent, w, h);
-        }else{
-            *w = scrW;
-            *h = scrH;
-        }
-
-        switch(widget->sizeType[0]){
-            case ABSOLUTE:
-                *w = min(*w, widget->w);
-                break;
-            case RELATIVE:
-                *w = ((*w * widget->w ) / 100) - widget->x;
-                break;
-        }switch(widget->sizeType[1]){
-            case ABSOLUTE:
-                *h = min(*h, widget->h);
-                break;
-            case RELATIVE:
-                *h = ((*h * widget->h) / 100) - 1;
-                break;
-        }
-
-        widget->hCopy = *h;
-        widget->wCopy = *w;
-        return 1;
-
-    }else{
-        *w = widget->wCopy;
-        *h = widget->hCopy;
-        return 0;
-    }
-}
-int widgetParentResized(Widget* widget){          /////////// right now it only accounts for window resize which is ok, but it would be neater to account for parent resize
-    return (widget->scrHCopy != scrH) || (widget->scrWCopy != scrW);
-}
-
-void renderWidget(Widget* widget){
-    if(isWidgetVisible(widget)){
-        int tmpx, tmpy;
-        getWidgetTopLeft(widget, &tmpx, &tmpy);
-        attron(COLOR_PAIR(widget->colorPair));
-        move(widget->topLeftY+1, widget->topLeftX+1);
-        for(int i = widget->topLeftY + 1; i < widget->topLeftY + widget->hCopy; i++){
-            for(int j = widget->topLeftX + 1; j < widget->topLeftX + widget->wCopy; j++){
-                addch(' ');
-            }
-            move(i+1, widget->topLeftX + 1);
-        }
-        attroff(COLOR_PAIR(widget->colorPair));
-
     }
 }
 
 int updateWidgetSize(Widget* widget){
-    int w, h;
-    return getWidgetSize(widget, &w, &h);
-}
-int updateWidgetTopLeft(Widget* widget){
-    int x, y;
-    return getWidgetTopLeft(widget, &x, &y);
-}
+    if(widgetParentResized(widget)){
+        int w, h;
+        widget->scrHCopy = scrH;
+        widget->scrWCopy = scrW;
 
+        if(widget->parent != NULL){
+            w = widget->parent->wCopy;
+            h = widget->parent->hCopy;
+        }else{
+            w = scrW;
+            h = scrH;
+        }
+
+        switch(widget->sizeType[0]){
+            case ABSOLUTE:
+                widget->wCopy = min(w, widget->w);
+                if(widget->x + widget->wCopy > w) widget->wCopy = w - widget->x;
+                break;
+            case RELATIVE:
+                widget->wCopy = ((w * widget->w ) / 100);
+                if(widget->alignment[0] == ALIGN_CENTER){
+                    widget->wCopy -= 2 * widget->x;
+                    widget->wCopy += (widget->wCopy^w)&1;
+                }
+                break;
+        }switch(widget->sizeType[1]){
+            case ABSOLUTE:
+                widget->hCopy = min(h, widget->h);
+                break;
+            case RELATIVE:
+                widget->hCopy = round((h * widget->h) / 100);
+                if(widget->alignment[1] == ALIGN_CENTER){
+                    widget->hCopy -= 2 * widget->y;
+                    widget->hCopy += (widget->hCopy^h)&1;
+                }
+                break;
+        }
+        return 1;
+
+    }else{
+        return 0;
+    }
+}
+int widgetParentResized(Widget* widget){          /////////// right now it only accounts for window resize which is ok, but it would be neater to account for parent resize
+    return 1;
+}
 int isWidgetHovered(Widget* widget, int x, int y){
-    updateWidgetTopLeft(widget);
-
     return (((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
 }
 
 void updateWidgetChildren(Widget* w){
-    updateWidgetTopLeft(w);
+    if(!(w->parent)){
+        updateWidgetTopLeft(w);
+    }
     w->tmpIterPtr = w->children->data;
     Widget* ch;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        ch = w->iterPtr->widget;
-        updateWidgetTopLeft(ch);
-        w->iterPtr->mouseMove(w->iterPtr->object);
+        if(w->iterPtr->type == UI_TYPE_WIDGET){
+            updateWidgetTopLeft(w->iterPtr->object);
+        }else{
+            w->iterPtr->update(w->iterPtr->object);
+        }
         w->tmpIterPtr = w->tmpIterPtr[0];
     }
+    w->tmpIterPtr = w->children->data;
     if(w->layoutType == VERTICAL_LAYOUT){
         w->tmpIterPtr = w->children->data;
-        int tmp = ch->y + 1;
+        int tmp = w->topLeftY;
         while(w->tmpIterPtr){
             w->iterPtr = w->tmpIterPtr[1];
             ch = w->iterPtr->widget;
-            w->topLeftY = tmp;
-            tmp = ch->y + ch->h + w->layoutPadding;
+            if((ch->alignment[1] == WITH_PARENT) && (ch->isVisible)){
+                ch->topLeftY = tmp + ch->y;
+                tmp += ch->hCopy + ch->y + w->layoutPadding;
+            }
             w->tmpIterPtr = w->tmpIterPtr[0];
         }
     }
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        ch = w->iterPtr->widget;
-        if(ch->children->size){
-            updateWidgetChildren(ch);
+        if(w->iterPtr->type == UI_TYPE_WIDGET){
+            updateWidgetChildren(w->iterPtr->object);
         }
         w->tmpIterPtr = w->tmpIterPtr[0];
     }
 }
-
 void deleteWidget(Widget* widget){
+    deleteLinkedList(widget->children);
     free(widget->uiBase);
+    free(widget->children);
+    widget->children = NULL;
     free(widget);
 }
 int WMouseMoveCb(Widget* w){
@@ -247,4 +236,46 @@ int WKeyPressCb(Widget* w, int key){
         w->iterPtr->keyPress(w->iterPtr->object, key);
         w->tmpIterPtr = w->tmpIterPtr[0];
     }
+}
+void renderWidget(Widget* w){
+    if(isWidgetVisible(w)){
+        if(w->bordered){
+            move(w->topLeftY, w->topLeftX);
+            add_wch(WACS_D_ULCORNER);
+            FOR(i, w->wCopy-2){
+                add_wch(WACS_D_HLINE);
+            }
+            add_wch(WACS_D_URCORNER);
+            move(w->topLeftY + w->hCopy-1, w->topLeftX);
+            add_wch(WACS_D_LLCORNER);
+            FOR(i, w->wCopy-2){
+                add_wch(WACS_D_HLINE);
+            }
+            add_wch(WACS_D_LRCORNER);
+            for(int i = w->topLeftY + 1; i < w->topLeftY + w->hCopy-1; i++){
+                move(i, w->topLeftX);
+                addch(ACS_VLINE);
+                move(i, w->topLeftX + w->wCopy-1);
+                addch(ACS_VLINE);
+            }
+        }
+        
+        if(w->colorPair){
+            attron(COLOR_PAIR(w->colorPair));
+            for(int i = w->topLeftY + 1; i < w->topLeftY + w->hCopy-1; i++){
+                move(i, w->topLeftX+1);
+                for(int j = w->topLeftX + 1; j < w->topLeftX + w->wCopy - 1; j++){
+                    addch(' ');
+                }
+            }
+            attroff(COLOR_PAIR(w->colorPair));
+        }
+        w->tmpIterPtr = w->children->data;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            w->iterPtr->render(w->iterPtr->object);
+            w->tmpIterPtr = w->tmpIterPtr[0];
+        }
+    }
+   
 }
