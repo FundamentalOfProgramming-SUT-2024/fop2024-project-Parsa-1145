@@ -16,6 +16,6 @@ void linkedListPushBack(LinkedList* list, void* elment);
 void removeItemFromLinkedList(LinkedList* list, void* element);
 void linkedListInsert(LinkedList* linkedList, void* element, int index);
 void popLinkedList(LinkedList* linkedList);
-void deleteLinkedList(LinkedList* list);
+void emptyLinkedList(LinkedList* list);
 
 #endif

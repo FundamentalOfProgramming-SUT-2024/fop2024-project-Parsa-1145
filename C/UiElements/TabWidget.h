@@ -28,10 +28,11 @@ typedef struct{
 typedef struct{
     TabWidget* tabWidget;
     Widget* tab;
+    void (*enterCallback)();
 }TabStruct;
 
 void createTabWidget(TabWidget* t, Widget* parent, int sizePolicyX, int sizePolicyY, int alignmentLeft, int alignmentRight, int x, int y, int w, int h, int bgColor);
-void tabWidgetAddTab(TabWidget* t, char* name, Widget* w);
+void tabWidgetAddTab(TabWidget* t, char* name, Widget* w, void(*callback)());
 int tabWidgetMouseMove(TabWidget* t);
 int tabWidgetMouseClick(TabWidget* t);
 int tabWidgetKeyPress(TabWidget* t, int ch);

@@ -24,5 +24,6 @@ void renderCheckBox(CheckBox* cb);
 void CBMouseMoveCb(CheckBox* cb);
 void CBMouseClickCb(CheckBox* cb);
 void updateCheckBox(CheckBox* cb);
+void deleteCheckBox(CheckBox* cb);
 
 #endif

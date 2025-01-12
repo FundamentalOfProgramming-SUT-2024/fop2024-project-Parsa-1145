@@ -17,6 +17,7 @@ ItemBase* generateKey(cJSON* data){
     k->openProb = cJSON_GetObjectItem(key, "openProb")->valuedouble;
     k->quantity = 1;
     k->sprite = (cJSON_GetObjectItem(key, "sprite")->valueint);
+    
 
     createKey(k);
 
@@ -30,6 +31,8 @@ void createKey(Key* k){
     k->itemBase->z = &(k->z);
     k->itemBase->quantity = &(k->quantity);
     k->itemBase->sprite = &(k->sprite);
+    k->itemBase->name = k->name;
+
 
     k->itemBase->object = k;
     k->itemBase->objectType = TYPE_KEY;

@@ -28,6 +28,8 @@ void createCoin(Coin* c){
     c->itemBase->z = &(c->z);
     c->itemBase->quantity = &(c->quantity);
     c->itemBase->sprite = &(c->sprite);
+    c->itemBase->name = c->name;
+
 
     c->itemBase->object = c;
     c->itemBase->objectType = TYPE_COIN;

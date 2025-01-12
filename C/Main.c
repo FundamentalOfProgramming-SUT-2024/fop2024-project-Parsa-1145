@@ -23,6 +23,8 @@ int main(){
     init_pair(C_BG_GRAY0, COLOR_WHITE, 10);
     init_pair(C_BG_GRAY1, COLOR_WHITE, 12);
     init_pair(C_BG_BLACK, COLOR_WHITE, COLOR_BLACK);
+    init_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
+
 
 
     getmaxyx(stdscr, scrH, scrW);

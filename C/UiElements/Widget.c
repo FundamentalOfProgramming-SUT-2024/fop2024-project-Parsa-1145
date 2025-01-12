@@ -29,12 +29,15 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
 
     widget->isVisible = 1;
     widget->layoutType = 0;
+    widget->scrollOn = 0;
+    widget->canScrollUp = 0;
 
     widget->children = malloc(sizeof(LinkedList));
     createLinkedList(widget->children, sizeof(UiBase*));
     widget->layoutOffset = 0;
     widget->layoutPadding = 1;
     widget->layoutType = 0;
+    widget->outOfBound = 0;
 
     widget->uiBase = malloc(sizeof(UiBase));
     widget->uiBase->keyPress = &WKeyPressCb;
@@ -42,16 +45,17 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->uiBase->mouseClick = &WMouseClickCb;
     widget->uiBase->mouseMove = &WMouseMoveCb;
     widget->uiBase->update = &updateWidgetChildren;
+    widget->uiBase->delete = &deleteWidget;
     widget->uiBase->object = widget;
     widget->uiBase->widget = widget;
     widget->uiBase->type = UI_TYPE_WIDGET;
 }
 int isWidgetVisible(Widget* widget){
     if(widget->parent != NULL){
-        if(isWidgetVisible(widget->parent) && widget->isVisible) return 1;
+        if(isWidgetVisible(widget->parent) && widget->isVisible && (!(widget->outOfBound))) return 1;
         else return 0;
     }else{
-        return widget->isVisible;
+        return widget->isVisible && (!(widget->outOfBound));
     }
 }
 int updateWidgetTopLeft(Widget* widget){
@@ -172,46 +176,91 @@ void updateWidgetChildren(Widget* w){
     if(!(w->parent)){
         updateWidgetTopLeft(w);
     }
-    w->tmpIterPtr = w->children->data;
-    Widget* ch;
-    while(w->tmpIterPtr){
-        w->iterPtr = w->tmpIterPtr[1];
-        if(w->iterPtr->type == UI_TYPE_WIDGET){
-            updateWidgetTopLeft(w->iterPtr->object);
-        }else{
-            w->iterPtr->update(w->iterPtr->object);
-        }
-        w->tmpIterPtr = w->tmpIterPtr[0];
-    }
-    w->tmpIterPtr = w->children->data;
-    if(w->layoutType == VERTICAL_LAYOUT){
+    if(w->children->size){
         w->tmpIterPtr = w->children->data;
-        int tmp = w->topLeftY;
+        Widget* ch;
         while(w->tmpIterPtr){
             w->iterPtr = w->tmpIterPtr[1];
-            ch = w->iterPtr->widget;
-            if((ch->alignment[1] == WITH_PARENT) && (ch->isVisible)){
-                ch->topLeftY = tmp + ch->y;
-                tmp += ch->hCopy + ch->y + w->layoutPadding;
+            if(w->iterPtr->type == UI_TYPE_WIDGET){
+                updateWidgetTopLeft(w->iterPtr->object);
+            }else{
+                w->iterPtr->update(w->iterPtr->object);
             }
             w->tmpIterPtr = w->tmpIterPtr[0];
         }
+        w->tmpIterPtr = w->children->data;
+        if(w->layoutType == VERTICAL_LAYOUT){
+            w->totalScrollArea = 0;
+            w->canScrollUp = 0;
+            w->scrollBarHeight = 0;
+            w->scrollBarPos = 0;
+
+            int outOfBound = 0, margin = 0, num = 0;
+            int tmp = w->topLeftY - w->layoutOffset;
+
+            w->tmpIterPtr = w->children->data;
+            w->iterPtr = w->tmpIterPtr[1];
+            if(w->iterPtr){
+                ch = w->iterPtr->widget;
+                margin = ch->y;
+            }
+            while(w->tmpIterPtr){
+                w->iterPtr = w->tmpIterPtr[1];
+                ch = w->iterPtr->widget;
+                if((ch->alignment[1] == WITH_PARENT)){
+                    if(outOfBound){
+                        ch->outOfBound = 1;
+                        w->totalScrollArea += ch->hCopy + ch->y + w->layoutPadding * (num!=0);
+                    }else{
+                        if(ch->isVisible){
+                            ch->topLeftY = tmp + ch->y;
+                            tmp += ch->hCopy + ch->y + w->layoutPadding;
+                            w->totalScrollArea += ch->hCopy + ch->y + w->layoutPadding * (num!=0);
+                            num++;
+                        }
+                        if((ch->topLeftY < w->topLeftY + margin)){
+                            ch->outOfBound = 1;
+                        }else if(ch->topLeftY + ch->hCopy > w->topLeftY + w->hCopy){
+                            ch->outOfBound = 1;
+                            w->canScrollUp = 1;
+                            outOfBound = 1;
+                        }else{
+                            ch->outOfBound = 0;
+                        }
+                    }
+                }
+                w->tmpIterPtr = w->tmpIterPtr[0];
+            }
+
+            w->scrollBarHeight = (((float)w->hCopy) / ((float)w->totalScrollArea)) * (float)(w->hCopy-1);
+            w->scrollBarPos = (((float)w->layoutOffset) / ((float)w->totalScrollArea)) * ((float)w->hCopy-1);
+        }
+        w->tmpIterPtr = w->children->data;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            w->tmpIterPtr = w->tmpIterPtr[0];
+            if(w->iterPtr->type == UI_TYPE_WIDGET){
+                updateWidgetChildren(w->iterPtr->object);
+            }
+        }
     }
+}
+void deleteWidget(Widget* w){
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        if(w->iterPtr->type == UI_TYPE_WIDGET){
-            updateWidgetChildren(w->iterPtr->object);
-        }
         w->tmpIterPtr = w->tmpIterPtr[0];
+        w->iterPtr->delete(w->iterPtr->object);
     }
-}
-void deleteWidget(Widget* widget){
-    deleteLinkedList(widget->children);
-    free(widget->uiBase);
-    free(widget->children);
-    widget->children = NULL;
-    free(widget);
+    emptyLinkedList(w->children);
+
+    if(w->parent){
+        removeItemFromLinkedList(w->parent->children, w->uiBase);
+    }
+    free(w->uiBase);
+    free(w->children);
+    w->children = NULL;
+    free(w);
 }
 int WMouseMoveCb(Widget* w){
     w->tmpIterPtr = w->children->data;
@@ -222,12 +271,33 @@ int WMouseMoveCb(Widget* w){
     }
 }
 int WMouseClickCb(Widget* w){
+    int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
+    int recieved = 0;
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        w->iterPtr->mouseClick(w->iterPtr->object);
         w->tmpIterPtr = w->tmpIterPtr[0];
+        if(w->iterPtr->mouseClick(w->iterPtr->object)) recieved = 1;
+        
     }
+    if(scroll && w->scrollOn){
+        if(!recieved){
+            if(isWidgetHovered(w, mEvent.x, mEvent.y)){
+                if(mEvent.bstate & BUTTON5_PRESSED){
+                    if(w->canScrollUp){
+                        w->layoutOffset += 1;
+                        return 1;
+                    }
+                }else if(mEvent.bstate & BUTTON4_PRESSED){
+                    if(w->layoutOffset){
+                        w->layoutOffset--;
+                        return 1;
+                    } 
+                }
+            }
+        }
+    }
+    return 0;
 }
 int WKeyPressCb(Widget* w, int key){
     w->tmpIterPtr = w->children->data;
@@ -269,6 +339,16 @@ void renderWidget(Widget* w){
                 }
             }
             attroff(COLOR_PAIR(w->colorPair));
+        }
+        if(w->scrollOn && (w->totalScrollArea > w->hCopy)){
+            FOR(i, w->hCopy-2){
+                mvaddch(w->topLeftY + i + 1, w->topLeftX + w->wCopy - 1, ACS_VLINE);
+            }
+            attron(A_REVERSE);
+            FOR(i, w->scrollBarHeight){
+                mvaddch(w->topLeftY + i + 1 + w->scrollBarPos, w->topLeftX + w->wCopy - 1, ' ');
+            }
+            attroff(A_REVERSE);
         }
         w->tmpIterPtr = w->children->data;
         while(w->tmpIterPtr){

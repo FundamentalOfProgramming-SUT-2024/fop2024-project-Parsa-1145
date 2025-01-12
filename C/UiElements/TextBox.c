@@ -29,6 +29,8 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     textBox->uiBase->mouseClick = &TBMouseClickCb;
     textBox->uiBase->mouseMove = &TBMouseMoveCb;
     textBox->uiBase->update = &updateTextBox;
+    textBox->uiBase->delete = &deleteTextBox;
+
 
     textBox->uiBase->object = textBox;
     textBox->uiBase->widget = textBox->widget;
@@ -147,4 +149,12 @@ void resetTextbox(TextBox* textBox){
 
 void updateTextBox(TextBox* t){
     updateWidgetTopLeft(t->widget);
+}
+void deleteTextBox(TextBox* t){
+    if(t->widget->parent){
+        removeItemFromLinkedList(t->widget->parent->children, t->uiBase);
+    }
+    free(t->widget);
+    free(t->uiBase);
+    free(t);
 }

@@ -97,7 +97,7 @@ void removeItemFromLinkedList(LinkedList* list, void* element){
     }
 
 }
-void deleteLinkedList(LinkedList* list){
+void emptyLinkedList(LinkedList* list){
     void** tmp = list->data;
     void** tmp2;
 
@@ -106,4 +106,6 @@ void deleteLinkedList(LinkedList* list){
         free(tmp);
         tmp = tmp2;
     }
+    list->size = 0;
+    list->data = NULL;
 }

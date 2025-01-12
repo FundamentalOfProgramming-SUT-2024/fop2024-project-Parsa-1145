@@ -26,6 +26,7 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
     checkBox->uiBase->mouseClick = &CBMouseClickCb;
     checkBox->uiBase->mouseMove = &CBMouseMoveCb;
     checkBox->uiBase->update = &updateCheckBox;
+    checkBox->uiBase->delete = &deleteCheckBox;
     checkBox->uiBase->widget = checkBox->widget;
     checkBox->uiBase->object = checkBox;
     checkBox->uiBase->type = UI_TYPE_CHECKBOX;
@@ -73,4 +74,12 @@ void CBMouseClickCb(CheckBox* cb){
 }
 void updateCheckBox(CheckBox* cb){
     updateWidgetTopLeft(cb->widget);
+}
+void deleteCheckBox(CheckBox* cb){
+    if(cb->widget->parent){
+        removeItemFromLinkedList(cb->widget->parent->children, cb->uiBase);
+    }
+    free(cb->uiBase);
+    free(cb->widget);
+    free(cb);
 }

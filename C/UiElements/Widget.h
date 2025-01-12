@@ -20,6 +20,12 @@ typedef struct Widget{
     int layoutType;
     int layoutPadding;
     int layoutOffset;
+    int outOfBound;
+    int scrollOn;
+    int canScrollUp;
+    int totalScrollArea;
+    int scrollBarHeight;
+    int scrollBarPos;
 
     LinkedList* children;
 

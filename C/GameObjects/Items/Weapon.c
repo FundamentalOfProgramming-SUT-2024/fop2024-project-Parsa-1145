@@ -29,6 +29,8 @@ void createWeapon(Weapon* weapon){
     weapon->gameObject->z = &(weapon->z);
     weapon->gameObject->sprite = &(weapon->sprite);
     weapon->gameObject->quantity = &(weapon->quantity);
+    weapon->gameObject->name = weapon->name;
+    
 
 
 

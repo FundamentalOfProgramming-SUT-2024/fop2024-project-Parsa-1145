@@ -116,7 +116,7 @@ void updateMainMenu(){
         case KEY_MOUSE:
             if(getmouse(&mEvent) == OK){
                 void** tmp = mmUiList.data;
-
+                //mvprintw(4, 4, "asd %lu %lu %lu", mEvent.bstate, BUTTON5_PRESSED, BUTTON4_PRESSED);
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
                         mousex = mEvent.x;
@@ -127,6 +127,7 @@ void updateMainMenu(){
                         }
                         break;
                     default:
+                        
                         FOR(i, mmUiList.size){
                             ((UiBase*)tmp[1])->mouseClick(((UiBase*)tmp[1])->object);
                             tmp = *tmp;

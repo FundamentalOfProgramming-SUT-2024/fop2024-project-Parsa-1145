@@ -2,13 +2,18 @@
 #define PLAYER
 
 #include "../Utilities/LinkedList.h"
-#include "./Items/ItemBase.h"
+#include "./Items/Weapon.h"
 
 typedef struct{
     int x, y, z;
     int visionRadius;
 
-    LinkedList items;
-} Player;
+    int health;
+    int strenght;
 
+    int maxHealth;
+
+    LinkedList items;
+    Weapon* weapon;
+} Player;
 #endif

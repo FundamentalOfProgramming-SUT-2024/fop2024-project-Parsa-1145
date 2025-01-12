@@ -8,34 +8,34 @@
 
 
 void renderButton(Button* btn){
-    btn->margin = (btn->widget->wCopy - btn->strLegth) / 2;
-    btn->marginCarry = (btn->widget->wCopy - btn->strLegth) % 2;
-    
     if(isWidgetVisible(btn->widget)){
-        if(!btn->clicked){
-            if(btn->hovered){
-                attron(A_DIM);
-            }
+        attron(COLOR_PAIR(btn->bgColor));
+        if(btn->clicked){
             attron(A_REVERSE);
+        }else if(btn->hovered){
+            attron(A_BOLD);
         }
-
         move(btn->widget->topLeftY, btn->widget->topLeftX);
-        for(int i = 0; i < btn->margin + btn->marginCarry; i++){
+        for(int i = 0; i < btn->widget->wCopy; i++){
             addch(' ');
         }
-
-        printw("%s", btn->str);
-
-        for(int i = 0; i < btn->margin; i++){
-            addch(' ');
+        switch (btn->textAlign){
+            case ALIGN_CENTER:
+                btn->margin = (btn->widget->wCopy - btn->strLegth)/2 + ((btn->widget->wCopy - btn->strLegth)&1);
+                break;
+            case ALIGN_LEFT:
+                btn->margin = 0;
+                break;
+            default:
+                break;
         }
-        
-        if(!btn->clicked){
-            if(btn->hovered){
-                attroff(A_DIM);
-            }
+        mvprintw(btn->widget->topLeftY, btn->widget->topLeftX + btn->margin,"%s", btn->str);
+        if(btn->clicked){
             attroff(A_REVERSE);
+        }else if(btn->hovered){
+            attroff(A_BOLD);
         }
+        attroff(COLOR_PAIR(btn->bgColor));
     }
 }
 void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int alignmentX, int alignmentY, int x, int y, int w){
@@ -49,7 +49,9 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->clicked = 0;
     btn->hovered = 0;
 
-    btn->str = str;
+    btn->str = copyString(str);
+    btn->textAlign = ALIGN_CENTER;
+    btn->bgColor = C_BG_WHITE;
 
     btn->uiBase = malloc(sizeof(UiBase));
     btn->uiBase->render = &renderButton;
@@ -57,6 +59,7 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->uiBase->mouseClick = &buttonMouseClickEvent;
     btn->uiBase->mouseMove = &buttonMouseMoveCallback;
     btn->uiBase->update = &updateButton;
+    btn->uiBase->delete = &deleteButton;
     btn->uiBase->object = btn;
     btn->uiBase->widget = btn->widget;
     btn->uiBase->type = UI_TYPE_BUTTON;
@@ -107,8 +110,12 @@ int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clic
 }
 
 void deleteButton(Button* btn){
+    if(btn->widget->parent){
+        removeItemFromLinkedList(btn->widget->parent->children, btn->uiBase);
+    }
     deleteWidget(btn->widget);
     free(btn->uiBase);
+    free(btn->str);
     free(btn);
 }
 void updateButton(Button* btn){

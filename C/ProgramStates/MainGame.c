@@ -19,6 +19,8 @@
 #include "../UiElements/Checkbox.h"
 #include "../UiElements/UiBase.h"
 #include "../UiElements/TabWidget.h"
+#include "../UiElements/TextWidget.h"
+
 
 
 #include "../GameObjects/Player.h"
@@ -80,12 +82,6 @@ Widget mgWeaponsTab;
 Widget mgPotionsTab;
 Widget mgFoodTab;
 
-Button tmpBtn1;
-Button tmpBtn2;
-Button tmpBtn3;
-Button tmpBtn4;
-Button tmpBtn5;
-
 LinkedList mgUiList;
 
 Button* mgButtonList[1] = {&mgCloseDebugBtn};
@@ -96,6 +92,38 @@ void mgToggleStatMenu(){
     mgItemWidget.isVisible =! mgItemWidget.isVisible;
 
     renderMainGame();
+}
+void openWeaponTab(){
+    void** tmpIterPtr;
+    {
+        UiBase* iterPtr;
+        tmpIterPtr = mgWeaponsTab.children->data;
+        while(tmpIterPtr){
+            iterPtr = tmpIterPtr[1];
+            tmpIterPtr = tmpIterPtr[0];
+            iterPtr->delete(iterPtr->object);
+        }
+    }
+
+    ItemBase* iterPtr;
+    tmpIterPtr = player.items.data;
+    while(tmpIterPtr){
+        iterPtr = tmpIterPtr[1];
+        tmpIterPtr = tmpIterPtr[0];
+        if(iterPtr->objectType){
+            Widget* tmpWidget = malloc(sizeof(Widget));
+            TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
+            Button* tmpButton = malloc(sizeof(Button));
+
+            createWidget(tmpWidget, &mgWeaponsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
+            tmpWidget->bordered = 1;
+            createTextWidget(tmpTextWidget, tmpWidget, iterPtr->name, ALIGN_LEFT, ABSOLUTE, 0, 0);
+            createButton(tmpButton, tmpWidget, "Drop", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 4);
+            linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
+            linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
+            linkedListPushBack(mgWeaponsTab.children, tmpWidget->uiBase);
+        }
+    }
 }
 void mgToggleExitMenu(){
     mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
@@ -145,6 +173,16 @@ void updateUi(){
         tmp->update(tmp->object);
         tmp1 = tmp1[0];
     }
+}
+
+void tmpAddButton(){
+    Button* btn = malloc(sizeof(Button));
+    createButton(btn, &mgPotionsTab, "3", RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 80);
+    btn->contextCallback = &deleteButton;
+    btn->contextObject = btn;
+    btn->bgColor = C_BG_BLACK;
+    btn->textAlign = ALIGN_LEFT;
+    linkedListPushBack(mgPotionsTab.children, btn->uiBase);
 }
 
 void initMainGame(){
@@ -202,30 +240,25 @@ void initMainGame(){
     createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
     mgStatsTab.layoutType = VERTICAL_LAYOUT;
     mgStatsTab.bordered = 1;
-    createButton(&tmpBtn3, &mgStatsTab, "3", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 1, 50);
-    linkedListPushBack(mgStatsTab.children, tmpBtn3.uiBase);
+    mgStatsTab.scrollOn = 1;
 
     createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
     mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
-    createButton(&tmpBtn4, &mgWeaponsTab, "4", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 1, 30);
-    linkedListPushBack(mgWeaponsTab.children, tmpBtn4.uiBase);
+    mgWeaponsTab.scrollOn = 1;
+
 
     createWidget(&mgFoodTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
     mgFoodTab.layoutType = VERTICAL_LAYOUT;
-    createButton(&tmpBtn5, &mgFoodTab, "5", RELATIVE, ALIGN_RIGHT, WITH_PARENT, 0, 1, 30);
-    linkedListPushBack(mgFoodTab.children, tmpBtn5.uiBase);
+    mgFoodTab.scrollOn = 1;
 
     createWidget(&mgPotionsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
     mgPotionsTab.layoutType = VERTICAL_LAYOUT;
-    createButton(&tmpBtn1, &mgPotionsTab, "1", RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 1, 80);
-    createButton(&tmpBtn2, &mgPotionsTab, "2", RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 80);
-    linkedListPushBack(mgPotionsTab.children, tmpBtn1.uiBase);
-    linkedListPushBack(mgPotionsTab.children, tmpBtn2.uiBase);
+    mgPotionsTab.scrollOn = 1;
 
-    tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab);
-    tabWidgetAddTab(&mgTabWidget, "Weaopns", &mgWeaponsTab);
-    tabWidgetAddTab(&mgTabWidget, "Food", &mgFoodTab);
-    tabWidgetAddTab(&mgTabWidget, "Potions", &mgPotionsTab);
+    tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab, NULL);
+    tabWidgetAddTab(&mgTabWidget, "Weaopns", &mgWeaponsTab, &openWeaponTab);
+    tabWidgetAddTab(&mgTabWidget, "Food", &mgFoodTab, NULL);
+    tabWidgetAddTab(&mgTabWidget, "Potions", &mgPotionsTab, NULL);
 
     linkedListPushBack(mgStatusWidget.children, mgTabWidget.uiBase);
 
@@ -414,6 +447,7 @@ void enterMainGame(){
     player.x = 0;
     player.y = 0;
     player.z = 0;
+    player.weapon = NULL;
     FOR(i, player.items.size){
         ItemBase* tmp;
         tmp = linkedListGetElement(&(player.items), 0);
@@ -425,10 +459,7 @@ void enterMainGame(){
     mainCamera.w = scrW;
     mainCamera.h = scrH - 6;
     mainCamera.w = scrW - 20;
-
-
-    
-    
+        
     generateMap();
     player.x = floors[0].roomList[0]->x + 2;
     player.y = floors[0].roomList[0]->y + 2;
@@ -444,8 +475,6 @@ void enterMainGame(){
 
     timeout(100);
     nodelay(stdscr, FALSE);
-    
-
 }
 int validForItemPosition(int x, int y, Room* r){
     x += r->x;

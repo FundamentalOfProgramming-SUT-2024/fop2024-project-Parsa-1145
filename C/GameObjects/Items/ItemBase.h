@@ -21,6 +21,7 @@ typedef struct ItemBase{
     int *x, *y, *z;
     wchar_t* sprite;
     int* quantity;
+    char* name;
 }ItemBase;
 
 void defaultItemPickup(ItemBase* g);

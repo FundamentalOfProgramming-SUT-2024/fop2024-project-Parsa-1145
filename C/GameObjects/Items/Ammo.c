@@ -29,6 +29,7 @@ void createAmmo(Ammo* a){
     a->gameObject->z = &(a->z);
     a->gameObject->sprite = &(a->sprite);
     a->gameObject->quantity = &(a->quantity);
+    a->gameObject->name = a->name;
 
     a->gameObject->object = a;
     a->gameObject->objectType = TYPE_AMMO;

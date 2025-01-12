@@ -77,8 +77,8 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
     }
     
 
-    if((cell->attr[6]) && (randWithProb(cell->attr[2] * 0.05 + (cell->attr[3]==2) * 0.2))){
-        if(randWithProb(0.1))cell->attr[3] = 2;
+    if((cell->attr[6]) && (randWithProb(cell->attr[2] * 0.05 + (cell->attr[3]==2) * 0.1))){
+        if((cell->attr[3] != 2) && randWithProb(0.1))cell->attr[3] = 2;
         else{
             cell->attr[3] = !cell->attr[3];
         }

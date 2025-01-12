@@ -7,19 +7,23 @@
 #include "Widget.h"
 
 typedef struct {
-    Widget* parent;
     UiBase* uiBase;
+    Widget* widget;
+
     char* str;
     int strLegth;
+    int textAlign;
     int margin;
     int marginCarry;
-    voidCB callBack;
-    void(*contextCallback)(void*);
+
+    void (*callBack)();
+    void (*contextCallback)(void*);
     void* contextObject;
+
     int hovered;
     int clicked;
 
-    Widget* widget;
+    int bgColor;
 }Button;
 
 void renderButton(Button* btn);

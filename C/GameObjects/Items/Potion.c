@@ -25,6 +25,8 @@ void createPotion(Potion* p){
     p->gameObject->z = &(p->z);
     p->gameObject->sprite = &(p->sprite);
     p->gameObject->quantity = &(p->quantity);
+    p->gameObject->name = p->name;
+
 
 
 

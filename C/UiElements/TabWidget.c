@@ -37,11 +37,12 @@ void createTabWidget(TabWidget* t, Widget* parent, int sizePolicyX, int sizePoli
     t->uiBase->widget = t->widget;
     t->uiBase->type = UI_TYPE_TEXTBOX;
 }
-void tabWidgetAddTab(TabWidget* t, char* name, Widget* w){
+void tabWidgetAddTab(TabWidget* t, char* name, Widget* w, void(*callback)()){
     TabStruct* tmp = malloc(sizeof(TabStruct));
     w->parent = t->tabArea;
     tmp->tabWidget = t;
     tmp->tab = w;
+    tmp->enterCallback = callback;
     linkedListPushBack(t->Tabs, tmp);
 
     Button* btn = malloc(sizeof(Button));
@@ -90,6 +91,11 @@ void tabWidgetRender(TabWidget* t){
         addch(ACS_VLINE);
         t->tmpIterPtr = t->tmpIterPtr[0];
     }
+    mvaddch(t->widget->topLeftY + 1, t->widget->topLeftX, ACS_HLINE);
+    FOR(i, t->widget->wCopy-1){
+        addch(ACS_HLINE);
+    }
+
     if(t->active){
         renderWidget(t->active);
     }
@@ -101,14 +107,15 @@ void tabWidgetSwitchTab(TabStruct* t){
     if(t->tabWidget->active) t->tabWidget->isVisible = 0;
     t->tabWidget->active = t->tab;
     t->tabWidget->active->isVisible = 1;
+    if(t->enterCallback) t->enterCallback();
     //updateWidgetChildren(t->tab);
 }
 void updateTabWidget(TabWidget* t){
     updateWidgetTopLeft(t->widget);
     t->tabArea->topLeftX = t->widget->topLeftX;
-    t->tabArea->topLeftY = t->widget->topLeftY + 1;
+    t->tabArea->topLeftY = t->widget->topLeftY + 2;
     t->tabArea->wCopy = t->widget->wCopy;
-    t->tabArea->hCopy = t->widget->hCopy - 1;
+    t->tabArea->hCopy = t->widget->hCopy - 2;
 
     t->tmpIterPtr = t->tabButtons->data;
     int tmp = t->tabArea->topLeftX;
@@ -116,10 +123,11 @@ void updateTabWidget(TabWidget* t){
         t->iterPtr = t->tmpIterPtr[1];
         t->tmpWidget = t->iterPtr->widget;
         t->tmpWidget->topLeftX = tmp;
-        t->tmpWidget->topLeftY = t->tabArea->topLeftY-1;
+        t->tmpWidget->topLeftY = t->widget->topLeftY;
         tmp += t->tmpWidget->w + 1;
         t->tmpIterPtr = t->tmpIterPtr[0];
     }
+    
     if(t->active){
         updateWidgetTopLeft(t->active);
         updateWidgetChildren(t->active);
