@@ -20,5 +20,5 @@ typedef struct{
 ItemBase* generateKey(cJSON* data);
 int isKeyEqual(Key* k1, Key* k2);
 void createKey(Key* k);
-void deleteKey(Key* k);
+void deleteKey(ItemBase* o);
 #endif

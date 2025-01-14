@@ -16,9 +16,9 @@ typedef struct{
     void (*delete)(void*);
 }UiBase;
 
-void defaultMouseClickCb(void*);
-void defaultMouseMoveCb(void*);
-void defaultKeyPressCb(void*);
+int defaultMouseClickCb(void*);
+int defaultMouseMoveCb(void*);
+int defaultKeyPressCb(void*);
 void defaultRender(void*);
 
 

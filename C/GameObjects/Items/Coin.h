@@ -21,5 +21,5 @@ typedef struct{
 ItemBase* generateCoin(cJSON* data);
 void createCoin(Coin* c);
 int isCoinEqual(Coin* c1, Coin* c2);
-void deleteCoin(Coin* c);
+void deleteCoin(ItemBase* o);
 #endif

@@ -1,7 +1,7 @@
 #include "UiBase.h"
 
 
-void defaultMouseClickCb(void*){}
-void defaultMouseMoveCb(void*){}
-void defaultKeyPressCb(void*){}
+int defaultMouseClickCb(void*){return 0;}
+int defaultMouseMoveCb(void*){return 0;}
+int defaultKeyPressCb(void*){return 0;}
 void defaultRender(void*){}

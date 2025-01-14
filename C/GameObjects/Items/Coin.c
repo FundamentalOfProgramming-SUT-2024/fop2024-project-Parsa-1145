@@ -46,7 +46,8 @@ void createCoin(Coin* c){
 int isCoinEqual(Coin* c1, Coin* c2){
     return (!strcmp(c1->name, c2->name));
 }
-void deleteCoin(Coin* c){
+void deleteCoin(ItemBase* o){
+    Coin* c = o->object;
     free(c->name);
     free(c->itemBase);
     free(c);

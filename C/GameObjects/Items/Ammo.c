@@ -80,7 +80,9 @@ void updateAmmo(Ammo* a){
         pickUpAmmo(a);
     }
 }
-void deleteAmmo(Ammo* a){
+void deleteAmmo(ItemBase* o){
+    Ammo* a = o->object;
+
     free(a->name);
     free(a->gameObject);
     free(a);

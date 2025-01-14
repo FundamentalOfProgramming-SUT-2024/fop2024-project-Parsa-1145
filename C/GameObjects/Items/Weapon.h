@@ -23,11 +23,11 @@ typedef struct{
 
 ItemBase* generateWeapon(cJSON* data);
 void createWeapon(Weapon* w);
-void pickUpWeapon(Weapon* w);
-void dropWeapon(Weapon* w);
+void pickUpWeapon(ItemBase* o);
+void dropWeapon(ItemBase* o);
 void renderWeapon(Weapon* w, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
-void updateWeapon(Weapon* w);
-void deleteWeapon(Weapon* w);
+void updateWeapon(ItemBase* o);
+void deleteWeapon(ItemBase* o);
 int isWeaponEqual(Weapon* w1, Weapon* w2);
 
 #endif

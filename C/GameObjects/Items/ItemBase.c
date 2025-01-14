@@ -4,7 +4,7 @@
 
 void defaultItemPickup(ItemBase* g){
     removeItemFromLinkedList(floors[player.z].itemList, g);
-
+    addMessage(writeLog("You picked up %d %s",g->quantity[0], g->name));
     ItemBase* tmp;
     FOR(i, player.items.size){
         tmp = linkedListGetElement(&player.items, i);
@@ -12,7 +12,7 @@ void defaultItemPickup(ItemBase* g){
         if(tmp->objectType == g->objectType){
             if(g->isEqual(tmp->object, g->object)){
                 *(tmp->quantity) += *(g->quantity);
-                g->deleteObject(g->object);
+                g->deleteObject(g);
                 return;
             }
         }
@@ -21,13 +21,18 @@ void defaultItemPickup(ItemBase* g){
     linkedListPushBack(&(player.items), g);
 }
 void defaultItemDrop(ItemBase* g){
-    *(g->x) = player.x;
-    *(g->y) = player.y;
-    linkedListPushBack(floors[player.z].itemList, g);
-    removeItemFromLinkedList(&(player.items), g);
+    if(validForItemPosition(player.x, player.y, player.z)){
+        *(g->x) = player.x;
+        *(g->y) = player.y;
+        linkedListPushBack(floors[player.z].itemList, g);
+        removeItemFromLinkedList(&(player.items), g);
+        removeItemFromLinkedList(&(player.items), g);
+        addMessage(writeLog("You dropped up a %s", g->name));
+    }else{
+        addMessage(writeLog("You can not drop here"));
+    }
 }
 void defaultItemRender(ItemBase* g, CharTexture* frameBuffer, ColorTexture* colorBuffer, Camera* cam){
-
     if(isinRect(*(g->x), *(g->y), cam->x, cam->y, cam->w, cam->h)){
         frameBuffer->data[*(g->y) - cam->y][*(g->x) - cam->x] = *(g->sprite);
     }

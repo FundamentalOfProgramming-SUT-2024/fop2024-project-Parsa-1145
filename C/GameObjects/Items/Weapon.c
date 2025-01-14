@@ -31,42 +31,39 @@ void createWeapon(Weapon* weapon){
     weapon->gameObject->quantity = &(weapon->quantity);
     weapon->gameObject->name = weapon->name;
     
-
-
-
     weapon->gameObject->object = weapon;
     weapon->gameObject->objectType = TYPE_WEAPON;
 
     weapon->gameObject->render = &defaultItemRender;
-    weapon->gameObject->drop = &defaultItemDrop;
-    weapon->gameObject->pickUp = &defaultItemPickup;
-    weapon->gameObject->update = &defaultItemUpdate;
+    weapon->gameObject->drop = &dropWeapon;
+    weapon->gameObject->pickUp = &pickUpWeapon;
+    weapon->gameObject->update = &updateWeapon;
     weapon->gameObject->deleteObject = &deleteWeapon;
     weapon->gameObject->isEqual = &isWeaponEqual;
 }
-void pickUpWeapon(Weapon* w){
-    removeItemFromLinkedList(floors[player.z].itemList, w->gameObject);
-    linkedListPushBack(&(player.items), w->gameObject);
+void pickUpWeapon(ItemBase* o){
+    Weapon* w = o->object;
+    defaultItemPickup(o);
+    updateWeaponTab();
 }
-void dropWeapon(Weapon* w){
-
-    w->x = player.x;
-    w->y = player.y;
-    linkedListPushBack(floors[player.z].itemList, w->gameObject);
-    removeItemFromLinkedList(&(player.items), w->gameObject);
+void dropWeapon(ItemBase* o){
+    Weapon* w = o->object;
+    defaultItemDrop(o);
+    updateWeaponTab();
 }
 void renderWeapon(Weapon* w, CharTexture* frameBuffer, ColorTexture* colorBuffer, Camera* cam){
-
     if(isinRect(w->x, w->y, cam->x, cam->y, cam->w, cam->h)){
         frameBuffer->data[w->y - cam->y][w->x - cam->x] = w->sprite;
     }
 }
-void updateWeapon(Weapon* w){
+void updateWeapon(ItemBase* o){
+    Weapon* w = o->object;
     if((player.x == w->x) && (player.y == w->y)){
-        pickUpWeapon(w);
+        pickUpWeapon(o);
     }
 }
-void deleteWeapon(Weapon* w){
+void deleteWeapon(ItemBase* o){
+    Weapon* w = o->object;
     free(w->name);
     free(w->gameObject);
     free(w);

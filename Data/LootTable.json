@@ -5,7 +5,7 @@
     "enteries" : [
         {
             "type" : 0,
-            "weight" : 5,
+            "weight" : 25,
             "pool" : [
                 {
                     "name" : "Long Sword",
@@ -23,7 +23,7 @@
                     "name" : "Mace",
                     "minDmg" : 5,
                     "maxDmg" : 8,
-                    "Sprite" : 10132,
+                    "Sprite" : 1759,
                     "weight" : 1
                 }
             ]

@@ -49,7 +49,8 @@ void createKey(Key* k){
 int isKeyEqual(Key* k1, Key* k2){
     return((k1->broken == k2->broken) || ((k1->openProb == k2->openProb) && (!strcmp(k1->name, k2->name))));
 }
-void deleteKey(Key* k){
+void deleteKey(ItemBase* o){
+    Key* k = o->object;
     free(k->name);
     free(k->itemBase);
     free(k);

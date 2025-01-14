@@ -32,5 +32,6 @@ extern int saveJsonToFile(char* address, void* json);
 extern int isinRect(float x, float y, float rx, float ry, float w, float h);
 extern int chooseWithWeight(cJSON* json);
 extern char* copyString(char* str);
+extern char* writeLog(const char* format, ...);
 
 extern MEVENT mEvent;

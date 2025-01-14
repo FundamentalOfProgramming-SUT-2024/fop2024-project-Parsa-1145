@@ -181,3 +181,18 @@ char* copyString(char* str){
     strcpy(out, str);
     return out;
 }
+
+extern char* writeLog(const char* format, ...){
+    char* out;
+    int size;
+    va_list args;
+
+    va_start(args, format);
+    size = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+    va_start(args, format);
+    out = malloc(size + 2);
+    vsnprintf(out, size+1, format, args);
+    va_end(args);
+    return out;
+}

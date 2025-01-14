@@ -110,7 +110,7 @@ int updateWidgetTopLeft(Widget* widget){
                 widget->topLeftY = y + ((ph - widget->hCopy) / 2);
                 break;
             case ALIGN_BOTTOM:
-                widget->topLeftY = (y + ph) - (widget->y) - (widget->hCopy);
+                widget->topLeftY = max((y + ph) - (widget->y) - (widget->hCopy), y+1);
                 break;
             case WITH_PARENT:
                 break;
@@ -156,6 +156,10 @@ int updateWidgetSize(Widget* widget){
                 if(widget->alignment[1] == ALIGN_CENTER){
                     widget->hCopy -= 2 * widget->y;
                     widget->hCopy += (widget->hCopy^h)&1;
+                }else if(widget->alignment[1] == ALIGN_BOTTOM){
+                    if(widget->hCopy + widget->y > h){
+                        widget->hCopy = h - widget->y - 1;
+                    }
                 }
                 break;
         }
@@ -266,8 +270,8 @@ int WMouseMoveCb(Widget* w){
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        w->iterPtr->mouseMove(w->iterPtr->object);
         w->tmpIterPtr = w->tmpIterPtr[0];
+        w->iterPtr->mouseMove(w->iterPtr->object);
     }
 }
 int WMouseClickCb(Widget* w){
@@ -278,7 +282,6 @@ int WMouseClickCb(Widget* w){
         w->iterPtr = w->tmpIterPtr[1];
         w->tmpIterPtr = w->tmpIterPtr[0];
         if(w->iterPtr->mouseClick(w->iterPtr->object)) recieved = 1;
-        
     }
     if(scroll && w->scrollOn){
         if(!recieved){
@@ -294,6 +297,7 @@ int WMouseClickCb(Widget* w){
                         return 1;
                     } 
                 }
+                w->bordered != w->bordered;
             }
         }
     }
@@ -303,8 +307,8 @@ int WKeyPressCb(Widget* w, int key){
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
-        w->iterPtr->keyPress(w->iterPtr->object, key);
         w->tmpIterPtr = w->tmpIterPtr[0];
+        w->iterPtr->keyPress(w->iterPtr->object, key);
     }
 }
 void renderWidget(Widget* w){

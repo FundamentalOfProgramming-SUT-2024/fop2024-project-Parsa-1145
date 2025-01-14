@@ -40,7 +40,8 @@ void createPotion(Potion* p){
     p->gameObject->deleteObject = &deletePotion;
     p->gameObject->isEqual = &isPotionEqual;
 }
-void deletePotion(Potion* p){
+void deletePotion(ItemBase* o){
+    Potion* p = o->object;
     free(p->name);
     free(p->gameObject);
     free(p);

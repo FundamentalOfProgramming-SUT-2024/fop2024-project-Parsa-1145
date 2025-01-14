@@ -66,6 +66,7 @@ void linkedListInsert(LinkedList* list, void* element, int index){
         tmp2[0] = tmp;
         tmp[1] = element;
     }
+    list->size++;
 }
 void popLinkedList(LinkedList* list){
     if(list->size){

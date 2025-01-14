@@ -10,17 +10,12 @@ typedef struct{
     UiBase* uiBase;
     int x, y;
     char* str;
-    int spaceAccepted;
-    int index;
+    int strLength;
 
     int alignmentX, alignmentY;
 
     int bgColor;
     int colorPair;
-
-    int focused;
-    int hovered;
-
 }TextWidget;
 
 void createTextWidget(TextWidget* t, Widget* parent, char* str, int alignmentX, int alignmentY, int x, int y);

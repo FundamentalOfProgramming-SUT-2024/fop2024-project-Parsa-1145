@@ -8,7 +8,7 @@
 void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int sizePolicyX, int sizePolicyY, int alignmentX, int alignmentY, int x, int y, int w){
     textBox->widget = malloc(sizeof(Widget));
 
-    createWidget(textBox->widget, parent, sizePolicyX, ABSOLUTE, alignmentX, alignmentY, x, y, w, 4, COLOR_BLACK);
+    createWidget(textBox->widget, parent, sizePolicyX, ABSOLUTE, alignmentX, alignmentY, x, y, w, 3+(label[0]!=NULL), COLOR_BLACK);
     
     textBox->str = str;
     textBox->label = label;
@@ -41,23 +41,26 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
 void renderTextBox(TextBox* textBox){
     if(isWidgetVisible(textBox->widget->parent)){
         attron(COLOR_PAIR(textBox->bgColor));
-        move(textBox->widget->topLeftY, textBox->widget->topLeftX + 1);
-        printw("%s:", textBox->label);
+        int top = textBox->widget->topLeftY;
+        if(textBox->label[0]){
+            move(top++, textBox->widget->topLeftX + 1);
+            printw("%s:", textBox->label);
+        }
 
         if(textBox->hovered && !textBox->focused)attron(A_DIM);
-        move(textBox->widget->topLeftY+1, textBox->widget->topLeftX);
+        move(top++, textBox->widget->topLeftX);
         addch(ACS_ULCORNER);
         FOR(i, textBox->widget->wCopy-2){
             addch(ACS_HLINE);
         }
         addch(ACS_URCORNER);
 
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX);
+        move(top, textBox->widget->topLeftX);
         addch(ACS_VLINE);
         FOR(i, textBox->widget->wCopy-2){
             addch(' ');
         }
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + 1);
+        move(top, textBox->widget->topLeftX + 1);
         printw("%s", textBox->str);
         textBox->index = strlen(textBox->str);
         if(textBox->focused){
@@ -67,10 +70,10 @@ void renderTextBox(TextBox* textBox){
         }else{
             addch(' ');
         }
-        move(textBox->widget->topLeftY+2, textBox->widget->topLeftX + textBox->widget->wCopy-1);
+        move(top++, textBox->widget->topLeftX + textBox->widget->wCopy-1);
         addch(ACS_VLINE);
         
-        move(textBox->widget->topLeftY+3, textBox->widget->topLeftX);
+        move(top, textBox->widget->topLeftX);
         addch(ACS_LLCORNER);
         FOR(i, textBox->widget->wCopy-2){
             addch(ACS_HLINE);
