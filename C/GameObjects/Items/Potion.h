@@ -17,6 +17,9 @@ typedef struct{
 ItemBase* generatePotion(cJSON* data);
 void createPotion(Potion* w);
 void deletePotion(ItemBase* o);
+void pickupPotion(ItemBase* o);
+void dropPotion(ItemBase* o);
 int isPotionEqual(Potion* w1, Potion* w2);
+void usePotion(ItemBase* o);
 
 #endif

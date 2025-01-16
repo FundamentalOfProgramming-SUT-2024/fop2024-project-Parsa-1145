@@ -199,11 +199,9 @@ void initSignUpMenu(){
 
     createButton(&suBackButton, &suFormWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 2, 2, 6);
     createButton(&suSignupButton, &suFormWidget, "Sign Up", ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 0, 2, 11);
-    createButton(&suRandomPasswordBtn, &suFormWidget, "Random", ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 16, 11);
-
-    
     createTextBox(&suUserNameTb, &suFormWidget, "Username", suEnteredUsername, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 6, 90);
     createTextBox(&suPasswordTb, &suFormWidget, "Password", suEnteredPssword, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 11, 90);
+    createButton(&suRandomPasswordBtn, &suFormWidget, "Random", ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 16, 11);
     createTextBox(&suEmailTb, &suFormWidget, "Email", suEnteredEmail, RELATIVE, ABSOLUTE, ALIGN_CENTER, ABSOLUTE, 0, 18, 90);
 
     linkedListPushBack(&suUiList, suFormWidget.uiBase);

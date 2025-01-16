@@ -74,11 +74,14 @@ Widget mgSidePane;
 Widget mgTerminalWidget;
 TextBox mgTerminalTextBox;
 Widget mgMessagesArea;
-Widget mgStatusWidget;
+
 Widget mgItemWidget;
 
+Widget mgStatusWidget;
 TabWidget mgTabWidget;
 Widget mgStatsTab;
+TextWidget healthTextWidget;
+TextWidget goldTextWidget;
 Widget mgWeaponsTab;
 Widget mgPotionsTab;
 Widget mgFoodTab;
@@ -121,8 +124,7 @@ void updateWeaponTab(){
             Button* tmpButton = malloc(sizeof(Button));
 
             createWidget(tmpWidget, &mgWeaponsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
-            tmpWidget->bordered = 1;
-            createTextWidget(tmpTextWidget, tmpWidget, iterPtr->name, ALIGN_LEFT, ABSOLUTE, 0, 0);
+            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", 's', iterPtr->name,'u', iterPtr->sprite,'d', iterPtr->quantity);
             createButton(tmpButton, tmpWidget, "Drop", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 4);
             tmpButton->contextObject = iterPtr;
             tmpButton->contextCallback = iterPtr->drop;
@@ -132,6 +134,53 @@ void updateWeaponTab(){
         }
     }
     mgWeaponsTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
+}
+void updatePotionsTab(){
+    void** tmpIterPtr;
+    {
+        UiBase* iterPtr;
+        tmpIterPtr = mgPotionsTab.children->data;
+        while(tmpIterPtr){
+            iterPtr = tmpIterPtr[1];
+            tmpIterPtr = tmpIterPtr[0];
+            iterPtr->delete(iterPtr->object);
+        }
+    }
+    emptyLinkedList(mgPotionsTab.children);
+
+    ItemBase* iterPtr;
+    tmpIterPtr = player.items.data;
+    while(tmpIterPtr){
+        iterPtr = tmpIterPtr[1];
+        tmpIterPtr = tmpIterPtr[0];
+        if(iterPtr->objectType == TYPE_POTION){
+            Widget* tmpWidget = malloc(sizeof(Widget));
+            TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
+            Button* tmpButton = malloc(sizeof(Button));
+            Button* useBtn = malloc(sizeof(Button));
+            Button* identify = malloc(sizeof(Button));
+
+            createWidget(tmpWidget, &mgPotionsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
+            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", 's', iterPtr->name,'u', iterPtr->sprite,'d', iterPtr->quantity);
+            createButton(tmpButton, tmpWidget, "Drop", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 4);
+            createButton(useBtn, tmpWidget, "Use", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 5, 0, 3);
+            createButton(identify, tmpWidget, "Identify", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 9, 0, 8);
+            linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
+            linkedListPushBack(tmpWidget->children, useBtn->uiBase);
+            linkedListPushBack(tmpWidget->children, identify->uiBase);
+            linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
+            linkedListPushBack(mgPotionsTab.children, tmpWidget->uiBase);
+
+            tmpButton->contextObject = iterPtr;
+            useBtn->contextObject = iterPtr;
+            identify->contextObject = iterPtr;
+
+            tmpButton->contextCallback = iterPtr->drop;
+            useBtn->contextCallback = usePotion;
+            identify->contextCallback = NULL;
+        }
+    }
+    mgPotionsTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
 }
 void mgToggleExitMenu(){
     mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
@@ -185,11 +234,10 @@ void updateUi(){
 
 extern void addMessage(char* message){
     TextWidget* tmp = malloc(sizeof(TextWidget));
-    createTextWidget(tmp, &mgMessagesArea, message, ALIGN_LEFT, WITH_PARENT, 0, 0);
+    createTextWidget(tmp, &mgMessagesArea, ALIGN_LEFT, WITH_PARENT, 0, 0, message);
     linkedListInsert(mgMessagesArea.children, tmp->uiBase, 0);
     if(mgMessagesArea.children->size == 20){
         tmp = ((UiBase*)linkedListGetElement(mgMessagesArea.children, mgMessagesArea.children->size-1))->object;
-        free(tmp->str);
         deleteTextWidget(tmp);
         linkedListDeleteElement(mgMessagesArea.children, mgMessagesArea.children->size-1);
     }
@@ -239,17 +287,18 @@ void initMainGame(){
     mgSidePane.layoutPadding = 0;
     createWidget(&mgStatusWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 45, C_BG_BLACK);
     createWidget(&mgItemWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 20, C_BG_BLACK);
-    createWidget(&mgTerminalWidget, NULL, RELATIVE, RELATIVE, ALIGN_RIGHT, ALIGN_BOTTOM, 0, 0, 40, 30, C_BG_BLACK);
+    createWidget(&mgTerminalWidget, NULL, ABSOLUTE, RELATIVE, ALIGN_RIGHT, ALIGN_BOTTOM, 0, 0, 40, 30, C_BG_BLACK);
     mgTerminalWidget.bordered = 1;
     mgItemWidget.bordered = 1;
     mgStatusWidget.bordered = 1;
 
     createTabWidget(&mgTabWidget, &mgStatusWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 1, 1, 100, 100, NULL);
-    
 
     createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+    createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", 'd', &(player.health), 'd', &(player.maxHealth));
+    createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", 'd', &(player.totalGold));
+
     mgStatsTab.layoutType = VERTICAL_LAYOUT;
-    mgStatsTab.bordered = 1;
     mgStatsTab.scrollOn = 1;
 
     createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
@@ -277,7 +326,7 @@ void initMainGame(){
 
     createWidget(&mgMessagesArea, &mgTerminalWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 4, 100, 100, NULL);
     mgMessagesArea.layoutType = VERTICAL_LAYOUT;
-    mgMessagesArea.layoutPadding = 0;
+    mgMessagesArea.layoutPadding = 1;
     mgMessagesArea.scrollOn = 1;
     createTextBox(&mgTerminalTextBox, &mgTerminalWidget, "", mgTerminalInput, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 1, 100);
     linkedListPushBack(mgTerminalWidget.children, mgTerminalTextBox.uiBase);
@@ -304,7 +353,8 @@ void initMainGame(){
     gameSettings.roomThemeProb[2] = 0.25;
     gameSettings.roomThemeProb[3] = 0.05;
     gameSettings.roomThemeNum = 4;
-
+    
+    gameSettings.maxHealth = 16;
 
     gameSettings.debugMode = 1;
     gameSettings.debugShowPointCloud = 1;
@@ -484,7 +534,10 @@ void enterMainGame(){
     player.x = floors[0].roomList[0]->x + 2;
     player.y = floors[0].roomList[0]->y + 2;
     player.z = 0;
+    player.totalGold = 0;
     player.visionRadius = 5;
+    player.health = gameSettings.maxHealth;
+    player.maxHealth = gameSettings.maxHealth;
     createLinkedList(&(player.items), sizeof(ItemBase*));
 
     getmaxyx(stdscr, scrH, scrW);
@@ -532,8 +585,8 @@ void generateLoot(){
                 do{
                     x1 = randBetween(f->roomList[f->stairRooms[1]]->x + 1,f->roomList[f->stairRooms[1]]->x + f->roomList[f->stairRooms[1]]->w-1, 0);
                     y1 = randBetween(f->roomList[f->stairRooms[1]]->y + 1,f->roomList[f->stairRooms[1]]->y + f->roomList[f->stairRooms[1]]->h - 1, 0);
-                    x2 = randBetween((f+1)->roomList[f->stairRooms[0]]->x + 1,f->roomList[f->stairRooms[0]]->x + f->roomList[f->stairRooms[0]]->w-1, 0);
-                    y2 = randBetween((f+1)->roomList[f->stairRooms[0]]->y + 1,f->roomList[f->stairRooms[0]]->y + f->roomList[f->stairRooms[0]]->h - 1, 0);
+                    x2 = x1 - f->roomList[f->stairRooms[1]]->x + (f+1)->roomList[f->stairRooms[0]]->x;
+                    y2 = y1 - f->roomList[f->stairRooms[1]]->y + (f+1)->roomList[f->stairRooms[0]]->y;;
                 }
                 while((!validForItemPosition(x2, y2, j+1)) && (!validForItemPosition(x1, y1, j)));
                 Stair* s1 = malloc(sizeof(Stair));

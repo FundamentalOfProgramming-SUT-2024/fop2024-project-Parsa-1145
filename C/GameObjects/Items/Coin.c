@@ -34,7 +34,7 @@ void createCoin(Coin* c){
     c->itemBase->object = c;
     c->itemBase->objectType = TYPE_COIN;
 
-    c->itemBase->pickUp = &defaultItemPickup;
+    c->itemBase->pickUp = &pickupCoin;
     c->itemBase->drop = &defaultItemDrop;
     c->itemBase->render = &defaultItemRender;
     c->itemBase->update = &defaultItemUpdate;
@@ -42,6 +42,14 @@ void createCoin(Coin* c){
     c->itemBase->deleteObject = &deleteCoin;
 
 
+}
+void pickupCoin(ItemBase* o){
+    Coin* c = o->object;
+
+    player.totalGold += c->quantity * c->value;
+    addMessage(writeLog("A sack found with %d %s inside",o->quantity[0], o->name));
+
+    defaultItemPickup(o);
 }
 int isCoinEqual(Coin* c1, Coin* c2){
     return (!strcmp(c1->name, c2->name));

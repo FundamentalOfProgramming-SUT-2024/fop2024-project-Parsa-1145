@@ -24,6 +24,7 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->parent = parent;
     updateWidgetSize(widget);
 
+
     widget->colorPair = bgColor;
     widget->bordered = 0;
 

@@ -4,7 +4,6 @@
 
 void defaultItemPickup(ItemBase* g){
     removeItemFromLinkedList(floors[player.z].itemList, g);
-    addMessage(writeLog("You picked up %d %s",g->quantity[0], g->name));
     ItemBase* tmp;
     FOR(i, player.items.size){
         tmp = linkedListGetElement(&player.items, i);
@@ -40,7 +39,7 @@ void defaultItemRender(ItemBase* g, CharTexture* frameBuffer, ColorTexture* colo
 void defaultItemUpdate(ItemBase* g){
 
     if((player.x == *(g->x)) && (player.y == *(g->y))){
-        defaultItemPickup(g);
+        g->pickUp(g);
     }
 }
 void noPickUp(ItemBase* g){}

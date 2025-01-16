@@ -34,8 +34,8 @@ void createPotion(Potion* p){
     p->gameObject->objectType = TYPE_POTION;
 
     p->gameObject->render = &defaultItemRender;
-    p->gameObject->drop = &defaultItemDrop;
-    p->gameObject->pickUp = &defaultItemPickup;
+    p->gameObject->drop = &dropPotion;
+    p->gameObject->pickUp = &pickupPotion;
     p->gameObject->update = &defaultItemUpdate;
     p->gameObject->deleteObject = &deletePotion;
     p->gameObject->isEqual = &isPotionEqual;
@@ -50,4 +50,20 @@ int isPotionEqual(Potion* p1, Potion* p2){
     if(!strcmp(p1->name, p2->name)){
         return 1;
     }
+}
+void pickupPotion(ItemBase* o){
+    Potion* p = o->object;
+
+    defaultItemPickup(o);
+
+    addMessage(writeLog("You picked up a %s", p->name));
+    updatePotionsTab();
+}
+void usePotion(ItemBase* o){
+    addMessage(writeLog("You used a %s", o->name));
+}
+
+void dropPotion(ItemBase* o){
+    defaultItemDrop(o);
+    updatePotionsTab(o);
 }

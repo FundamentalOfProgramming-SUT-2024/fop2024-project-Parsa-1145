@@ -14,6 +14,8 @@ typedef struct{
     int roomThemeNum;
     float* roomThemeProb;
 
+    int maxHealth;
+
     int debugMode;
     int debugShowPointCloud;
     int noClip;

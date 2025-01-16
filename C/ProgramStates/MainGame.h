@@ -25,6 +25,8 @@ extern Widget mgFoodTab;
 
 
 extern void updateWeaponTab();
+extern void updatePotionsTab();
+
 extern int validForItemPosition(int x, int y, int z);
 extern void addMessage(char* message);
 

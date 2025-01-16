@@ -9,9 +9,10 @@ typedef struct{
     int visionRadius;
 
     int health;
+    int maxHealth;
     int strenght;
 
-    int maxHealth;
+    int totalGold;
 
     LinkedList items;
     Weapon* weapon;
