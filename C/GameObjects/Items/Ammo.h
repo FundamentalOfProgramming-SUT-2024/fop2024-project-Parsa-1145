@@ -20,7 +20,6 @@ typedef struct{
     int type;
     float damage;
     float range;
-    int level;
     int ammoType;
 }Ammo;
 

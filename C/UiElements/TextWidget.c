@@ -33,20 +33,34 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
 
     t->args = calloc(n ,sizeof(Arg));
 
-    FOR(i, n){
-        t->args[i].argType = (char) va_arg(args, int);
-        switch (t->args[i].argType){
-            case 's':
-                t->args[i].arg.s = va_arg(args, char*);
+    int k = 0;
+    FOR(i, t->strLength){
+        switch (format[i]){
+            case '\\':
+                if(format[i+1] == '%'){
+                    i++;
+                }
                 break;
-            case 'd':
-                t->args[i].arg.d = va_arg(args, int*);
+            case '%':
+                i++;
+                t->args[k].argType = format[i];
+                switch (t->args[k].argType){
+                    case 's':
+                        t->args[k].arg.s = va_arg(args, char*);
+                        break;
+                    case 'd':
+                        t->args[k].arg.d = va_arg(args, int*);
+                        break;
+                    case 'u':
+                        t->args[k].arg.w = va_arg(args, wchar_t*);
+                        break;
+                    case 'f':
+                        t->args[k].arg.f = va_arg(args, float*);
+                        break;
+                }
+                k++;
                 break;
-            case 'u':
-                t->args[i].arg.w = va_arg(args, wchar_t*);
-                break;
-            case 'f':
-                t->args[i].arg.f = va_arg(args, float*);
+            default:
                 break;
         }
     }

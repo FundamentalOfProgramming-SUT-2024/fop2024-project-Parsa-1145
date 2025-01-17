@@ -95,8 +95,7 @@ char mgTerminalInput[50];
 LinkedList messages;
 
 void mgToggleStatMenu(){
-    mgStatusWidget.isVisible =! mgStatusWidget.isVisible;
-    mgItemWidget.isVisible =! mgItemWidget.isVisible;
+    mgSidePane.isVisible =! mgSidePane.isVisible;
 
     renderMainGame();
 }
@@ -124,7 +123,7 @@ void updateWeaponTab(){
             Button* tmpButton = malloc(sizeof(Button));
 
             createWidget(tmpWidget, &mgWeaponsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
-            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", 's', iterPtr->name,'u', iterPtr->sprite,'d', iterPtr->quantity);
+            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", iterPtr->name, iterPtr->sprite, iterPtr->quantity);
             createButton(tmpButton, tmpWidget, "...", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 3);
             tmpButton->contextObject = iterPtr;
             tmpButton->contextCallback = iterPtr->openItemInfo;
@@ -262,8 +261,8 @@ void initMainGame(){
                 createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
                 mgStatsTab.layoutType = VERTICAL_LAYOUT;
                 mgStatsTab.scrollOn = 1;
-                createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", 'd', &(player.health), 'd', &(player.maxHealth));
-                createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", 'd', &(player.totalGold));
+                createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", &(player.health), &(player.maxHealth));
+                createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", &(player.totalGold));
 
                 createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
                 mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
