@@ -154,9 +154,6 @@ void updateTextBox(TextBox* t){
     updateWidgetTopLeft(t->widget);
 }
 void deleteTextBox(TextBox* t){
-    if(t->widget->parent){
-        removeItemFromLinkedList(t->widget->parent->children, t->uiBase);
-    }
     free(t->widget);
     free(t->uiBase);
     free(t);

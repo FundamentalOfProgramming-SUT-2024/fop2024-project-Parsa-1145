@@ -31,6 +31,7 @@ void dropAmmo(Ammo* a);
 void renderAmmo(Ammo* a, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
 void updateAmmo(Ammo* a);
 void deleteAmmo(ItemBase* a);
+void openAmmoInfo(ItemBase* o);
 int isAmmoEqual(Ammo* a1, Ammo* a2);
 
 #endif

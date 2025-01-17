@@ -28,6 +28,7 @@ void dropWeapon(ItemBase* o);
 void renderWeapon(Weapon* w, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
 void updateWeapon(ItemBase* o);
 void deleteWeapon(ItemBase* o);
+void openWeaponInfo(ItemBase* o);
 int isWeaponEqual(Weapon* w1, Weapon* w2);
 
 #endif

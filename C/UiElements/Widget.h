@@ -58,6 +58,7 @@ void deleteWidget(Widget* widget);
 int WMouseMoveCb(Widget* textBox);
 int WMouseClickCb(Widget* textBox);
 int WKeyPressCb(Widget* textBox, int key);
+void emptyWidget(Widget* w);
 
 /*TODO
     first implement vertical layout and scrolling. shouldnt be hard. check if the start of each widget is in the area. dont need to implement a text area for multiple lines

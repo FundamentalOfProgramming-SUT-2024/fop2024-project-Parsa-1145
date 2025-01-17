@@ -6,7 +6,6 @@
 #include "../../Globals.h"
 #include "ItemTypes.h"
 
-
 ItemBase* generateWeapon(cJSON* data){
     cJSON* weapon = cJSON_GetArrayItem(data, chooseWithWeight(data));
 
@@ -40,16 +39,15 @@ void createWeapon(Weapon* weapon){
     weapon->gameObject->update = &updateWeapon;
     weapon->gameObject->deleteObject = &deleteWeapon;
     weapon->gameObject->isEqual = &isWeaponEqual;
+    weapon->gameObject->openItemInfo = &openWeaponInfo;
 }
 void pickUpWeapon(ItemBase* o){
     Weapon* w = o->object;
     defaultItemPickup(o);
-    updateWeaponTab();
 }
 void dropWeapon(ItemBase* o){
     Weapon* w = o->object;
     defaultItemDrop(o);
-    updateWeaponTab();
 }
 void renderWeapon(Weapon* w, CharTexture* frameBuffer, ColorTexture* colorBuffer, Camera* cam){
     if(isinRect(w->x, w->y, cam->x, cam->y, cam->w, cam->h)){
@@ -71,4 +69,37 @@ void deleteWeapon(ItemBase* o){
 
 int isWeaponEqual(Weapon* w1, Weapon* w2){
     return (!strcmp(w1->name, w2->name));
+}
+void openWeaponInfo(ItemBase* o){
+    Weapon* w = o->object;
+    TextWidget* name = malloc(sizeof(TextWidget));
+    TextWidget* quantity = malloc(sizeof(TextWidget));
+    TextWidget* dmg = malloc(sizeof(TextWidget));
+    TextWidget* range = malloc(sizeof(TextWidget));
+    TextWidget* sprite = malloc(sizeof(TextWidget));
+
+    Button* drop = malloc(sizeof(Button));
+    Button* equip = malloc(sizeof(Button));
+
+    emptyWidget(&mgItemWidget);
+
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s", 's', o->name);
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", 'd', o->quantity);
+    createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", 'd', &(w->damage));
+    createTextWidget(range, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "range: %d", 'd', &(w->damage));
+    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "sprite: %u", 's', o->sprite);
+
+    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+    createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+
+    drop->contextObject = o;
+    drop->contextCallback = &defaultItemDrop;
+
+    linkedListPushBack(mgItemWidget.children, name->uiBase);
+    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
+    linkedListPushBack(mgItemWidget.children, dmg->uiBase);
+    linkedListPushBack(mgItemWidget.children, range->uiBase);
+    linkedListPushBack(mgItemWidget.children, sprite->uiBase);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
+    linkedListPushBack(mgItemWidget.children, equip->uiBase);
 }

@@ -76,6 +76,8 @@ TextBox mgTerminalTextBox;
 Widget mgMessagesArea;
 
 Widget mgItemWidget;
+Widget mgItemWidgetWrapper;
+
 
 Widget mgStatusWidget;
 TabWidget mgTabWidget;
@@ -83,8 +85,6 @@ Widget mgStatsTab;
 TextWidget healthTextWidget;
 TextWidget goldTextWidget;
 Widget mgWeaponsTab;
-Widget mgPotionsTab;
-Widget mgFoodTab;
 
 LinkedList mgUiList;
 
@@ -118,69 +118,22 @@ void updateWeaponTab(){
     while(tmpIterPtr){
         iterPtr = tmpIterPtr[1];
         tmpIterPtr = tmpIterPtr[0];
-        if(iterPtr->objectType == TYPE_WEAPON){
+        if(1){
             Widget* tmpWidget = malloc(sizeof(Widget));
             TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
             Button* tmpButton = malloc(sizeof(Button));
 
             createWidget(tmpWidget, &mgWeaponsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
             createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", 's', iterPtr->name,'u', iterPtr->sprite,'d', iterPtr->quantity);
-            createButton(tmpButton, tmpWidget, "Drop", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 4);
+            createButton(tmpButton, tmpWidget, "...", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 3);
             tmpButton->contextObject = iterPtr;
-            tmpButton->contextCallback = iterPtr->drop;
+            tmpButton->contextCallback = iterPtr->openItemInfo;
             linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
             linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
             linkedListPushBack(mgWeaponsTab.children, tmpWidget->uiBase);
         }
     }
     mgWeaponsTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
-}
-void updatePotionsTab(){
-    void** tmpIterPtr;
-    {
-        UiBase* iterPtr;
-        tmpIterPtr = mgPotionsTab.children->data;
-        while(tmpIterPtr){
-            iterPtr = tmpIterPtr[1];
-            tmpIterPtr = tmpIterPtr[0];
-            iterPtr->delete(iterPtr->object);
-        }
-    }
-    emptyLinkedList(mgPotionsTab.children);
-
-    ItemBase* iterPtr;
-    tmpIterPtr = player.items.data;
-    while(tmpIterPtr){
-        iterPtr = tmpIterPtr[1];
-        tmpIterPtr = tmpIterPtr[0];
-        if(iterPtr->objectType == TYPE_POTION){
-            Widget* tmpWidget = malloc(sizeof(Widget));
-            TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
-            Button* tmpButton = malloc(sizeof(Button));
-            Button* useBtn = malloc(sizeof(Button));
-            Button* identify = malloc(sizeof(Button));
-
-            createWidget(tmpWidget, &mgPotionsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
-            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", 's', iterPtr->name,'u', iterPtr->sprite,'d', iterPtr->quantity);
-            createButton(tmpButton, tmpWidget, "Drop", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 4);
-            createButton(useBtn, tmpWidget, "Use", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 5, 0, 3);
-            createButton(identify, tmpWidget, "Identify", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 9, 0, 8);
-            linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
-            linkedListPushBack(tmpWidget->children, useBtn->uiBase);
-            linkedListPushBack(tmpWidget->children, identify->uiBase);
-            linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
-            linkedListPushBack(mgPotionsTab.children, tmpWidget->uiBase);
-
-            tmpButton->contextObject = iterPtr;
-            useBtn->contextObject = iterPtr;
-            identify->contextObject = iterPtr;
-
-            tmpButton->contextCallback = iterPtr->drop;
-            useBtn->contextCallback = usePotion;
-            identify->contextCallback = NULL;
-        }
-    }
-    mgPotionsTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
 }
 void mgToggleExitMenu(){
     mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
@@ -247,91 +200,97 @@ void initMainGame(){
     createLinkedList(&mgUiList, sizeof(UiBase*));
 
     createWidget(&mgDebugMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_GRAY0);
-    mgDebugMenu.isVisible = 0;
-    mgDebugMenu.layoutType = VERTICAL_LAYOUT;
-    mgDebugMenu.layoutPadding = 1;
-    mgDebugMenu.bordered = 1;
+    {
+        mgDebugMenu.isVisible = 0;
+        mgDebugMenu.layoutType = VERTICAL_LAYOUT;
+        mgDebugMenu.layoutPadding = 1;
+        mgDebugMenu.bordered = 1;
 
-    createButton(&mgCloseDebugBtn, &mgDebugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 7);
-    createCheckBox(&mgShowPointCloudCb, &mgDebugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
-    createCheckBox(&mgNoClipCb, &mgDebugMenu, "Toggle noclip", &(gameSettings.noClip), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 5, 100);
+        createButton(&mgCloseDebugBtn, &mgDebugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 7);
+        createCheckBox(&mgShowPointCloudCb, &mgDebugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
+        createCheckBox(&mgNoClipCb, &mgDebugMenu, "Toggle noclip", &(gameSettings.noClip), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 5, 100);
 
-    linkedListPushBack(mgDebugMenu.children, mgNoClipCb.uiBase);
-    linkedListPushBack(mgDebugMenu.children, mgShowPointCloudCb.uiBase);
-    linkedListPushBack(mgDebugMenu.children, mgCloseDebugBtn.uiBase);
+        linkedListPushBack(mgDebugMenu.children, mgNoClipCb.uiBase);
+        linkedListPushBack(mgDebugMenu.children, mgShowPointCloudCb.uiBase);
+        linkedListPushBack(mgDebugMenu.children, mgCloseDebugBtn.uiBase);
+    }
 
 
     createWidget(&mgPauseMenu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 21, 11, C_BG_GRAY0);
-    mgPauseMenu.isVisible = 0;
-    mgPauseMenu.bordered = 1;
-    mgPauseMenu.layoutType = VERTICAL_LAYOUT;
-    mgPauseMenu.layoutPadding = 1;
+    {
+        mgPauseMenu.isVisible = 0;
+        mgPauseMenu.bordered = 1;
+        mgPauseMenu.layoutType = VERTICAL_LAYOUT;
+        mgPauseMenu.layoutPadding = 1;
 
-    createButton(&mgResumeButton, &mgPauseMenu, "Resume", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 2, 80);
-    createButton(&mgOptionsBtn, &mgPauseMenu, "Options", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
-    createButton(&mgSaveBtn, &mgPauseMenu, "Save", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
-    createButton(&mgExitBtn, &mgPauseMenu, "Exit", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+        createButton(&mgResumeButton, &mgPauseMenu, "Resume", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 2, 80);
+        createButton(&mgOptionsBtn, &mgPauseMenu, "Options", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+        createButton(&mgSaveBtn, &mgPauseMenu, "Save", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
+        createButton(&mgExitBtn, &mgPauseMenu, "Exit", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
 
-    linkedListPushBack(mgPauseMenu.children, mgResumeButton.uiBase);
-    linkedListPushBack(mgPauseMenu.children, mgOptionsBtn.uiBase);
-    linkedListPushBack(mgPauseMenu.children, mgSaveBtn.uiBase);
-    linkedListPushBack(mgPauseMenu.children, mgExitBtn.uiBase);
+        linkedListPushBack(mgPauseMenu.children, mgResumeButton.uiBase);
+        linkedListPushBack(mgPauseMenu.children, mgOptionsBtn.uiBase);
+        linkedListPushBack(mgPauseMenu.children, mgSaveBtn.uiBase);
+        linkedListPushBack(mgPauseMenu.children, mgExitBtn.uiBase);
 
-    mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
-    mgResumeButton.callBack = &mgToggleExitMenu;
-    mgExitBtn.callBack = &enterMainMenu;
+        mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
+        mgResumeButton.callBack = &mgToggleExitMenu;
+        mgExitBtn.callBack = &enterMainMenu;
+    }
 
 
     createWidget(&mgSidePane, NULL, ABSOLUTE, RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 0, 0, 30, 100, NULL);
     mgSidePane.layoutType = VERTICAL_LAYOUT;
     mgSidePane.layoutPadding = 0;
-    createWidget(&mgStatusWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 45, C_BG_BLACK);
-    createWidget(&mgItemWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 20, C_BG_BLACK);
-    createWidget(&mgTerminalWidget, NULL, ABSOLUTE, RELATIVE, ALIGN_RIGHT, ALIGN_BOTTOM, 0, 0, 40, 30, C_BG_BLACK);
-    mgTerminalWidget.bordered = 1;
-    mgItemWidget.bordered = 1;
-    mgStatusWidget.bordered = 1;
+    {
+        createWidget(&mgItemWidgetWrapper, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 20, C_BG_BLACK);
+        mgItemWidgetWrapper.bordered = 1;
+        {
+            createWidget(&mgItemWidget, &mgItemWidgetWrapper, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 1, 1, 100, 100, C_BG_BLACK);
+            mgItemWidget.layoutType = VERTICAL_LAYOUT;
+            mgItemWidget.scrollOn = 1;
+            mgItemWidget.layoutPadding = 0;
 
-    createTabWidget(&mgTabWidget, &mgStatusWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 1, 1, 100, 100, NULL);
+            linkedListPushBack(mgItemWidgetWrapper.children, mgItemWidget.uiBase);
+        }
 
-    createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
-    createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", 'd', &(player.health), 'd', &(player.maxHealth));
-    createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", 'd', &(player.totalGold));
+        createWidget(&mgStatusWidget, &mgSidePane, RELATIVE, RELATIVE, ALIGN_LEFT, WITH_PARENT, 0, 0, 100, 45, C_BG_BLACK);
+        mgStatusWidget.bordered = 1;
+        {
+            createTabWidget(&mgTabWidget, &mgStatusWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 1, 1, 100, 100, NULL);
+            {
+                createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+                mgStatsTab.layoutType = VERTICAL_LAYOUT;
+                mgStatsTab.scrollOn = 1;
+                createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", 'd', &(player.health), 'd', &(player.maxHealth));
+                createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", 'd', &(player.totalGold));
 
-    mgStatsTab.layoutType = VERTICAL_LAYOUT;
-    mgStatsTab.scrollOn = 1;
+                createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+                mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
+                mgWeaponsTab.scrollOn = 1;
 
-    createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
-    mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
-    mgWeaponsTab.scrollOn = 1;
+                tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab, NULL);
+                tabWidgetAddTab(&mgTabWidget, "Inventory", &mgWeaponsTab, NULL);
+            }
+            linkedListPushBack(mgStatusWidget.children, mgTabWidget.uiBase);
+        }
 
+        createWidget(&mgTerminalWidget, NULL, ABSOLUTE, RELATIVE, ALIGN_RIGHT, ALIGN_BOTTOM, 0, 0, 40, 30, C_BG_BLACK);
+        mgTerminalWidget.bordered = 1;
+        {
+            createWidget(&mgMessagesArea, &mgTerminalWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 4, 100, 100, NULL);
+            mgMessagesArea.layoutType = VERTICAL_LAYOUT;
+            mgMessagesArea.layoutPadding = 1;
+            mgMessagesArea.scrollOn = 1;
+            createTextBox(&mgTerminalTextBox, &mgTerminalWidget, "", mgTerminalInput, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 1, 100);
 
-    createWidget(&mgFoodTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
-    mgFoodTab.layoutType = VERTICAL_LAYOUT;
-    mgFoodTab.scrollOn = 1;
-
-    createWidget(&mgPotionsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 100, 100, NULL);
-    mgPotionsTab.layoutType = VERTICAL_LAYOUT;
-    mgPotionsTab.scrollOn = 1;
-
-    tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab, NULL);
-    tabWidgetAddTab(&mgTabWidget, "Weaopns", &mgWeaponsTab, &updateWeaponTab);
-    tabWidgetAddTab(&mgTabWidget, "Food", &mgFoodTab, NULL);
-    tabWidgetAddTab(&mgTabWidget, "Potions", &mgPotionsTab, NULL);
-
-    linkedListPushBack(mgStatusWidget.children, mgTabWidget.uiBase);
-
-    linkedListPushBack(mgSidePane.children, mgStatusWidget.uiBase);
-    linkedListPushBack(mgSidePane.children, mgItemWidget.uiBase);
-
-    createWidget(&mgMessagesArea, &mgTerminalWidget, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 4, 100, 100, NULL);
-    mgMessagesArea.layoutType = VERTICAL_LAYOUT;
-    mgMessagesArea.layoutPadding = 1;
-    mgMessagesArea.scrollOn = 1;
-    createTextBox(&mgTerminalTextBox, &mgTerminalWidget, "", mgTerminalInput, RELATIVE, ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 1, 100);
-    linkedListPushBack(mgTerminalWidget.children, mgTerminalTextBox.uiBase);
-    linkedListPushBack(mgTerminalWidget.children, mgMessagesArea.uiBase);
-
+            linkedListPushBack(mgTerminalWidget.children, mgTerminalTextBox.uiBase);
+            linkedListPushBack(mgTerminalWidget.children, mgMessagesArea.uiBase);
+        }
+        
+        linkedListPushBack(mgSidePane.children, mgStatusWidget.uiBase);
+        linkedListPushBack(mgSidePane.children, mgItemWidgetWrapper.uiBase);
+    }
     linkedListPushBack(&mgUiList, mgSidePane.uiBase);
     linkedListPushBack(&mgUiList, mgTerminalWidget.uiBase);
 
@@ -556,7 +515,7 @@ int validForItemPosition(int x, int y, int z){
         ItemBase* i;
         while(tmpPtr){
             i = tmpPtr[1];
-            if((i->x == x) && (i->y == y)){
+            if((i->x[0] == x) && (i->y[0] == y)){
                 return 0;
             }else{
                 tmpPtr = tmpPtr[0];
@@ -564,6 +523,7 @@ int validForItemPosition(int x, int y, int z){
         }
         return 1;
     }
+    else return 0;
 }
 void generateLoot(){
     char* lootTableData;
@@ -1067,7 +1027,7 @@ void renderMainGame(){
 
     renderFrameBuffer(frameBuffer);
 
-    mvprintw(mainCamera.h/2, mainCamera.w/2, "@");
+    mvprintw(scrH/2, scrW/2, "@");
 
     renderUi();
 

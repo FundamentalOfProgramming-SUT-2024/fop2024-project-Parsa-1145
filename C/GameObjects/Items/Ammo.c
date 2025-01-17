@@ -40,6 +40,7 @@ void createAmmo(Ammo* a){
     a->gameObject->update = &defaultItemUpdate;
     a->gameObject->deleteObject = &deleteAmmo;
     a->gameObject->isEqual = &isAmmoEqual;
+    a->gameObject->openItemInfo = &openAmmoInfo;
 }
 
 int isAmmoEqual(Ammo* a1, Ammo* a2){
@@ -86,4 +87,28 @@ void deleteAmmo(ItemBase* o){
     free(a->name);
     free(a->gameObject);
     free(a);
+}
+void openAmmoInfo(ItemBase* o){
+    Ammo* a = o->object;
+    TextWidget* name = malloc(sizeof(TextWidget));
+    TextWidget* quantity = malloc(sizeof(TextWidget));
+    TextWidget* sprite = malloc(sizeof(TextWidget));
+
+    Button* drop = malloc(sizeof(Button));
+
+    emptyWidget(&mgItemWidget);
+
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s", 's', o->name);
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", 'd', o->quantity);
+    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "sprite: %u", 's', o->sprite);
+
+    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+
+    drop->contextObject = o;
+    drop->contextCallback = &defaultItemDrop;
+
+    linkedListPushBack(mgItemWidget.children, name->uiBase);
+    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
+    linkedListPushBack(mgItemWidget.children, sprite->uiBase);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
 }

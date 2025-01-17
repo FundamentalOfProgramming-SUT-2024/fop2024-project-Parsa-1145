@@ -110,9 +110,6 @@ int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clic
 }
 
 void deleteButton(Button* btn){
-    if(btn->widget->parent){
-        removeItemFromLinkedList(btn->widget->parent->children, btn->uiBase);
-    }
     deleteWidget(btn->widget);
     free(btn->uiBase);
     free(btn->str);

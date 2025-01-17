@@ -40,14 +40,12 @@ void createCoin(Coin* c){
     c->itemBase->update = &defaultItemUpdate;
     c->itemBase->isEqual = &isCoinEqual;
     c->itemBase->deleteObject = &deleteCoin;
-
-
+    c->itemBase->openItemInfo = &openCoinInfo;
 }
 void pickupCoin(ItemBase* o){
     Coin* c = o->object;
 
     player.totalGold += c->quantity * c->value;
-    addMessage(writeLog("A sack found with %d %s inside",o->quantity[0], o->name));
 
     defaultItemPickup(o);
 }
@@ -59,4 +57,28 @@ void deleteCoin(ItemBase* o){
     free(c->name);
     free(c->itemBase);
     free(c);
+}
+void openCoinInfo(ItemBase* o){
+    Coin* c = o->object;
+    TextWidget* name = malloc(sizeof(TextWidget));
+    TextWidget* quantity = malloc(sizeof(TextWidget));
+    TextWidget* sprite = malloc(sizeof(TextWidget));
+
+    Button* drop = malloc(sizeof(Button));
+
+    emptyWidget(&mgItemWidget);
+
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s", 's', o->name);
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", 'd', o->quantity);
+    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "sprite: %u", 's', o->sprite);
+
+    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+
+    drop->contextObject = o;
+    drop->contextCallback = &defaultItemDrop;
+
+    linkedListPushBack(mgItemWidget.children, name->uiBase);
+    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
+    linkedListPushBack(mgItemWidget.children, sprite->uiBase);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
 }

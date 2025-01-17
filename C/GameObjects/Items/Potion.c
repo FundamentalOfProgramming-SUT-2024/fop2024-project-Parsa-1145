@@ -4,6 +4,8 @@
 #include "../../Globals.h"
 #include "ItemTypes.h"
 
+
+
 ItemBase* generatePotion(cJSON* data){
     cJSON* potion = cJSON_GetArrayItem(data, chooseWithWeight(data));
 
@@ -27,9 +29,6 @@ void createPotion(Potion* p){
     p->gameObject->quantity = &(p->quantity);
     p->gameObject->name = p->name;
 
-
-
-
     p->gameObject->object = p;
     p->gameObject->objectType = TYPE_POTION;
 
@@ -39,6 +38,8 @@ void createPotion(Potion* p){
     p->gameObject->update = &defaultItemUpdate;
     p->gameObject->deleteObject = &deletePotion;
     p->gameObject->isEqual = &isPotionEqual;
+    p->gameObject->openItemInfo = &openPotionInfo;
+    
 }
 void deletePotion(ItemBase* o){
     Potion* p = o->object;
@@ -49,15 +50,12 @@ void deletePotion(ItemBase* o){
 int isPotionEqual(Potion* p1, Potion* p2){
     if(!strcmp(p1->name, p2->name)){
         return 1;
-    }
+    }else return 0;
 }
 void pickupPotion(ItemBase* o){
     Potion* p = o->object;
 
     defaultItemPickup(o);
-
-    addMessage(writeLog("You picked up a %s", p->name));
-    updatePotionsTab();
 }
 void usePotion(ItemBase* o){
     addMessage(writeLog("You used a %s", o->name));
@@ -65,5 +63,28 @@ void usePotion(ItemBase* o){
 
 void dropPotion(ItemBase* o){
     defaultItemDrop(o);
-    updatePotionsTab(o);
+}
+void openPotionInfo(ItemBase* o){
+    Potion* w = o->object;
+    TextWidget* name = malloc(sizeof(TextWidget));
+    TextWidget* quantity = malloc(sizeof(TextWidget));
+    TextWidget* sprite = malloc(sizeof(TextWidget));
+
+    Button* drop = malloc(sizeof(Button));
+    Button* equip = malloc(sizeof(Button));
+
+    emptyWidget(&mgItemWidget);
+
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s", 's', o->name);
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", 'd', o->quantity);
+    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "Shape: %u", 's', o->sprite);
+
+    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+    createButton(equip, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+
+    linkedListPushBack(mgItemWidget.children, name->uiBase);
+    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
+    linkedListPushBack(mgItemWidget.children, sprite->uiBase);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
+    linkedListPushBack(mgItemWidget.children, equip->uiBase);
 }

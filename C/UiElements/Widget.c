@@ -258,10 +258,6 @@ void deleteWidget(Widget* w){
         w->iterPtr->delete(w->iterPtr->object);
     }
     emptyLinkedList(w->children);
-
-    if(w->parent){
-        removeItemFromLinkedList(w->parent->children, w->uiBase);
-    }
     free(w->uiBase);
     free(w->children);
     w->children = NULL;
@@ -363,4 +359,15 @@ void renderWidget(Widget* w){
         }
     }
    
+}
+
+void emptyWidget(Widget* w){
+    w->tmpIterPtr = w->children->data;
+    while(w->tmpIterPtr){
+        w->iterPtr = w->tmpIterPtr[1];
+        w->tmpIterPtr = w->tmpIterPtr[0];
+        w->iterPtr->delete(w->iterPtr->object);
+    }
+    emptyLinkedList(w->children);
+
 }

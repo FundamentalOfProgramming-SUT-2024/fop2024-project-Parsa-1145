@@ -76,9 +76,6 @@ void updateCheckBox(CheckBox* cb){
     updateWidgetTopLeft(cb->widget);
 }
 void deleteCheckBox(CheckBox* cb){
-    if(cb->widget->parent){
-        removeItemFromLinkedList(cb->widget->parent->children, cb->uiBase);
-    }
     free(cb->uiBase);
     free(cb->widget);
     free(cb);

@@ -4,6 +4,9 @@
 
 void defaultItemPickup(ItemBase* g){
     removeItemFromLinkedList(floors[player.z].itemList, g);
+
+    addMessage(writeLog("You picked up %d %s", g->quantity[0],  g->name));
+
     ItemBase* tmp;
     FOR(i, player.items.size){
         tmp = linkedListGetElement(&player.items, i);
@@ -18,6 +21,7 @@ void defaultItemPickup(ItemBase* g){
     }
 
     linkedListPushBack(&(player.items), g);
+    updateWeaponTab();
 }
 void defaultItemDrop(ItemBase* g){
     if(validForItemPosition(player.x, player.y, player.z)){
@@ -27,6 +31,8 @@ void defaultItemDrop(ItemBase* g){
         removeItemFromLinkedList(&(player.items), g);
         removeItemFromLinkedList(&(player.items), g);
         addMessage(writeLog("You dropped up a %s", g->name));
+        updateWeaponTab();
+        emptyWidget(&mgItemWidget);
     }else{
         addMessage(writeLog("You can not drop here"));
     }

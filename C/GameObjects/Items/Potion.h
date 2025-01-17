@@ -20,6 +20,7 @@ void deletePotion(ItemBase* o);
 void pickupPotion(ItemBase* o);
 void dropPotion(ItemBase* o);
 int isPotionEqual(Potion* w1, Potion* w2);
+void openPotionInfo(ItemBase* o);
 void usePotion(ItemBase* o);
 
 #endif

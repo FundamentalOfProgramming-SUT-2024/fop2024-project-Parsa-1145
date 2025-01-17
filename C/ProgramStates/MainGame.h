@@ -18,11 +18,8 @@ extern Camera mainCamera;
 extern Player player;
 extern Floor* floors;
 
-extern Widget mgStatsTab;
 extern Widget mgWeaponsTab;
-extern Widget mgPotionsTab;
-extern Widget mgFoodTab;
-
+extern Widget mgItemWidget;
 
 extern void updateWeaponTab();
 extern void updatePotionsTab();
