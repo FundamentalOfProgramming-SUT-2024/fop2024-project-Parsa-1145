@@ -9,11 +9,14 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
     float distance, diffrence, desiredDistance;
     float xDir, yDir;
     float force = 0;
+    float xSum = 0, ySum = 0;
 
     int flag = 1;
     for(int i = 0; i < n; i++){
         points[i]->xForce = 0;
         points[i]->yForce = 0;
+        xSum += points[i]->x;
+        ySum += points[i]->y;
         if((!points[i]->locked)){
             for(int j = 0; j < n; j++){//you could shuffle the list, then iterate half of the cloud. this should solve the lock-to-infinite problem
                 if(i != j){
@@ -34,12 +37,12 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
                         yDir = (points[i]->y - points[j]->y) / distance;
                     }
                     if(diffrence > 0){
-                        points[i]->xForce += diffrence * xDir * 2;
-                        points[i]->yForce += diffrence * yDir * 2;
+                        points[i]->xForce += diffrence * xDir / 2;
+                        points[i]->yForce += diffrence * yDir / 2;
                     }else{
                         if(adjMat[i][j]){
-                            points[i]->xForce +=  diffrence * xDir;
-                            points[i]->yForce +=  diffrence * yDir;
+                            points[i]->xForce +=  diffrence * xDir ;
+                            points[i]->yForce +=  diffrence * yDir ;
                         }
                     }
 
@@ -49,13 +52,17 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
                 }
             }
         }
-        xDir = - points[i]->x;
-        yDir = - points[i]->y;
+        xSum /= n;
+        ySum /= n;
+
+        xDir = xSum - points[i]->x;
+        yDir = ySum - points[i]->y;
+
         diffrence = hypot(xDir, yDir);
 
         if(diffrence > 2){
-            points[i]->xForce +=  2 * xDir / diffrence; 
-            points[i]->yForce +=  2 * yDir / diffrence;
+            points[i]->xForce +=  xDir / diffrence / 2; 
+            points[i]->yForce +=  yDir / diffrence / 2;
         }
         
 

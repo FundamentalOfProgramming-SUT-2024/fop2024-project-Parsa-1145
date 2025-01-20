@@ -1,8 +1,13 @@
 #ifndef ITEMBASE
 #define ITEMBASE
 
+#include <stdlib.h>
+
+
 #include "../Camera.h"
 #include "../Texture.h"
+#include "../../Utilities/LinkedList.h"
+#include "../../Utilities/cJSON.h"
 
 #include "../../UiElements/Button.h"
 #include "../../UiElements/TextBox.h"
@@ -11,32 +16,54 @@
 #include "../../UiElements/TabWidget.h"
 #include "../../UiElements/TextWidget.h"
 
-struct ItemBase;
-
-typedef void (*objectCb)(struct ItemBase*);
+extern int globalItemIdCounter;
 
 typedef struct ItemBase{
-    void* object;
-    int objectType;
-    objectCb update;
+    void (*update)(struct ItemBase*);
     void (*render)(void*, CharTexture*, ColorTexture*, Camera*);
     int (*isEqual)(void*, void*);
-    objectCb pickUp;
-    objectCb drop;
-    objectCb deleteObject;
-    objectCb openItemInfo;
+    void (*pickUp)(struct ItemBase*);
+    void (*drop)(struct ItemBase*);
+    void (*deleteObject)(struct ItemBase*);
+    void (*openItemInfo)(struct ItemBase*);
+    void (*primaryUse)(struct ItemBase*);
+    void (*secondaryUse)(struct ItemBase*);
+    void (*playerCollision)(struct ItemBase*);
+    void (*keyPress)(struct ItemBase*);
 
-    int *x, *y, *z;
-    wchar_t* sprite;
-    int* quantity;
+    int id;
+    int relId;
+    char *type, *subType;
+    int damage, range;
+    LinkedList effects;
+    int goodness, decayTime, cursed;
+    int decayed;
+    float openingProb;
+    int fake;
+    int value;
+    char primaryKey, secondaryKey;
+    char* primaryUseName, *secondaryUseName;
+    int x, y, z;
+    wchar_t sprite;
+    int quantity;
     char* name;
+    int collider;
+    int locked;
+    int inInventory;
 }ItemBase;
 
-void defaultItemPickup(ItemBase* g);
-void defaultItemDrop(ItemBase* g);
-void defaultItemRender(ItemBase* g, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
-void defaultItemUpdate(ItemBase* g);
-void noPickUp(ItemBase* g);
-void noDrop(ItemBase* g);
+ItemBase* loadItem(cJSON* data);
+void defaultItemPickup(ItemBase* o);
+void defaultItemDrop(ItemBase* o);
+void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
+int defaultItemCompare(ItemBase* o1, ItemBase* o2);
+void defaultItemUpdate(ItemBase* o);
+void defaultItemDelete(ItemBase* o);
+void noPickUp(ItemBase* o);
+void noDrop(ItemBase* o);
+void pickableItemUpdate(ItemBase* o);
+void debugItemInfo(ItemBase* o);
+ItemBase* findItemById(int id);
+
 
 #endif

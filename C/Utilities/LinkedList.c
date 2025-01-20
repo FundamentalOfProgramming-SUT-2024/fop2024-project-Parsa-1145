@@ -99,14 +99,8 @@ void removeItemFromLinkedList(LinkedList* list, void* element){
 
 }
 void emptyLinkedList(LinkedList* list){
-    void** tmp = list->data;
-    void** tmp2;
-
-    while(tmp){
-        tmp2 = tmp[0];
-        free(tmp);
-        tmp = tmp2;
+    while(list->size){
+        popLinkedList(list);
     }
-    list->size = 0;
     list->data = NULL;
 }

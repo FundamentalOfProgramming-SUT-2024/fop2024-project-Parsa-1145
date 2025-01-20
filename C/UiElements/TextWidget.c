@@ -88,6 +88,68 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
     t->uiBase->type = UI_TYPE_TEXTWIDGET;
 
 }
+void changeTextWidget(TextWidget* t, char* format, ...){
+    free(t->format);
+    free(t->args);
+
+    t->format = copyString(format);
+
+    int n = 0;
+    t->strLength = strlen(format);
+    FOR(i, t->strLength){
+        switch (format[i]){
+            case '\\':
+                if(format[i+1] == '%'){
+                    i++;
+                }
+                break;
+            case '%':
+                n++;
+                break;
+            default:
+                break;
+        }
+    }
+
+    va_list args;
+    va_start(args, n);
+
+    t->args = calloc(n ,sizeof(Arg));
+
+    int k = 0;
+    FOR(i, t->strLength){
+        switch (format[i]){
+            case '\\':
+                if(format[i+1] == '%'){
+                    i++;
+                }
+                break;
+            case '%':
+                i++;
+                t->args[k].argType = format[i];
+                switch (t->args[k].argType){
+                    case 's':
+                        t->args[k].arg.s = va_arg(args, char*);
+                        break;
+                    case 'd':
+                        t->args[k].arg.d = va_arg(args, int*);
+                        break;
+                    case 'u':
+                        t->args[k].arg.w = va_arg(args, wchar_t*);
+                        break;
+                    case 'f':
+                        t->args[k].arg.f = va_arg(args, float*);
+                        break;
+                }
+                k++;
+                break;
+            default:
+                break;
+        }
+    }
+
+    va_end(args);
+}
 void renderTextWidget(TextWidget* t){
     if(isWidgetVisible(t->widget)){
         attron(COLOR_PAIR(t->bgColor));
@@ -135,5 +197,6 @@ void deleteTextWidget(TextWidget* t){
     free(t->uiBase);
     free(t->widget);
     free(t->format);
+    free(t->args);
     free(t);
 }

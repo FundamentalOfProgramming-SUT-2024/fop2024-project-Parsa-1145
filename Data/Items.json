@@ -1,0 +1,198 @@
+[
+    {
+        "name" : "Mace",
+        "type" : "weapon",
+        "subType" : "melee",
+        "damage" : 4,
+        "sprite" : 98,
+        "primaryUse" : "Swing attack",
+        "secondaryUse" : "Swing attack"
+    },{
+        "name" : "Sword",
+        "type" : "weapon",
+        "subType" : "melee",
+        "damage" : 2,
+        "sprite" : 98,
+        "primaryUse" : "Swing attack",
+        "secondaryUse" : "Swing attack"
+    },{
+        "name" : "Dagger",
+        "type" : "weapon",
+        "subType" : "melee",
+        "damage" : 1,
+        "range" : 4,
+        "sprite" : 98,
+        "primaryUse" : "Stab",
+        "secondaryUse" : "Throw"
+    },{
+        "name" : "Bow",
+        "type" : "weapon",
+        "subType" : "ranged",
+        "damage" : 1,
+        "range" : 10,
+        "sprite" : 98,
+        "primaryUse" : "Shoot arrow",
+        "secondaryUse" : "Kick"
+    },{
+        "name" : "Magic Wand",
+        "type" : "weapon",
+        "subType" : "ranged",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 98,
+        "primaryUse" : "Cast spell",
+        "secondaryUse" : "Kick"
+    },{
+        "name" : "Wooden arrow",
+        "type" : "ammo",
+        "subType" : "arrow",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 98
+    },{
+        "name" : "Iron tip arrow",
+        "type" : "ammo",
+        "subType" : "arrow",
+        "damage" : 4,
+        "range" : 10,
+        "sprite" : 98
+    },{
+        "name" : "Ancient key",
+        "type" : "useable",
+        "subType" : "key",
+        "openProb" : 0.9,
+        "sprite" : 98,
+        "primaryUse" : "Unlock door"
+    },{
+        "name" : "Thiefs key",
+        "type" : "useable",
+        "subType" : "key",
+        "openProb" : 0.4,
+        "sprite" : 98,
+        "primaryUse" : "Unlock door"
+    },{
+        "name" : "Broken key",
+        "type" : "useable",
+        "subType" : "key",
+        "openProb" : 0,
+        "sprite" : 98
+    },{
+        "name" : "Maggot",
+        "type" : "consumable",
+        "subType" : "food",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "decayTime" : 500,
+        "goodness" : 1,
+        "cursedProb" : 0.4,
+        "effects": [
+            {
+                "type" : "heal",
+                "amount" : 1
+            }
+        ]
+    },{
+        "name" : "Dead rat",
+        "type" : "consumable",
+        "subType" : "food",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "decayTime" : 300,
+        "goodness" : 2,
+        "cursedProb" : 0.3,
+        "effects": [
+            {
+                "type" : "heal",
+                "amount" : 3
+            }, {
+                "type" : "strenghten",
+                "amount" : 1.1,
+                "duration" : 10
+            }
+        ]
+    },{
+        "name" : "Wierd soup",
+        "type" : "consumable",
+        "subType" : "food",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "decayTime" : 200,
+        "goodness" : 2,
+        "cursedProb" : 0.2,
+        "effects": [
+            {
+                "type" : "heal",
+                "amount" : 5
+            },{
+                "type" : "speedIncrease",
+                "amount" : 2,
+                "duration" : 4
+            }
+        ]
+    },{
+        "name" : "Health Potion",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "healthRegen",
+                "amount" : 2,
+                "duration" : 20
+            }
+        ]
+    },{
+        "name" : "Speed potion",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "speedIncrease",
+                "amount" : 2,
+                "duration" : 15
+            }
+        ]
+    },{
+        "name" : "Strength potion",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 98,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "strenghten",
+                "amount" : 2 ,
+                "duration" : 20
+            }
+        ]
+    },{
+        "name" : "Golden coin",
+        "type" : "valuable",
+        "sprite" : 98,
+        "value" : 1
+    },{
+        "name" : "Ruby",
+        "type" : "valuable",
+        "sprite" : 98,
+        "value" : 10
+    },{
+        "name" : "Door",
+        "type" : "intractable",
+        "sprite" : 98
+    },{
+        "name" : "Trap",
+        "type" : "intractable",
+        "sprite" : 98
+    },{
+        "name" : "Password Generator",
+        "type" : "intractable",
+        "sprite" : 98
+    },{
+        "name" : "Stair",
+        "type" : "intractable",
+        "sprite" : 98
+    }
+]

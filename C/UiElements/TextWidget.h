@@ -31,6 +31,7 @@ typedef struct{
 }TextWidget;
 
 void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignmentY, int x, int y, char* format, ...);
+void changeTextWidget(TextWidget* t, char* format, ...);
 void renderTextWidget(TextWidget* t);
 void updateTextWidget(TextWidget* t);
 void deleteTextWidget(TextWidget* t);

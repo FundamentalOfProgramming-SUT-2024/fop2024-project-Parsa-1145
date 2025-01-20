@@ -17,12 +17,21 @@ extern EngineState mainGame;
 extern Camera mainCamera;
 extern Player player;
 extern Floor* floors;
+extern int floorNum;
 
-extern Widget mgWeaponsTab;
+extern int globalTime;
+extern int deltaTime;
+
+
+extern Widget mgInventoryTab;
 extern Widget mgItemWidget;
 
-extern void updateWeaponTab();
-extern void updatePotionsTab();
+extern TextWidget mgEquipedNameTextWidget;
+extern TextWidget mgEquipedPrimaryTextWidget;
+extern TextWidget mgEquipedSecondaryextWidget;
+
+extern void updateInventoryTab();
+extern void updateEffectsTab();
 
 extern int validForItemPosition(int x, int y, int z);
 extern void addMessage(char* message);

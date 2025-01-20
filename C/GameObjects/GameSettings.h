@@ -15,10 +15,12 @@ typedef struct{
     float* roomThemeProb;
 
     int maxHealth;
+    int healthRegen;
 
     int debugMode;
     int debugShowPointCloud;
     int noClip;
+    int debugItemInfo;
 } GameSettings;
 
 

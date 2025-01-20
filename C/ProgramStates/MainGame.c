@@ -1,6 +1,7 @@
 #include <math.h>
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "MainGame.h"
@@ -31,13 +32,10 @@
 #include "../GameObjects/Renderer.h"
 #include "../GameObjects/Texture.h"
 #include "../GameObjects/Items/ItemBase.h"
-#include "../GameObjects/Items/Weapon.h"
-#include "../GameObjects/Items/Ammo.h"
-#include "../GameObjects/Items/Key.h"
-#include "../GameObjects/Items/Coin.h"
-#include "../GameObjects/Items/Potion.h"
-#include "../GameObjects/Items/Door.h"
-#include "../GameObjects/Items/Stair.h"
+#include "../GameObjects/Items/Useable.h"
+#include "../GameObjects/Items/Intractable.h"
+#include "../GameObjects/Items/Action.h"
+
 
 
 
@@ -56,7 +54,10 @@ CharTexture* visitedMaskBuffer;
 Floor* floors;
 int floorNum;
 LinkedList PathCells;
-int cellState = 0;
+int globalTime = 0;
+int deltaTime = 0;
+
+
 
 Widget mgPauseMenu;
 Button mgOptionsBtn;
@@ -69,6 +70,8 @@ Widget mgDebugMenu;
 Button mgCloseDebugBtn;
 CheckBox mgShowPointCloudCb;
 CheckBox mgNoClipCb;
+CheckBox mgItemDebugInfo;
+
 
 Widget mgSidePane;
 Widget mgTerminalWidget;
@@ -78,13 +81,19 @@ Widget mgMessagesArea;
 Widget mgItemWidget;
 Widget mgItemWidgetWrapper;
 
-
 Widget mgStatusWidget;
 TabWidget mgTabWidget;
 Widget mgStatsTab;
 TextWidget healthTextWidget;
 TextWidget goldTextWidget;
-Widget mgWeaponsTab;
+Widget mgEffectsTab;
+
+Widget mgInventoryTab;
+
+Widget mgEquipedWidget;
+TextWidget mgEquipedNameTextWidget;
+TextWidget mgEquipedPrimaryTextWidget;
+TextWidget mgEquipedSecondaryextWidget;
 
 LinkedList mgUiList;
 
@@ -99,21 +108,41 @@ void mgToggleStatMenu(){
 
     renderMainGame();
 }
-void updateWeaponTab(){
-    void** tmpIterPtr;
-    {
-        UiBase* iterPtr;
-        tmpIterPtr = mgWeaponsTab.children->data;
-        while(tmpIterPtr){
-            iterPtr = tmpIterPtr[1];
-            tmpIterPtr = tmpIterPtr[0];
-            iterPtr->delete(iterPtr->object);
-        }
+void openItemInfo(ItemBase* o){
+    if(gameSettings.debugItemInfo){
+        debugItemInfo(o);
+    }else{
+        o->openItemInfo(o);
     }
-    emptyLinkedList(mgWeaponsTab.children);
+}
+void updateEffectsTab(){
+    emptyWidget(&mgEffectsTab);
+
+    Effect* iterPtr;
+    void** tmpIterPtr = player.effects.data;
+    int i = 0;
+    while(tmpIterPtr){
+        iterPtr = tmpIterPtr[1];
+        tmpIterPtr = tmpIterPtr[0];
+        if(1){
+            TextWidget* name = malloc(sizeof(TextWidget));
+            TextWidget* duration = malloc(sizeof(TextWidget));
+
+            createTextWidget(name, &mgEffectsTab, ALIGN_LEFT, WITH_PARENT, 0, !i, "%s", (iterPtr->type));
+            createTextWidget(duration, &mgEffectsTab, ALIGN_LEFT, WITH_PARENT, 1, 0, "duration : %d / %d", &(iterPtr->elapsed), &(iterPtr->duration));
+
+            linkedListPushBack(mgEffectsTab.children, name->uiBase);
+            linkedListPushBack(mgEffectsTab.children, duration->uiBase);
+        }
+        i++;
+    }
+}
+
+void updateInventoryTab(){
+    emptyWidget(&mgInventoryTab);
 
     ItemBase* iterPtr;
-    tmpIterPtr = player.items.data;
+    void** tmpIterPtr = player.items.data;
     while(tmpIterPtr){
         iterPtr = tmpIterPtr[1];
         tmpIterPtr = tmpIterPtr[0];
@@ -122,17 +151,17 @@ void updateWeaponTab(){
             TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
             Button* tmpButton = malloc(sizeof(Button));
 
-            createWidget(tmpWidget, &mgWeaponsTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
-            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", iterPtr->name, iterPtr->sprite, iterPtr->quantity);
+            createWidget(tmpWidget, &mgInventoryTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
+            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%u) x%d", (iterPtr->name), &(iterPtr->sprite), &(iterPtr->quantity));
             createButton(tmpButton, tmpWidget, "...", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 3);
             tmpButton->contextObject = iterPtr;
-            tmpButton->contextCallback = iterPtr->openItemInfo;
+            tmpButton->contextCallback = openItemInfo;
             linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
             linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
-            linkedListPushBack(mgWeaponsTab.children, tmpWidget->uiBase);
+            linkedListPushBack(mgInventoryTab.children, tmpWidget->uiBase);
         }
     }
-    mgWeaponsTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
+    mgInventoryTab.tmpIterPtr = NULL; //this is here to free up the uibase iterator of the widget.
 }
 void mgToggleExitMenu(){
     mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
@@ -184,7 +213,7 @@ void updateUi(){
     }
 }
 
-extern void addMessage(char* message){
+void addMessage(char* message){
     TextWidget* tmp = malloc(sizeof(TextWidget));
     createTextWidget(tmp, &mgMessagesArea, ALIGN_LEFT, WITH_PARENT, 0, 0, message);
     linkedListInsert(mgMessagesArea.children, tmp->uiBase, 0);
@@ -193,6 +222,7 @@ extern void addMessage(char* message){
         deleteTextWidget(tmp);
         linkedListDeleteElement(mgMessagesArea.children, mgMessagesArea.children->size-1);
     }
+    free(message);
 }
 
 void initMainGame(){
@@ -206,11 +236,14 @@ void initMainGame(){
         mgDebugMenu.bordered = 1;
 
         createButton(&mgCloseDebugBtn, &mgDebugMenu, "Close", ABSOLUTE, ALIGN_LEFT, ABSOLUTE, 2, 2, 7);
-        createCheckBox(&mgShowPointCloudCb, &mgDebugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
         createCheckBox(&mgNoClipCb, &mgDebugMenu, "Toggle noclip", &(gameSettings.noClip), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 5, 100);
+        createCheckBox(&mgItemDebugInfo, &mgDebugMenu, "Toggle item debug info", &(gameSettings.debugItemInfo), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
+        createCheckBox(&mgShowPointCloudCb, &mgDebugMenu, "Toggle point cloud", &(gameSettings.debugShowPointCloud), RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 3, 0, 100);
 
         linkedListPushBack(mgDebugMenu.children, mgNoClipCb.uiBase);
+        linkedListPushBack(mgDebugMenu.children, mgItemDebugInfo.uiBase);
         linkedListPushBack(mgDebugMenu.children, mgShowPointCloudCb.uiBase);
+
         linkedListPushBack(mgDebugMenu.children, mgCloseDebugBtn.uiBase);
     }
 
@@ -261,15 +294,25 @@ void initMainGame(){
                 createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
                 mgStatsTab.layoutType = VERTICAL_LAYOUT;
                 mgStatsTab.scrollOn = 1;
-                createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", &(player.health), &(player.maxHealth));
-                createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", &(player.totalGold));
+                {
+                    createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", &(player.health), &(player.maxHealth));
+                    createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", &(player.totalGold));
 
-                createWidget(&mgWeaponsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
-                mgWeaponsTab.layoutType = VERTICAL_LAYOUT;
-                mgWeaponsTab.scrollOn = 1;
+                    linkedListPushBack(mgStatsTab.children, healthTextWidget.uiBase);
+                    linkedListPushBack(mgStatsTab.children, goldTextWidget.uiBase);
+                }
+
+                createWidget(&mgInventoryTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+                mgInventoryTab.layoutType = VERTICAL_LAYOUT;
+                mgInventoryTab.scrollOn = 1;
+
+                createWidget(&mgEffectsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
+                mgEffectsTab.layoutType = VERTICAL_LAYOUT;
+                mgEffectsTab.scrollOn = 1;
 
                 tabWidgetAddTab(&mgTabWidget, "Stats", &mgStatsTab, NULL);
-                tabWidgetAddTab(&mgTabWidget, "Inventory", &mgWeaponsTab, NULL);
+                tabWidgetAddTab(&mgTabWidget, "Effects", &mgEffectsTab, NULL);
+                tabWidgetAddTab(&mgTabWidget, "Inventory", &mgInventoryTab, NULL);
             }
             linkedListPushBack(mgStatusWidget.children, mgTabWidget.uiBase);
         }
@@ -290,11 +333,28 @@ void initMainGame(){
         linkedListPushBack(mgSidePane.children, mgStatusWidget.uiBase);
         linkedListPushBack(mgSidePane.children, mgItemWidgetWrapper.uiBase);
     }
+
+    createWidget(&mgEquipedWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 20, 5, NULL);
+    {
+        mgEquipedWidget.layoutType = VERTICAL_LAYOUT;
+        mgEquipedWidget.layoutPadding = 0;
+
+        createTextWidget(&mgEquipedNameTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 1, "Nothing is equiped");
+        createTextWidget(&mgEquipedPrimaryTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
+        createTextWidget(&mgEquipedSecondaryextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
+
+        mgEquipedPrimaryTextWidget.widget->isVisible = 0;
+        mgEquipedSecondaryextWidget.widget->isVisible = 0;
+
+        linkedListPushBack(mgEquipedWidget.children, mgEquipedNameTextWidget.uiBase);
+        linkedListPushBack(mgEquipedWidget.children, mgEquipedPrimaryTextWidget.uiBase);
+        linkedListPushBack(mgEquipedWidget.children, mgEquipedSecondaryextWidget.uiBase);
+    }
     linkedListPushBack(&mgUiList, mgSidePane.uiBase);
     linkedListPushBack(&mgUiList, mgTerminalWidget.uiBase);
-
     linkedListPushBack(&mgUiList, mgPauseMenu.uiBase);
     linkedListPushBack(&mgUiList, mgDebugMenu.uiBase);
+    linkedListPushBack(&mgUiList, mgEquipedWidget.uiBase);
 
 
     gameSettings.difficaulity = 0;
@@ -317,11 +377,15 @@ void initMainGame(){
     gameSettings.debugMode = 1;
     gameSettings.debugShowPointCloud = 1;
     gameSettings.noClip = 0;
+    gameSettings.debugItemInfo = 0;
 
     floorNum = 0;
 
     createLinkedList(&PathCells, sizeof(MovingCell*));
     createLinkedList(&messages, sizeof(TextWidget*));
+
+    createLinkedList(&(player.items), sizeof(ItemBase*));
+    createLinkedList(&(player.effects), sizeof(Effect*));
 }
 Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, int maxN, float branchingProb, int depth){
     Room** branchRoomList;
@@ -475,20 +539,17 @@ void enterMainGame(){
     player.x = 0;
     player.y = 0;
     player.z = 0;
-    player.weapon = NULL;
+    player.heldObject = NULL;
     FOR(i, player.items.size){
         ItemBase* tmp;
         tmp = linkedListGetElement(&(player.items), 0);
-        tmp->deleteObject(tmp->object);
+        tmp->deleteObject(tmp);
         popLinkedList(&(player.items));
     }
 
-    mainCamera.h = scrH;
-    mainCamera.w = scrW;
-    mainCamera.h = scrH - 6;
-    mainCamera.w = scrW - 20;
         
     generateMap();
+
     player.x = floors[0].roomList[0]->x + 2;
     player.y = floors[0].roomList[0]->y + 2;
     player.z = 0;
@@ -496,9 +557,15 @@ void enterMainGame(){
     player.visionRadius = 5;
     player.health = gameSettings.maxHealth;
     player.maxHealth = gameSettings.maxHealth;
-    createLinkedList(&(player.items), sizeof(ItemBase*));
+    player.speedModifier = 1;
+    player.healthRegenModifier = 1;
+    player.healthModifier = 1;
+    player.strengthModifier = 1;
+    player.speed = 1;
 
     getmaxyx(stdscr, scrH, scrW);
+    mainCamera.h = scrH;
+    mainCamera.w = scrW;
     frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
     visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
 
@@ -509,12 +576,13 @@ void enterMainGame(){
 }
 int validForItemPosition(int x, int y, int z){
     Floor* f = floors + z;
+    static void** tmpPtr;
+    static ItemBase* i;
+    tmpPtr = f->itemList->data;
     if(f->groundMesh->data[y][x] == '.'){
-        void** tmpPtr = f->itemList->data;
-        ItemBase* i;
         while(tmpPtr){
             i = tmpPtr[1];
-            if((i->x[0] == x) && (i->y[0] == y)){
+            if((i->x == x) && (i->y == y)){
                 return 0;
             }else{
                 tmpPtr = tmpPtr[0];
@@ -526,8 +594,11 @@ int validForItemPosition(int x, int y, int z){
 }
 void generateLoot(){
     char* lootTableData;
-    if(fileToStr("../Data/LootTable.json", &lootTableData)){
+    char* itemDb;
+    if(fileToStr("../Data/LootTable.json", &lootTableData) && fileToStr("../Data/Items.json", &itemDb)){
         cJSON* lootTableJson = cJSON_Parse(lootTableData);
+        cJSON* itemDbJson = cJSON_Parse(itemDb);
+
 
         int themeNum = cJSON_GetArraySize(lootTableJson);
         cJSON* roomLootTable[themeNum];
@@ -548,66 +619,70 @@ void generateLoot(){
                     y2 = y1 - f->roomList[f->stairRooms[1]]->y + (f+1)->roomList[f->stairRooms[0]]->y;;
                 }
                 while((!validForItemPosition(x2, y2, j+1)) && (!validForItemPosition(x1, y1, j)));
-                Stair* s1 = malloc(sizeof(Stair));
-                Stair* s2 = malloc(sizeof(Stair));
+                ItemBase* s1 = calloc(1, sizeof(ItemBase));
+                ItemBase* s2 = calloc(1, sizeof(ItemBase));
+                initStair(s1);
+                initStair(s2);
                 s1->z = j;
                 s1->x = x1;
                 s1->y = y1;
-                s1->dest = s2;
                 s1->sprite = '#';
-                createStair(s1);
-                linkedListPushBack(f->itemList, s1->itemBase);
+                linkedListPushBack(f->itemList, s1);
                 s2->z = j+1;
                 s2->x = x2;
                 s2->y = y2;
-                s2->dest = s1;
                 s2->sprite = '#';
-                createStair(s2);
-                linkedListPushBack(nextF->itemList, s2->itemBase);
+                linkedListPushBack(nextF->itemList, s2);
+                s1->relId = s2->id;
+                s2->relId = s1->id;
             }
             FOR(i, f->roomNum){
                 Room* r = f->roomList[i];
-                int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "min")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "max")->valueint + 1, i + j);
+                int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "minRolls")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "maxRolls")->valueint + 1, i + j);
 
                 cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme], "enteries");
                 FOR(z, num){
-                    int tmp = chooseWithWeight(enteries);
+                    int index = chooseWithWeight(enteries);
 
-                    cJSON* entery = cJSON_GetArrayItem(enteries, tmp);
-
+                    cJSON* entery = cJSON_GetArrayItem(enteries, index);
+                    char* name = cJSON_GetObjectItem(entery, "name")->valuestring;
                     ItemBase* gen;
-                    cJSON* pool = cJSON_GetObjectItem(entery, "pool");
 
-                    switch(cJSON_GetObjectItem(entery, "type")->valueint){
-                        case 0:
-                            gen = generateWeapon(pool);
+                    cJSON* tmp = itemDbJson->child;
+                    int found = 0;
+                    while(tmp){
+                        if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
+                            gen = loadItem(tmp);
+                            found = 1;
                             break;
-                        case 1:
-                            gen = generateAmmo(pool);
-                            break;
-                        case 2:
-                            gen = generateCoin(pool);
-                            break;
-                        case 3:
-                            gen = generateKey(pool);
-                            break;
-                        case TYPE_POTION:
-                            gen = generatePotion(pool);
-                            break;
+                        }else{
+                            tmp = tmp->next;
+                        }
                     }
-                    gen->x[0] = randBetween(1 + r->x, r->w + r->x-1, 0);
-                    gen->y[0] = randBetween(1 + r->y, r->h  + r->y-1, 0);
-                    while(!validForItemPosition(gen->x[0], gen->y[0], j)){
-                        gen->x[0] = randBetween(1 + r->x, r->w + r->x-1, 0);
-                        gen->y[0] = randBetween(1 + r->y, r->h  + r->y-1, 0);
+                    if(found){
+                        if(cJSON_GetObjectItem(entery, "min")){
+                            gen->quantity = randBetween(cJSON_GetObjectItem(entery, "min")->valueint, cJSON_GetObjectItem(entery, "max")->valueint + 1, 0);
+                        }else{
+                            gen->quantity = 1;
+                        }
+                        gen->x = randBetween(1 + r->x, r->w + r->x-1, 0);
+                        gen->y = randBetween(1 + r->y, r->h  + r->y-1, 0);
+                        while(!validForItemPosition(gen->x, gen->y, j)){
+                            gen->x = randBetween(1 + r->x, r->w + r->x-1, 0);
+                            gen->y = randBetween(1 + r->y, r->h  + r->y-1, 0);
+                        }
+                        gen->z = j;
+                        linkedListPushBack(f->itemList, gen);
+
                     }
-                    gen->z[0] = j;
-                    linkedListPushBack(f->itemList, gen);
+                     
                 }
             }
         }
         cJSON_free(lootTableJson);
-
+        cJSON_free(itemDbJson);
+        free(lootTableData);
+        free(itemDb);
     }
 }
 void postProccessFloor(Floor* f){
@@ -622,25 +697,23 @@ void postProccessFloor(Floor* f){
                 if(f->groundMesh->data[i][j-1] == '.') tmp++;
                 if(tmp >= 1) f->groundMesh->data[i][j] = ';';
             }else if(f->groundMesh->data[i][j] == 'D'){
-                Door* d = malloc(sizeof(Door));
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
                 d->sprite = '+';
                 d->x = j;
                 d->y = i;
                 d->z = f->index;
-                d->hidden = 0;
                 d->locked = 0;
-                createDoor(d);
-                linkedListPushBack(f->itemList, d->itemBase);
+                linkedListPushBack(f->itemList, d);
             }else if(f->groundMesh->data[i][j] == 'H'){
-                Door* d = malloc(sizeof(Door));
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
                 d->sprite = '#';
                 d->x = j;
                 d->y = i;
                 d->z = f->index;
-                d->hidden = 1;
                 d->locked = 0;
-                createDoor(d);
-                linkedListPushBack(f->itemList, d->itemBase);
+                linkedListPushBack(f->itemList, d);
             }
         }
     }
@@ -682,7 +755,7 @@ void generateFloor(Floor* f){
     createLinkedList(f->itemList, sizeof(ItemBase*));
 
     int roomsPlaced = 0;
-    while(roomsPlaced < 200){
+    do{
         if(roomsPlaced != 0){
             roomsPlaced = 0;
             FOR(i, f->roomNum){
@@ -744,8 +817,7 @@ void generateFloor(Floor* f){
 
             // }
         }
-    }
-
+    }while(roomsPlaced < 200);
     float lastRatio = 1;
     FOR(i, f->roomNum){
         Room* r = f->roomList[i];
@@ -902,23 +974,60 @@ int moveValid(int x, int y){
     
 }
 
-void updatePlayer(){
+void updateWorld(){
     drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
-    void** tmpPtr = floors[player.z].itemList->data;
-    void** tmpCopy;
-    ItemBase* tmp;
+    static void** tmpPtr;
+    static ItemBase* tmpItemBase;
+    static Effect* tmpEffect;
+    static int moves = 0;
+
+    
+
+    moves ++;
+    if(moves >= getPlayerSpeed(&player)){
+        globalTime++;
+        deltaTime = 1;
+        moves = 0;
+    }else{
+        deltaTime = 0;
+    }
+
+    player.speedModifier = 1;
+    player.healthRegenModifier = 1;
+    player.healthModifier = 1;
+    player.strengthModifier = 1;
+    if(deltaTime){
+        for(void** i = player.effects.data; i ;){
+            tmpEffect = i[1];
+            i = i[0];
+
+            tmpEffect->elapsed++;
+            tmpEffect->func(tmpEffect);
+            if(tmpEffect->duration <= tmpEffect->elapsed){
+                deleteEffect(tmpEffect);
+                removeItemFromLinkedList(&(player.effects), tmpEffect);
+                updateEffectsTab();
+            }
+        }
+    }
+    tmpPtr = floors[player.z].itemList->data;
     while(tmpPtr){
-        tmp = tmpPtr[1];
-        tmpCopy = *tmpPtr;
-        tmp->update(tmp);
-        tmpPtr = tmpCopy;
+        tmpItemBase = tmpPtr[1];
+        tmpPtr = *tmpPtr;
+        if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
+    }
+    tmpPtr = player.items.data;
+    while(tmpPtr){
+        tmpItemBase = tmpPtr[1];
+        tmpPtr = *tmpPtr;
+        if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
     }
 }
 void movePlayer(int x, int y){
     if(moveValid(x, y)){
         player.x += x;
         player.y += y;
-        updatePlayer();
+        updateWorld();
     }
     
 }
@@ -969,6 +1078,10 @@ void updateMainGame(){
                 case 's':
                     movePlayer(0, 1);
                     break;
+                case 'e':
+                    if(player.heldObject && player.heldObject->primaryUse){
+                        player.heldObject->primaryUse(player.heldObject);
+                    }
                 case 'u':
                     if(player.z != 0){
                         player.z--;

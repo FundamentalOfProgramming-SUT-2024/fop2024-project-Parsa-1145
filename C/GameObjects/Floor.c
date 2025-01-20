@@ -18,7 +18,7 @@ void deleteFloor(Floor* f){
     ItemBase* tmp;
     FOR(j, f->itemList->size){
         tmp = linkedListGetElement(f->itemList, 0);
-        tmp->deleteObject(tmp->object);
+        tmp->deleteObject(tmp);
         popLinkedList(f->itemList);
     }
     free(f->itemList);

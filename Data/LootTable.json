@@ -1,193 +1,166 @@
 [{
     "type" : 0,
-    "min" : 5,
-    "max" : 10,
-    "enteries" : [
+    "minRolls" : 5,
+    "maxRolls" : 10,
+    "enteries":[
         {
-            "type" : 0,
-            "weight" : 25,
-            "pool" : [
-                {
-                    "name" : "Long Sword",
-                    "minDmg" : 4,
-                    "maxDmg" : 6,
-                    "Sprite" : 10132,
-                    "weight" : 2
-                },{
-                    "name" : "Dagger",
-                    "minDmg" : 1,
-                    "maxDmg" : 2,
-                    "Sprite" : 10132,
-                    "weight" : 5
-                },{
-                    "name" : "Mace",
-                    "minDmg" : 5,
-                    "maxDmg" : 8,
-                    "Sprite" : 1759,
-                    "weight" : 1
-                }
-            ]
+            "name" : "Sword",
+            "weight" : 5
         },{
-            "type" : 1,
-            "weight" : 10,
-            "pool" : [
-                {
-                    "name" : "Wooden Arrow",
-                    "dmg" : 1,
-                    "minQuantity" : 4,
-                    "maxQuantity" : 10,
-                    "sprite" : 10132,
-                    "weight" : 3
-                },{
-                    "name" : "Iron Tip Arrow",
-                    "dmg" : 13,
-                    "minQuantity" : 2,
-                    "maxQuantity" : 5,
-                    "sprite" : 10132,
-                    "weight" : 1
-                }
-            ]
+            "name" : "Dagger",
+            "weight" : 5
         },{
-            "type" : 2,
-            "weight" : 15,
-            "pool" : [
-                {
-                    "name" : "Gold Coin",
-                    "minQuantity" : 5,
-                    "maxQuantity" : 15,
-                    "sprite" : 10132,
-                    "Value" : 1,
-                    "weight" : 5
-                },{
-                    "name" : "Black Coin",
-                    "minQuantity" : 2,
-                    "maxQuantity" : 5,
-                    "sprite" : 10132,
-                    "Value" : 10,
-                    "weight" : 1
-                }
-            ]
+            "name" : "Bow",
+            "weight" : 5
         },{
-            "type" : 3,
+            "name" : "Magic Wand",
+            "weight" : 5
+        },{
+            "name" : "Wooden arrow",
             "weight" : 5,
-            "pool" : [
-                    {
-                        "name" : "Ancient Key",
-                        "sprite" : 10132,
-                        "openProb" : 0.9,
-                        "broken" : 0,
-                        "weight" : 1
-                    },{
-                        "name" : "Broken Key",
-                        "sprite" : 10132,
-                        "openProb" : 0,
-                        "broken" : 1,
-                        "weight" : 4
-                    }
-                ]
+            "min" : 5,
+            "max" : 10
         },{
-            "type" : 4,
-            "weight" : 6,
-            "pool" : [
-                    {
-                        "name" : "Speed Potion",
-                        "sprite" : "L",
-                        "weight" : 1
-                    },{
-                        "name" : "Health Potion",
-                        "sprite" : "H",
-                        "weight" : 1
-                    },{
-                        "name" : "Poison Potion",
-                        "sprite" : "P",
-                        "weight" : 1
-                    }
-                ]
+            "name" : "Iron tip arrow",
+            "weight" : 5,
+            "min" : 3,
+            "max" : 7
+        },{
+            "name" : "Ancient key",
+            "weight" : 5
+        },{
+            "name" : "Thiefs key",
+            "weight" : 5
+        },{
+            "name" : "Broken key",
+            "weight" : 5
+        },{
+            "name" : "Maggot",
+            "weight" : 5
+        },{
+            "name" : "Dead rat",
+            "weight" : 5
+        },{
+            "name" : "Wierd soup",
+            "weight" : 5
+        },{
+            "name" : "Health Potion",
+            "weight" : 5
+        },{
+            "name" : "Strength potion",
+            "weight" : 5
+        },{
+            "name" : "Speed potion",
+            "weight" : 5
+        },{
+            "name" : "Golden coint",
+            "weight" : 5,
+            "min" : 9,
+            "max" : 16
+        },{
+            "name" : "Ruby",
+            "weight" : 5,
+            "min" : 3,
+            "max" : 6
         }
     ]
 },{
     "type" : 1,
-    "min" : 1,
-    "max" : 5,
-    "enteries" : [
+    "minRolls" : 5,
+    "maxRolls" : 10,
+    "enteries":[
         {
-            "type" : 2,
-            "weight" : 1,
-            "pool" : [
-                {
-                    "name" : "Gold Coin",
-                    "minQuantity" : 5,
-                    "maxQuantity" : 15,
-                    "sprite" : 10132,
-                    "Value" : 1,
-                    "weight" : 5
-                },{
-                    "name" : "Black Coin",
-                    "minQuantity" : 2,
-                    "maxQuantity" : 5,
-                    "sprite" : 10132,
-                    "Value" : 10,
-                    "weight" : 1
-                }
-            ]
+            "name" : "Health Potion",
+            "weight" : 5
+        },{
+            "name" : "Strength potion",
+            "weight" : 5
+        },{
+            "name" : "Speed potion",
+            "weight" : 5
         }
     ]
 },{
     "type" : 2,
-    "min" : 1,
-    "max" : 5,
-    "enteries" : [
+    "minRolls" : 5,
+    "maxRolls" : 10,
+    "enteries":[
         {
-            "type" : 0,
+            "name" : "Sword",
+            "weight" : 5
+        },{
+            "name" : "Dagger",
+            "weight" : 5
+        },{
+            "name" : "Bow",
+            "weight" : 5
+        },{
+            "name" : "Magic Wand",
+            "weight" : 5
+        },{
+            "name" : "Wooden arrow",
             "weight" : 5,
-            "pool" : [
-                {
-                    "name" : "Long Sword",
-                    "minDmg" : 4,
-                    "maxDmg" : 6,
-                    "Sprite" : 10132,
-                    "weight" : 2
-                },{
-                    "name" : "Dagger",
-                    "minDmg" : 1,
-                    "maxDmg" : 2,
-                    "Sprite" : 10132,
-                    "weight" : 5
-                },{
-                    "name" : "Mace",
-                    "minDmg" : 5,
-                    "maxDmg" : 8,
-                    "Sprite" : 10132,
-                    "weight" : 1
-                }
-            ]
+            "min" : 5,
+            "max" : 10
+        },{
+            "name" : "Iron tip arrow",
+            "weight" : 5,
+            "min" : 3,
+            "max" : 7
+        },{
+            "name" : "Ancient key",
+            "weight" : 5
+        },{
+            "name" : "Thiefs key",
+            "weight" : 5
+        },{
+            "name" : "Broken key",
+            "weight" : 5
+        },{
+            "name" : "Maggot",
+            "weight" : 5
+        },{
+            "name" : "Dead rat",
+            "weight" : 5
+        },{
+            "name" : "Wierd soup",
+            "weight" : 5
+        },{
+            "name" : "Health Potion",
+            "weight" : 5
+        },{
+            "name" : "Strength potion",
+            "weight" : 5
+        },{
+            "name" : "Speed potion",
+            "weight" : 5
+        },{
+            "name" : "Golden coint",
+            "weight" : 5,
+            "min" : 9,
+            "max" : 16
+        },{
+            "name" : "Ruby",
+            "weight" : 5,
+            "min" : 3,
+            "max" : 6
         }
     ]
 },{
     "type" : 3,
-    "min" : 5,
-    "max" : 10,
-    "enteries" : [
+    "minRolls" : 10,
+    "maxRolls" : 15,
+    "enteries":[
         {
-            "type" : 1,
-            "weight" : 10,
-            "pool" : [
-                {
-                    "name" : "Wooden Arrow",
-                    "dmg" : 1,
-                    "minQuantity" : 4,
-                    "maxQuantity" : 10,
-                    "sprite" : 10132,
-                    "weight" : 3
-                },{
-                    "name" : "Iron Tip Arrow",
-                    "dmg" : 13,
-                    "minQuantity" : 2,
-                    "maxQuantity" : 5,
-                    "sprite" : 10132,
-                    "weight" : 1
-                }
-            ]
+            "name" : "Golden coint",
+            "weight" : 5,
+            "min" : 9,
+            "max" : 16
+        },{
+            "name" : "Ruby",
+            "weight" : 5,
+            "min" : 3,
+            "max" : 6
         }
     ]
 }]
