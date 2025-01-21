@@ -4,7 +4,7 @@
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 4,
-        "sprite" : 98,
+        "sprite" : 5876,
         "primaryUse" : "Swing attack",
         "secondaryUse" : "Swing attack"
     },{
@@ -12,7 +12,7 @@
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 2,
-        "sprite" : 98,
+        "sprite" : 11797,
         "primaryUse" : "Swing attack",
         "secondaryUse" : "Swing attack"
     },{
@@ -21,7 +21,7 @@
         "subType" : "melee",
         "damage" : 1,
         "range" : 4,
-        "sprite" : 98,
+        "sprite" : 11313,
         "primaryUse" : "Stab",
         "secondaryUse" : "Throw"
     },{
@@ -30,7 +30,7 @@
         "subType" : "ranged",
         "damage" : 1,
         "range" : 10,
-        "sprite" : 98,
+        "sprite" : 10631,
         "primaryUse" : "Shoot arrow",
         "secondaryUse" : "Kick"
     },{
@@ -39,7 +39,7 @@
         "subType" : "ranged",
         "damage" : 2,
         "range" : 8,
-        "sprite" : 98,
+        "sprite" : 5849,
         "primaryUse" : "Cast spell",
         "secondaryUse" : "Kick"
     },{
@@ -48,39 +48,39 @@
         "subType" : "arrow",
         "damage" : 2,
         "range" : 8,
-        "sprite" : 98
+        "sprite" : 10231
     },{
         "name" : "Iron tip arrow",
         "type" : "ammo",
         "subType" : "arrow",
         "damage" : 4,
         "range" : 10,
-        "sprite" : 98
+        "sprite" : 10234
     },{
         "name" : "Ancient key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0.9,
-        "sprite" : 98,
+        "sprite" : 11238,
         "primaryUse" : "Unlock door"
     },{
         "name" : "Thiefs key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0.4,
-        "sprite" : 98,
+        "sprite" : 11229,
         "primaryUse" : "Unlock door"
     },{
         "name" : "Broken key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0,
-        "sprite" : 98
+        "sprite" : 1126
     },{
         "name" : "Maggot",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 98,
+        "sprite" : 8276,
         "primaryUse" : "consume",
         "decayTime" : 500,
         "goodness" : 1,
@@ -95,7 +95,7 @@
         "name" : "Dead rat",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 98,
+        "sprite" : 11294,
         "primaryUse" : "consume",
         "decayTime" : 300,
         "goodness" : 2,
@@ -114,7 +114,7 @@
         "name" : "Wierd soup",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 98,
+        "sprite" : 11294,
         "primaryUse" : "consume",
         "decayTime" : 200,
         "goodness" : 2,
@@ -133,7 +133,7 @@
         "name" : "Health Potion",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 98,
+        "sprite" : 11224,
         "primaryUse" : "consume",
         "effects": [
             {
@@ -146,7 +146,7 @@
         "name" : "Speed potion",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 98,
+        "sprite" : 11224,
         "primaryUse" : "consume",
         "effects": [
             {
@@ -159,7 +159,7 @@
         "name" : "Strength potion",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 98,
+        "sprite" : 11224,
         "primaryUse" : "consume",
         "effects": [
             {
@@ -171,12 +171,12 @@
     },{
         "name" : "Golden coin",
         "type" : "valuable",
-        "sprite" : 98,
+        "sprite" : 11097,
         "value" : 1
     },{
         "name" : "Ruby",
         "type" : "valuable",
-        "sprite" : 98,
+        "sprite" : 9671,
         "value" : 10
     },{
         "name" : "Door",

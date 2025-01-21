@@ -46,6 +46,7 @@ void generateMap();
 EngineState mainGame = {&enterMainGame, &updateMainGame, &renderMainGame, &exitMainGame};
 
 Player player;
+LinkedList playerActionList;
 
 Camera mainCamera;
 CharTexture* frameBuffer;
@@ -94,6 +95,7 @@ Widget mgEquipedWidget;
 TextWidget mgEquipedNameTextWidget;
 TextWidget mgEquipedPrimaryTextWidget;
 TextWidget mgEquipedSecondaryextWidget;
+Widget mgInteractionsWidget;
 
 LinkedList mgUiList;
 
@@ -138,6 +140,30 @@ void updateEffectsTab(){
     }
 }
 
+void updateInteractionsWidget(){
+    Interaction* tmpInteraction;
+    TextWidget* tmpText;
+
+    emptyWidget(&mgInteractionsWidget);
+
+    for(void** i = playerActionList.data; i ;){
+        tmpInteraction = i[1];
+        i = i[0];
+        tmpText = malloc(sizeof(TextWidget));
+        switch(tmpInteraction->key){
+            case KEY_UP:
+                createTextWidget(tmpText, &mgInteractionsWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "press up to %s", tmpInteraction->name);
+                break;
+            case KEY_DOWN:
+                createTextWidget(tmpText, &mgInteractionsWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "press down to %s", tmpInteraction->name);
+                break;
+            default:
+                createTextWidget(tmpText, &mgInteractionsWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "press %u to %s", &(tmpInteraction->key), tmpInteraction->name);
+                break;
+        }
+        linkedListPushBack(mgInteractionsWidget.children, tmpText->uiBase);
+    }
+}
 void updateInventoryTab(){
     emptyWidget(&mgInventoryTab);
 
@@ -177,6 +203,16 @@ void uiMouseMove(){
     while(tmp1){
         tmp = tmp1[1];
         tmp->mouseMove(tmp->object);
+        tmp1 = tmp1[0];
+    }
+}
+uiKeyPress(int key){
+    static UiBase* tmp;
+    static void** tmp1;
+    tmp1 = mgUiList.data;
+    while(tmp1){
+        tmp = tmp1[1];
+        tmp->keyPress(tmp->object, key);
         tmp1 = tmp1[0];
     }
 }
@@ -334,14 +370,17 @@ void initMainGame(){
         linkedListPushBack(mgSidePane.children, mgItemWidgetWrapper.uiBase);
     }
 
-    createWidget(&mgEquipedWidget, NULL, ABSOLUTE, ABSOLUTE, ALIGN_LEFT, ALIGN_TOP, 0, 0, 20, 5, NULL);
+    createWidget(&mgEquipedWidget, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 20, 100, NULL);
+    mgEquipedWidget.layoutType = VERTICAL_LAYOUT;
+    mgEquipedWidget.layoutPadding = 0;
     {
-        mgEquipedWidget.layoutType = VERTICAL_LAYOUT;
-        mgEquipedWidget.layoutPadding = 0;
-
         createTextWidget(&mgEquipedNameTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 1, "Nothing is equiped");
         createTextWidget(&mgEquipedPrimaryTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
         createTextWidget(&mgEquipedSecondaryextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
+        createWidget(&mgInteractionsWidget, &mgEquipedWidget, RELATIVE, ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 2, 100, 10, NULL);
+        mgInteractionsWidget.layoutType = VERTICAL_LAYOUT;
+        mgInteractionsWidget.scrollOn = 1;
+
 
         mgEquipedPrimaryTextWidget.widget->isVisible = 0;
         mgEquipedSecondaryextWidget.widget->isVisible = 0;
@@ -349,6 +388,7 @@ void initMainGame(){
         linkedListPushBack(mgEquipedWidget.children, mgEquipedNameTextWidget.uiBase);
         linkedListPushBack(mgEquipedWidget.children, mgEquipedPrimaryTextWidget.uiBase);
         linkedListPushBack(mgEquipedWidget.children, mgEquipedSecondaryextWidget.uiBase);
+        linkedListPushBack(mgEquipedWidget.children, mgInteractionsWidget.uiBase);
     }
     linkedListPushBack(&mgUiList, mgSidePane.uiBase);
     linkedListPushBack(&mgUiList, mgTerminalWidget.uiBase);
@@ -386,6 +426,7 @@ void initMainGame(){
 
     createLinkedList(&(player.items), sizeof(ItemBase*));
     createLinkedList(&(player.effects), sizeof(Effect*));
+    createLinkedList(&(playerActionList), sizeof(Interaction*));
 }
 Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, int maxN, float branchingProb, int depth){
     Room** branchRoomList;
@@ -961,29 +1002,48 @@ void generateMap(){
 
     generateLoot();
 }
-
-int moveValid(int x, int y){
-    if(gameSettings.noClip) return 1;
-
-    x += player.x;
-    y += player.y;
-
-    if((floors[player.z].groundMesh->data[y][x] == '.')){
-        return 1;
-    }else return 0;
-    
-}
-
-void updateWorld(){
-    drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
-    static void** tmpPtr;
-    static ItemBase* tmpItemBase;
-    static Effect* tmpEffect;
+void updateWorld(int x, int y){
+    void** tmpPtr;
+    ItemBase* tmpItemBase;
+    Effect* tmpEffect;
+    Interaction* tmpInteracion;
+    TextWidget* tmpInteractionText;
     static int moves = 0;
 
-    
+    for(void** i = playerActionList.data; i ;){
+        tmpInteracion = i[1];
+        i = i[0];
+        deleteInteraction(tmpInteracion);
+    }
+    emptyLinkedList(&playerActionList);
 
-    moves ++;
+    player.x += x;
+    player.y += y;
+    int moveValid = 1;
+
+    if((floors[player.z].groundMesh->data[player.y][player.x] != '.')){
+        moveValid = 0;
+    }
+
+    for(void** i = floors[player.z].itemList->data; i; ){
+        tmpItemBase = i[1];
+        i = i[0];
+
+        if((player.x == tmpItemBase->x) && (player.y == tmpItemBase->y)){
+            tmpItemBase->playerCollision(tmpItemBase);
+            if(tmpItemBase->collider){
+                moveValid = 0;
+            }
+        }
+    }
+    moveValid = moveValid || gameSettings.noClip;
+
+    if(!moveValid){
+        player.x -= x;
+        player.y -= y;
+    }else{
+        moves ++;
+    }
     if(moves >= getPlayerSpeed(&player)){
         globalTime++;
         deltaTime = 1;
@@ -992,10 +1052,13 @@ void updateWorld(){
         deltaTime = 0;
     }
 
+    drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
+
     player.speedModifier = 1;
     player.healthRegenModifier = 1;
     player.healthModifier = 1;
     player.strengthModifier = 1;
+
     if(deltaTime){
         for(void** i = player.effects.data; i ;){
             tmpEffect = i[1];
@@ -1022,17 +1085,62 @@ void updateWorld(){
         tmpPtr = *tmpPtr;
         if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
     }
-}
-void movePlayer(int x, int y){
-    if(moveValid(x, y)){
-        player.x += x;
-        player.y += y;
-        updateWorld();
-    }
+
+    updateInteractionsWidget();
     
+    
+}
+void playerKeyPress(int ch){
+    static Interaction* tmpIntracion;
+    switch(ch){
+        case 'o':
+            mgToggleExitMenu();
+            break;
+        case 'w':
+            updateWorld(0, -1);
+            break;
+        case 'd':
+            updateWorld(1, 0);
+            break;
+        case 'a':
+            updateWorld(-1, 0);
+            break;
+        case 's':
+            updateWorld(0, 1);
+            break;
+        case 'e':
+            if(player.heldObject && player.heldObject->primaryUse){
+                player.heldObject->primaryUse(player.heldObject);
+            }
+            break;
+        case 'u':
+            if(player.z != 0){
+                player.z--;
+                player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+            }
+            break;
+        case 'j':
+            if(player.z != floorNum-1){
+                player.z++;
+                player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
+                player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+            }
+            break;
+    }
+
+    for(void** i = playerActionList.data; i;){
+        tmpIntracion = i[1];
+        i = i[0];
+
+        if(ch == tmpIntracion->key){
+            tmpIntracion->func(tmpIntracion->object);
+        }
+    }
 }
 
 void updateMainGame(){
+    
     int ch = getch();
     
     switch(ch){
@@ -1062,46 +1170,9 @@ void updateMainGame(){
         case ERR:
             break;
         default:
+            uiKeyPress(ch);
+            playerKeyPress(ch);
             switch(ch){
-                case 'o':
-                    mgToggleExitMenu();
-                    break;
-                case 'w':
-                    movePlayer(0, -1);
-                    break;
-                case 'd':
-                    movePlayer(1, 0);
-                    break;
-                case 'a':
-                    movePlayer(-1, 0);
-                    break;
-                case 's':
-                    movePlayer(0, 1);
-                    break;
-                case 'e':
-                    if(player.heldObject && player.heldObject->primaryUse){
-                        player.heldObject->primaryUse(player.heldObject);
-                    }
-                case 'u':
-                    if(player.z != 0){
-                        player.z--;
-                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
-                    }
-                    break;
-                case 'j':
-                    if(player.z != floorNum-1){
-                        player.z++;
-                        player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                        player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
-                    }
-                    break;
-                case 'c':
-                    if(player.items.size){
-                        ItemBase* tmp = linkedListGetElement(&(player.items), 0);
-                        tmp->drop(tmp);
-                    }
-                    break;
                 case 'i':
                     mgToggleStatMenu();
                     break;

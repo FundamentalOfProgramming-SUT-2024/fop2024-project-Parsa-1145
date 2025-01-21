@@ -28,7 +28,7 @@ ItemBase* loadItem(cJSON* data){
         }else if(!strcmp(object->string, "damage")){
             o->damage = object->valueint;
         }else if(!strcmp(object->string, "sprite")){
-            o->sprite = object->valueint;
+            o->sprite = object->valueint - 1;
         }else if(!strcmp(object->string, "primaryUse")){
             o->primaryUse = getAction(object->valuestring);
             o->primaryUseName = copyString(object->valuestring);
@@ -186,7 +186,7 @@ void noDrop(ItemBase* g){}
 
 void pickableItemUpdate(ItemBase* o){
     if((!o->inInventory) && (player.x == o->x) && (player.y == o->y)){
-        o->pickUp(o);
+        addInteraction(writeLog("pickup %s", o->name), o->pickUp, 'g', o);
     }
 }
 void debugItemInfo(ItemBase* o){

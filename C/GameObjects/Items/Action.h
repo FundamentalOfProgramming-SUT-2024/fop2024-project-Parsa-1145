@@ -10,6 +10,18 @@ typedef struct Effect{
     int elapsed;
 }Effect;
 
+typedef struct{
+    ItemBase* object;
+    int (*func)(struct ItemBase*);
+    char* name;
+    int key;
+}Interaction;
+
+void moveInStair(ItemBase* o);
+
+void deleteInteraction(Interaction* a);
+void addInteraction(char* name, void (*func)(ItemBase*),  int key, ItemBase* o);
+
 int consume(ItemBase* o);
 int swingAttack(ItemBase* o);
 int stab(ItemBase* o);

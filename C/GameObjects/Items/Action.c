@@ -21,6 +21,17 @@ void(*getEffectFunc(char* name))(Effect*){
     else if (!strcmp(name, "healthRegen")) return &effectHealthRegen;
     else return NULL;
 }
+void moveInStair(ItemBase* o){
+    ItemBase* dest = findItemById(o->relId);
+
+    player.x = dest->x;
+    player.y = dest->y;
+    player.z = dest->z;
+
+    updateWorld(0, 0);
+}
+
+
 int consume(ItemBase* o){
     Effect* newEffect;
     Effect* tmpEffect;
@@ -76,6 +87,19 @@ void deleteEffect(Effect* effect){
     free(effect->type);
     free(effect);
 }
-Effect* loadEffect(cJSON* data){
 
+void deleteInteraction(Interaction* a){
+    free(a);
+}
+void addInteraction(char* name, void (*func)(ItemBase*),  int key, ItemBase* o){
+    Interaction* new = malloc(sizeof(Interaction));
+
+    new->func = func;
+    new->key = key;
+    new->object = o;
+    new->name = copyString(name);
+
+    linkedListPushBack(&playerActionList, new);
+
+ 
 }

@@ -1,4 +1,6 @@
 #include "Intractable.h"
+#include "Action.h"
+#include "../../ProgramStates/MainGame.h"
 
 void initDoor(ItemBase* o){
     if(!(o->id)){
@@ -38,10 +40,20 @@ void trapPlayerCollision(ItemBase* o){
 
 }
 void doorPlayerCollision(ItemBase* o){
-}
-void stairPlayerCollision(ItemBase* o){
 
 }
+
+void stairPlayerCollision(ItemBase* o){
+    ItemBase* dest = findItemById(o->relId);
+
+    if(dest->z > o->z){
+        addInteraction("go down", &moveInStair, KEY_DOWN, o);
+    }else{
+        addInteraction("go up", &moveInStair, KEY_UP, o);
+    }
+}
+
+
 void passwordGeneratorPlayerCollision(ItemBase* o){
     
 }

@@ -10,9 +10,10 @@ void initWeapon(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
+    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openWeaponInfo;
-    o->update = &pickableItemUpdate;
+    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &isWeaponEqual;
@@ -26,10 +27,11 @@ void initConsumable(ItemBase* o){
         o->isEqual = &isFoodEqual;
         o->openItemInfo = &openFoodInfo;
     }else if(!strcmp(o->subType, "potion")){
-        o->update = &pickableItemUpdate;
+        o->update = &defaultItemUpdate;
         o->isEqual = &defaultItemCompare;
         o->openItemInfo = &openPotionInfo;
     }
+    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
@@ -38,9 +40,10 @@ void initAmmo(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
+    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openAmmoInfo;
-    o->update = &pickableItemUpdate;
+    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -49,9 +52,10 @@ void initKey(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
+    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openKeyInfo;
-    o->update = &pickableItemUpdate;
+    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -60,9 +64,10 @@ void defaultUseableInit(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
+    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = NULL;
-    o->update = &pickableItemUpdate;
+    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -229,7 +234,6 @@ int isFoodEqual(ItemBase* o1, ItemBase* o2){
 }
 
 void updateFood(ItemBase* o){
-    pickableItemUpdate(o);
     if(deltaTime){
         if(o->inInventory){
             o->decayed += 2;

@@ -173,7 +173,7 @@ void renderTextWidget(TextWidget* t){
                         printw("%d", t->args[argIter].arg.d[0]);
                         break;
                     case 'u':
-                        printw("%lc", t->args[argIter].arg.w[0]);
+                        printw("%Lc", t->args[argIter].arg.w[0]);
                         break;
                     case 'f':
                         printw("%f", t->args[argIter].arg.f[0]);
