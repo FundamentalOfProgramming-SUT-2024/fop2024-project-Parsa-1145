@@ -30,5 +30,5 @@ typedef struct{
 int getPlayerSpeed(Player* player);
 int getPlayerStrength(Player* player);
 int getPlayerHealthRegen(Player* player);
-
+void checkEquiped();
 #endif

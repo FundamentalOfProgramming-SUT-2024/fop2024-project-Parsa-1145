@@ -170,12 +170,12 @@
         ]
     },{
         "name" : "Golden coin",
-        "type" : "valuable",
+        "type" : "valueable",
         "sprite" : 11097,
         "value" : 1
     },{
         "name" : "Ruby",
-        "type" : "valuable",
+        "type" : "valueable",
         "sprite" : 9671,
         "value" : 10
     },{

@@ -64,8 +64,19 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
         free(cell);
         return 0;
     }else if((f->featureMesh->data[y][x] == cell->attr[5]) && (!cell->attr[6])){
-        if(cell->attr[7]) f->groundMesh->data[y][x] = 'H';
-        else f->groundMesh->data[y][x] = 'D';
+        switch(cell->attr[7]){
+            case 2:
+                f->groundMesh->data[y][x] = 'L';
+                break;
+            case 1:
+                f->groundMesh->data[y][x] = 'H';
+                break;
+            case 0:
+                f->groundMesh->data[y][x] = 'D';
+                break;
+            default:
+            break;
+        }
         //f->featureMesh->data[y][x] = cell->attr[5];
         cell->attr[6] = 1;
     }
@@ -75,13 +86,14 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
         free(cell);
         return 0;
     }
-    
 
     if((cell->attr[6])){
-        if(randWithProb(cell->attr[2] * 0.05 + (cell->attr[3]==2) * 0.1)){
-            if((cell->attr[3] != 2) && randWithProb(0.1))cell->attr[3] = 2;
-            else{
-                cell->attr[3] = !cell->attr[3];
+        if((randWithProb(cell->attr[2]-1) * 0.05 + (cell->attr[3]==2) * 0.1)){
+            if(cell->attr[3] == 2){
+                cell->attr[3] = randWithProb(0.5);   
+            }else{
+                if(randWithProb(0.1))cell->attr[3] = 2;
+                else cell->attr[3] = randWithProb(0.5);
             }
             cell->attr[2] = 0;
         }else{

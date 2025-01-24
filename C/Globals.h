@@ -12,10 +12,10 @@ extern EngineState* engineState;
 extern GameSettings gameSettings;
 extern int scrW;
 extern int scrH;
-extern int mousex;
-extern int mousey;
 extern int terminate;
 extern Account account;
+extern cJSON* itemsJson;
+extern short rgb[6][6][6];
 
 extern char* playerDbAddress;
 

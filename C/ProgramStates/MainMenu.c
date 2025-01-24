@@ -119,8 +119,6 @@ void updateMainMenu(){
                 //mvprintw(4, 4, "asd %lu %lu %lu", mEvent.bstate, BUTTON5_PRESSED, BUTTON4_PRESSED);
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
-                        mousex = mEvent.x;
-                        mousey = mEvent.y;
                         FOR(i, mmUiList.size){
                             ((UiBase*)tmp[1])->mouseMove(((UiBase*)tmp[1])->object);
                             tmp = *tmp;

@@ -141,7 +141,8 @@ void renderTexture(CharTexture* tex, ColorTexture* color, float x, float y, Came
     }
 }
 
-void renderFrameBuffer(CharTexture* tex){
+void renderFrameBuffer(CharTexture* tex, ColorTexture* colTex){
+    static int prevCollor;
     FOR(i, tex->h){
         move(i, 0);
         FOR(j, tex->w){

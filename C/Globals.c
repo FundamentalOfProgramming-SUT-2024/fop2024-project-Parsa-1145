@@ -15,7 +15,10 @@ int mousex;
 int mousey;
 int terminate = 0;
 int colorPairNum = 5;
+cJSON* itemsJson = NULL;
 Account account;
+short rgb[6][6][6];
+
 
 
 MEVENT mEvent;
@@ -193,6 +196,7 @@ extern char* writeLog(const char* format, ...){
     va_start(args, format);
     out = malloc(size + 2);
     vsnprintf(out, size+1, format, args);
+    out[size] = '\0';
     va_end(args);
     return out;
 }

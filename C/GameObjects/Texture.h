@@ -7,7 +7,7 @@ typedef struct{
     int w, h;
 }CharTexture;
 typedef struct{
-    short** data[3];
+    unsigned char** data;
     int w, h;
 }ColorTexture;
 

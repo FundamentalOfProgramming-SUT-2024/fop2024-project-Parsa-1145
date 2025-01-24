@@ -67,7 +67,38 @@ int shootArrow(ItemBase* o){
     addMessage(writeLog("HOHO Shoot arrow"));
 }
 int unlockDoor(ItemBase* o){
-    addMessage(writeLog("HOHO Unlock"));
+    ItemBase* itemPtr;
+    void** tmpPtr = floors[player.z].itemList->data;
+    while(tmpPtr){
+        itemPtr = tmpPtr[1];
+        tmpPtr = tmpPtr[0];
+        if((!strcmp(itemPtr->name, "Door")) && (itemPtr->locked)){
+            int x = player.x - itemPtr->x, y = player.y - itemPtr->y;
+            if(x * x + y * y < 2){
+                if(randWithProb(o->openingProb)){
+                    addMessage(writeLog("Door unlocked"));
+                    itemPtr->locked = 0;
+                    itemPtr->collider = 0;
+                    itemPtr->sprite = '+';
+                }else{
+                    addMessage(writeLog("Key broke"));
+                    ItemBase* broken;
+                    broken = LoadItemWithName("Broken key");
+                    broken->quantity = 1;
+                    if(o->quantity > 1){
+                        o->quantity--;
+                    }
+                    else{
+                        player.heldObject = NULL;
+                        removeItemFromLinkedList(&(player.items), o);
+                        defaultItemDelete(o);
+                        checkEquiped();
+                    }
+                    addItemToInventory(broken);
+                }
+            }
+        }
+    }
 }
 
 int effectSpeedIncrease(struct Effect* e){

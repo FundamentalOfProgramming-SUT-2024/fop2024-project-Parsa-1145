@@ -26,7 +26,18 @@ int main(){
     init_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
 
 
-
+    int k = 20;
+    float z = 1000 / 6;
+    FOR(i, 6){
+        FOR(j, 6){
+            FOR(t, 6){
+                init_color(k, z * i, z * j, z * t);
+                init_pair(k, 0, k);
+                rgb[i][j][t] = k;
+                k++;
+            }
+        }
+    }
     getmaxyx(stdscr, scrH, scrW);
 
     initMainMenu();
@@ -35,6 +46,10 @@ int main(){
     initMainGame();
     initSignUpMenu();
     
+    char* tmp;
+    fileToStr("../Data/Items.json", &tmp);
+    itemsJson = cJSON_Parse(tmp);
+
 
     engineState = &maineMenu;
 

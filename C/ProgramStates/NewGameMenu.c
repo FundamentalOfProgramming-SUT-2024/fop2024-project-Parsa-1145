@@ -68,9 +68,6 @@ void updateNewGameMenu(){
         case KEY_MOUSE:
             if(getmouse(&mEvent) == OK){
                 switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        mousex = mEvent.x;
-                        mousey = mEvent.y;
 
                         ngmTmpIterPtr = ngmUiList.data;
                         while(ngmTmpIterPtr){

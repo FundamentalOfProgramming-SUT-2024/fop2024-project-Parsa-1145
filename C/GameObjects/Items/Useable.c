@@ -6,6 +6,7 @@
 #include "ItemTypes.h"
 #include "Action.h"
 
+
 void initWeapon(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
@@ -72,7 +73,18 @@ void defaultUseableInit(ItemBase* o){
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
 }
-
+void initValueable(ItemBase* o){
+    if(!(o->id)){
+        o->id = globalItemIdCounter++;
+    }
+    o->playerCollision = &pickableItemUpdate;
+    o->render = &defaultItemRender;
+    o->openItemInfo = openValueableInfo;
+    o->update = &defaultItemUpdate;
+    o->pickUp = &defaultItemPickup;
+    o->drop = &defaultItemDrop;
+    o->isEqual = &defaultItemCompare;
+}
 void openWeaponInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
     TextWidget* quantity = malloc(sizeof(TextWidget));
@@ -220,6 +232,33 @@ void openAmmoInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
 }
+void openValueableInfo(ItemBase* o){
+    TextWidget* name = malloc(sizeof(TextWidget));
+    TextWidget* quantity = malloc(sizeof(TextWidget));
+    TextWidget* value = malloc(sizeof(TextWidget));
+
+    Button* drop = malloc(sizeof(Button));
+    Button* equip = malloc(sizeof(Button));
+
+    emptyWidget(&mgItemWidget);
+
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
+    createTextWidget(value, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "value: %d", &(o->value));
+
+    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+    createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
+
+    drop->contextObject = o;
+    drop->contextCallback = &defaultItemDrop;
+    
+
+    linkedListPushBack(mgItemWidget.children, name->uiBase);
+    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
+    linkedListPushBack(mgItemWidget.children, value->uiBase);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
+    linkedListPushBack(mgItemWidget.children, equip->uiBase);
+}
 
 int isConsumableEqual(ItemBase* o1, ItemBase* o2){
     if(!strcmp(o1->name, o2->name)){
@@ -261,13 +300,6 @@ void equipInHand(ItemBase* o){
         changeTextWidget(&mgEquipedSecondaryextWidget, "Press q to %s", o->secondaryUseName);
         mgEquipedSecondaryextWidget.widget->isVisible = 1;
     }else{
-        mgEquipedSecondaryextWidget.widget->isVisible = 0;
-    }
-}
-void checkEquiped(){
-    if(!player.heldObject->inInventory){
-        changeTextWidget(&mgEquipedNameTextWidget, "Nothing equiped");
-        mgEquipedPrimaryTextWidget.widget->isVisible = 0;
         mgEquipedSecondaryextWidget.widget->isVisible = 0;
     }
 }

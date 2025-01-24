@@ -257,8 +257,6 @@ void updateSignUpMenu(){
             if(getmouse(&mEvent) == OK){
                 switch(mEvent.bstate){
                     case KEY_MOUSE_MOVE:
-                        mousex = mEvent.x;
-                        mousey = mEvent.y;
                         if(suInvalidPopup != NULL){
                             buttonMouseMoveCallback(suInvalidPopup->close);
                         }else{

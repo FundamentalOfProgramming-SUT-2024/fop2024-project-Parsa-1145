@@ -206,7 +206,7 @@ void uiMouseMove(){
         tmp1 = tmp1[0];
     }
 }
-uiKeyPress(int key){
+void uiKeyPress(int key){
     static UiBase* tmp;
     static void** tmp1;
     tmp1 = mgUiList.data;
@@ -638,8 +638,6 @@ void generateLoot(){
     char* itemDb;
     if(fileToStr("../Data/LootTable.json", &lootTableData) && fileToStr("../Data/Items.json", &itemDb)){
         cJSON* lootTableJson = cJSON_Parse(lootTableData);
-        cJSON* itemDbJson = cJSON_Parse(itemDb);
-
 
         int themeNum = cJSON_GetArraySize(lootTableJson);
         cJSON* roomLootTable[themeNum];
@@ -689,11 +687,11 @@ void generateLoot(){
                     char* name = cJSON_GetObjectItem(entery, "name")->valuestring;
                     ItemBase* gen;
 
-                    cJSON* tmp = itemDbJson->child;
+                    cJSON* tmp = itemsJson->child;
                     int found = 0;
                     while(tmp){
                         if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
-                            gen = loadItem(tmp);
+                            gen = loadItemFromJson(tmp);
                             found = 1;
                             break;
                         }else{
@@ -721,7 +719,6 @@ void generateLoot(){
             }
         }
         cJSON_free(lootTableJson);
-        cJSON_free(itemDbJson);
         free(lootTableData);
         free(itemDb);
     }
@@ -736,7 +733,7 @@ void postProccessFloor(Floor* f){
                 if(f->groundMesh->data[i-1][j] == '.') tmp++;
                 if(f->groundMesh->data[i][j+1] == '.') tmp++;
                 if(f->groundMesh->data[i][j-1] == '.') tmp++;
-                if(tmp >= 1) f->groundMesh->data[i][j] = ';';
+                if(tmp == 3) f->groundMesh->data[i][j] = ';';
             }else if(f->groundMesh->data[i][j] == 'D'){
                 ItemBase* d = calloc(1, sizeof(ItemBase));
                 initDoor(d);
@@ -745,6 +742,16 @@ void postProccessFloor(Floor* f){
                 d->y = i;
                 d->z = f->index;
                 d->locked = 0;
+                linkedListPushBack(f->itemList, d);
+            }else if(f->groundMesh->data[i][j] == 'L'){
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
+                d->sprite = '$';
+                d->x = j;
+                d->y = i;
+                d->z = f->index;
+                d->locked = 1;
+                d->collider = 1;
                 linkedListPushBack(f->itemList, d);
             }else if(f->groundMesh->data[i][j] == 'H'){
                 ItemBase* d = calloc(1, sizeof(ItemBase));
@@ -765,28 +772,29 @@ void postProccessFloor(Floor* f){
             }
         }
     }
-    for(int i = 1; i < f->h -1 ; i++){
-        for(int j = 1; j < f->w -1; j++){
-            if(!(f->groundMesh->data[i][j])){
-                tmp = 0;
-                if(f->groundMesh->data[i+1][j] == '.') tmp++;
-                if(f->groundMesh->data[i-1][j] == '.') tmp++;
-                if(f->groundMesh->data[i][j+1] == '.') tmp++;
-                if(f->groundMesh->data[i][j-1] == '.') tmp++;
-                if(tmp >= 3) f->groundMesh->data[i][j] = ';';
-            }
-        }
-    }
+    // for(int i = 1; i < f->h -1 ; i++){
+    //     for(int j = 1; j < f->w -1; j++){
+    //         if(!(f->groundMesh->data[i][j])){
+    //             tmp = 0;
+    //             if(f->groundMesh->data[i+1][j] == '.') tmp++;
+    //             if(f->groundMesh->data[i-1][j] == '.') tmp++;
+    //             if(f->groundMesh->data[i][j+1] == '.') tmp++;
+    //             if(f->groundMesh->data[i][j-1] == '.') tmp++;
+    //             if(tmp >= 3) f->groundMesh->data[i][j] = ';';
+    //         }
+    //     }
+    // }
     for(int i = 1; i < f->h -1 ; i++){
         for(int j = 1; j < f->w -1; j++){
             if(f->groundMesh->data[i][j] == ';'){
-                f->groundMesh->data[i][j] = '.';
+                //f->groundMesh->data[i][j] = '.';
             }else if(f->groundMesh->data[i][j] == 'D' || f->groundMesh->data[i][j] == 'H'){
                 f->groundMesh->data[i][j] = '.';
             }
         }
     }
 }
+
 void generateFloor(Floor* f){
     f->roomNum = 0;
     f->pointCloud = NULL;
@@ -977,8 +985,12 @@ void generateFloor(Floor* f){
                 cell->attr[6] = 0;
                 if(f->roomList[i]->neighbours == 2 && f->roomList[j]->neighbours == 1){
                     cell->attr[7] = 1;
-                }else{
-                    cell->attr[7] = 0;
+                }else if(f->roomList[i]->neighbours == 2){
+                    if(randWithProb(0.6)){
+                        cell->attr[7] = 2;
+                    }else{
+                        cell->attr[7] = 0;
+                    }
                 }
             }
         }
@@ -1111,6 +1123,11 @@ void playerKeyPress(int ch){
         case 'e':
             if(player.heldObject && player.heldObject->primaryUse){
                 player.heldObject->primaryUse(player.heldObject);
+            }
+            break;
+        case 'q':
+            if(player.heldObject && player.heldObject->primaryUse){
+                player.heldObject->secondaryUse(player.heldObject);
             }
             break;
         case 'u':

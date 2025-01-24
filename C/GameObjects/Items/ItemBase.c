@@ -14,7 +14,7 @@
 int globalItemIdCounter = 1;
 
 
-ItemBase* loadItem(cJSON* data){
+ItemBase* loadItemFromJson(cJSON* data){
     ItemBase* o = calloc(1, sizeof(ItemBase));
 
     cJSON* object = data->child;
@@ -87,6 +87,8 @@ ItemBase* loadItem(cJSON* data){
         }
     }else if(!strcmp(o->type, "ammo")){
         initAmmo(o);
+    }else if(!strcmp(o->type, "valueable")){
+        initValueable(o);
     }else if(!strcmp(o->type, "intractable")){
         if(!strcmp(o->name, "Door")){
             initDoor(o);
@@ -102,11 +104,28 @@ ItemBase* loadItem(cJSON* data){
     }
     return o;
 }
+ItemBase* LoadItemWithName(const char* name){
+    cJSON* tmp = itemsJson->child;
+    int found = 0;
+    while(tmp){
+        if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
+            return loadItemFromJson(tmp);
+        }else{
+            tmp = tmp->next;
+        }
+    }
+    return NULL;
+}
 void defaultItemPickup(ItemBase* o){
     removeItemFromLinkedList(floors[player.z].itemList, o);
 
     addMessage(writeLog("You picked up %d %s", o->quantity,  o->name));
 
+    addItemToInventory(o);
+    
+    updateWorld(0, 0);
+}
+void addItemToInventory(ItemBase* o){
     ItemBase* tmp;
     FOR(i, player.items.size){
         tmp = linkedListGetElement(&player.items, i);
@@ -126,13 +145,13 @@ void defaultItemDrop(ItemBase* o){
         o->y = player.y;
         linkedListPushBack(floors[player.z].itemList, o);
         removeItemFromLinkedList(&(player.items), o);
-        removeItemFromLinkedList(&(player.items), o);
         addMessage(writeLog("You dropped up a %s", o->name));
         updateInventoryTab();
         emptyWidget(&mgItemWidget);
         o->inInventory = 0;
 
         checkEquiped();
+        updateWorld(0, 0);
     }else{
         addMessage(writeLog("You can not drop here"));
     }
@@ -215,7 +234,7 @@ void debugItemInfo(ItemBase* o){
 
     createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(id, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "id: %d", o->name, &(o->id));
+    createTextWidget(id, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "id: %d", &(o->id));
     createTextWidget(relId, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "relId: %d", &(o->relId));
     createTextWidget(type, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "type: %s", (o->type));
     createTextWidget(subType, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "subType: %s", (o->subType));

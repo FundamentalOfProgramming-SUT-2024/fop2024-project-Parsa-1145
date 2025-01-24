@@ -52,8 +52,10 @@ typedef struct ItemBase{
     int inInventory;
 }ItemBase;
 
-ItemBase* loadItem(cJSON* data);
+ItemBase* loadItemFromJson(cJSON* data);
+ItemBase* LoadItemWithName(const char* name);
 void defaultItemPickup(ItemBase* o);
+void addItemToInventory(ItemBase* o);
 void defaultItemDrop(ItemBase* o);
 void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
 int defaultItemCompare(ItemBase* o1, ItemBase* o2);
