@@ -6,6 +6,7 @@
 #include "NewGameMenu.h"
 #include "LogInMenu.h"
 #include "SignupMenu.h"
+#include "MainGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
 #include "../UiElements/Button.h"
@@ -80,6 +81,8 @@ void initMainMenu(){
     mmLoginBtn.callBack = logInMenu.enter;
     mmNewCharacterBtn.callBack = signUpMenu.enter;
     mmLogOutBtn.callBack = &logOut;
+    mmLoadGameBtn.contextCallback = &loadGame;
+    mmLoadGameBtn.contextObject = "outa.json";
 
 
 }
@@ -105,8 +108,6 @@ void enterMainMenu(){
 }
 void updateMainMenu(){
     int ch = getch();
-    
-
     switch(ch){
         case KEY_RESIZE:
             getmaxyx(stdscr, scrH, scrW);

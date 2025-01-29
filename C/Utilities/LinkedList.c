@@ -103,4 +103,5 @@ void emptyLinkedList(LinkedList* list){
         popLinkedList(list);
     }
     list->data = NULL;
+    
 }

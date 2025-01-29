@@ -4,180 +4,273 @@
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 4,
-        "sprite" : 5876,
+        "sprite" : 5875,
         "primaryUse" : "Swing attack",
-        "secondaryUse" : "Swing attack"
+        "secondaryUse" : "Swing attack",
+        "cr" : 4,
+        "cg" : 4,
+        "cb" : 4
     },{
         "name" : "Sword",
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 2,
-        "sprite" : 11797,
+        "sprite" : 11796,
         "primaryUse" : "Swing attack",
-        "secondaryUse" : "Swing attack"
+        "secondaryUse" : "Swing attack",
+        "cr" : 4,
+        "cg" : 4,
+        "cb" : 4
     },{
         "name" : "Dagger",
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 1,
         "range" : 4,
-        "sprite" : 11313,
+        "sprite" : 11312,
         "primaryUse" : "Stab",
-        "secondaryUse" : "Throw"
+        "secondaryUse" : "Throw",
+        "cr" : 4,
+        "cg" : 4,
+        "cb" : 4
     },{
         "name" : "Bow",
         "type" : "weapon",
         "subType" : "ranged",
         "damage" : 1,
         "range" : 10,
-        "sprite" : 10631,
+        "sprite" : 10630,
         "primaryUse" : "Shoot arrow",
-        "secondaryUse" : "Kick"
+        "secondaryUse" : "Kick",
+        "cr" : 2,
+        "cg" : 1,
+        "cb" : 0
     },{
         "name" : "Magic Wand",
         "type" : "weapon",
         "subType" : "ranged",
         "damage" : 2,
         "range" : 8,
-        "sprite" : 5849,
+        "sprite" : 5848,
         "primaryUse" : "Cast spell",
-        "secondaryUse" : "Kick"
+        "secondaryUse" : "Kick",
+        "cr" : 0,
+        "cg" : 2,
+        "cb" : 4
     },{
         "name" : "Wooden arrow",
         "type" : "ammo",
         "subType" : "arrow",
         "damage" : 2,
         "range" : 8,
-        "sprite" : 10231
+        "sprite" : 10230,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
     },{
         "name" : "Iron tip arrow",
         "type" : "ammo",
         "subType" : "arrow",
         "damage" : 4,
         "range" : 10,
-        "sprite" : 10234
+        "sprite" : 10233,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
     },{
         "name" : "Ancient key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0.9,
-        "sprite" : 11238,
-        "primaryUse" : "Unlock door"
+        "sprite" : 11237,
+        "primaryUse" : "Unlock door",
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 0
     },{
         "name" : "Thiefs key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0.4,
-        "sprite" : 11229,
-        "primaryUse" : "Unlock door"
+        "sprite" : 11228,
+        "primaryUse" : "Unlock door",
+        "cr" : 2,
+        "cg" : 2,
+        "cb" : 0
     },{
         "name" : "Broken key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0,
-        "sprite" : 1126
+        "sprite" : 1125,
+        "cr" : 1,
+        "cg" : 1,
+        "cb" : 0
     },{
         "name" : "Maggot",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 8276,
+        "sprite" : 8275,
         "primaryUse" : "consume",
         "decayTime" : 500,
-        "goodness" : 1,
+        "goodness" : 2,
         "cursedProb" : 0.4,
         "effects": [
             {
-                "type" : "heal",
+                "type" : "Fill",
+                "amount" : 1
+            },{
+                "type" : "Heal",
                 "amount" : 1
             }
-        ]
+        ],
+        "cr" : 1,
+        "cg" : 2,
+        "cb" : 0
     },{
         "name" : "Dead rat",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 11294,
+        "sprite" : 11293,
         "primaryUse" : "consume",
         "decayTime" : 300,
-        "goodness" : 2,
+        "goodness" : 3,
         "cursedProb" : 0.3,
         "effects": [
             {
-                "type" : "heal",
+                "type" : "Fill",
+                "amount" : 2
+            },{
+                "type" : "Heal",
                 "amount" : 3
-            }, {
-                "type" : "strenghten",
+            },{
+                "type" : "Strenghten",
                 "amount" : 1.1,
                 "duration" : 10
             }
-        ]
+        ],
+        "cr" : 1,
+        "cg" : 2,
+        "cb" : 0
     },{
         "name" : "Wierd soup",
         "type" : "consumable",
         "subType" : "food",
-        "sprite" : 11294,
+        "sprite" : 11293,
         "primaryUse" : "consume",
         "decayTime" : 200,
-        "goodness" : 2,
+        "goodness" : 3,
         "cursedProb" : 0.2,
         "effects": [
             {
-                "type" : "heal",
+                "type" : "Fill",
+                "amount" : 3
+            },{
+                "type" : "Heal",
                 "amount" : 5
             },{
-                "type" : "speedIncrease",
+                "type" : "Speed increase",
                 "amount" : 2,
                 "duration" : 4
             }
-        ]
+        ],
+        "cr" : 1,
+        "cg" : 2,
+        "cb" : 0
     },{
-        "name" : "Health Potion",
+        "name" : "Health regen",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 11224,
+        "sprite" : 11223,
         "primaryUse" : "consume",
         "effects": [
             {
-                "type" : "healthRegen",
+                "type" : "Health regeneration",
                 "amount" : 2,
                 "duration" : 20
             }
-        ]
+        ],
+        "cr" : 4,
+        "cg" : 1,
+        "cb" : 0
+    },{
+        "name" : "Health potion",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 11223,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "Heal",
+                "amount" : 20
+            }
+        ],
+        "cr" : 4,
+        "cg" : 0,
+        "cb" : 1
+    },{
+        "name" : "Heart crystal",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 9829,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "Maxhealth increase",
+                "amount" : 5
+            }
+        ],
+        "cr" : 4,
+        "cg" : 1,
+        "cb" : 1
     },{
         "name" : "Speed potion",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 11224,
+        "sprite" : 11223,
         "primaryUse" : "consume",
         "effects": [
             {
-                "type" : "speedIncrease",
+                "type" : "Speed increase",
                 "amount" : 2,
                 "duration" : 15
             }
-        ]
+        ],
+        "cr" : 0,
+        "cg" : 4,
+        "cb" : 2
     },{
         "name" : "Strength potion",
         "type" : "consumable",
         "subType" : "potion",
-        "sprite" : 11224,
+        "sprite" : 11223,
         "primaryUse" : "consume",
         "effects": [
             {
-                "type" : "strenghten",
+                "type" : "Strenghten",
                 "amount" : 2 ,
                 "duration" : 20
             }
-        ]
+        ],
+        "cr" : 0,
+        "cg" : 3,
+        "cb" : 4
     },{
         "name" : "Golden coin",
         "type" : "valueable",
-        "sprite" : 11097,
-        "value" : 1
+        "sprite" : 11096,
+        "value" : 1,
+        "cr" : 4,
+        "cg" : 4,
+        "cb" : 0
     },{
         "name" : "Ruby",
         "type" : "valueable",
-        "sprite" : 9671,
-        "value" : 10
+        "sprite" : 9670,
+        "value" : 10,
+        "cr" : 5,
+        "cg" : 0,
+        "cb" : 0
     },{
         "name" : "Door",
         "type" : "intractable",

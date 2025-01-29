@@ -18,6 +18,10 @@ ItemBase* loadItemFromJson(cJSON* data){
     ItemBase* o = calloc(1, sizeof(ItemBase));
 
     cJSON* object = data->child;
+
+    o->color[0] = 5;
+    o->color[1] = 5;
+    o->color[2] = 5;
     while(object){
         if(!strcmp(object->string, "name")){
             o->name = copyString(object->valuestring);
@@ -28,7 +32,7 @@ ItemBase* loadItemFromJson(cJSON* data){
         }else if(!strcmp(object->string, "damage")){
             o->damage = object->valueint;
         }else if(!strcmp(object->string, "sprite")){
-            o->sprite = object->valueint - 1;
+            o->sprite = object->valueint;
         }else if(!strcmp(object->string, "primaryUse")){
             o->primaryUse = getAction(object->valuestring);
             o->primaryUseName = copyString(object->valuestring);
@@ -45,6 +49,18 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->goodness = object->valueint;
         }else if(!strcmp(object->string, "cursedProb")){
             o->cursed = randWithProb(object->valuedouble);
+        }else if(!strcmp(object->string, "cursed")){
+            o->cursed = object->valueint;
+        }else if(!strcmp(object->string, "cr")){
+            o->color[0] = object->valueint;
+        }else if(!strcmp(object->string, "cg")){
+            o->color[1] = object->valueint;
+        }else if(!strcmp(object->string, "cb")){
+            o->color[2] = object->valueint;
+        }else if(!strcmp(object->string, "lockBroken")){
+            o->lockBroken = object->valueint;
+        }else if(!strcmp(object->string, "locked")){
+            o->locked = object->valueint;
         }else if(!strcmp(object->string, "effects")){
             createLinkedList(&(o->effects), sizeof(Effect*));
             cJSON* effects = object->child;
@@ -67,42 +83,105 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->collider = object->valueint;
         }else if(!strcmp(object->string, "id")){
             o->id = object->valueint;
+        }else if(!strcmp(object->string, "relId")){
+            o->relId = object->valueint;
         }else if(!strcmp(object->string, "inInventory")){
             o->inInventory = object->valueint;
         }else if(!strcmp(object->string, "decayed")){
             o->decayed = object->valueint;
+        }else if(!strcmp(object->string, "x")){
+            o->x = object->valueint;
+        }else if(!strcmp(object->string, "y")){
+            o->y = object->valueint;
+        }else if(!strcmp(object->string, "z")){
+            o->z = object->valueint;
+        }else if(!strcmp(object->string, "quantity")){
+            o->quantity = object->valueint;
         }
         object = object->next;
     }
 
-
-
-    if(!strcmp(o->type, "consumable")){
-        initConsumable(o);
-    }else if(!strcmp(o->type, "weapon")){
-        initWeapon(o);
-    }else if(!strcmp(o->type, "useable")){
-        if(!strcmp(o->subType, "key")){
-            initKey(o);
+    if(o->type){
+        if(!strcmp(o->type, "consumable")){
+            initConsumable(o);
+        }else if(!strcmp(o->type, "weapon")){
+            initWeapon(o);
+        }else if(!strcmp(o->type, "useable")){
+            if(!strcmp(o->subType, "key")){
+                initKey(o);
+            }
+        }else if(!strcmp(o->type, "ammo")){
+            initAmmo(o);
+        }else if(!strcmp(o->type, "valueable")){
+            initValueable(o);
+        }else{
+            defaultUseableInit(o);
         }
-    }else if(!strcmp(o->type, "ammo")){
-        initAmmo(o);
-    }else if(!strcmp(o->type, "valueable")){
-        initValueable(o);
-    }else if(!strcmp(o->type, "intractable")){
+    }else {
         if(!strcmp(o->name, "Door")){
             initDoor(o);
         }else if(!strcmp(o->name, "Stair")){
             initStair(o);
         }else if(!strcmp(o->name, "Trap")){
             initTrap(o);
-        }else if(!strcmp(o->name, "Password Generator")){
+        }else if(!strcmp(o->name, "Password generator")){
             initPasswordGenerator(o);
         }
-    }else{
-        defaultUseableInit(o);
     }
     return o;
+}
+cJSON* itemToJson(ItemBase* o){
+    cJSON* json = cJSON_CreateObject();
+
+    cJSON_AddStringToObject(json, "name", o->name);
+    cJSON_AddStringToObject(json, "type", o->type);
+    cJSON_AddStringToObject(json, "subType", o->subType);
+    cJSON_AddNumberToObject(json, "damage", o->damage);
+    cJSON_AddNumberToObject(json, "sprite", o->sprite);
+    cJSON_AddStringToObject(json, "subType", o->subType);
+    cJSON_AddStringToObject(json, "primaryUse", o->primaryUseName);
+    cJSON_AddStringToObject(json, "secondaryUse", o->secondaryUseName);
+    cJSON_AddNumberToObject(json, "range", o->range);
+    cJSON_AddNumberToObject(json, "openProb", o->openingProb);
+    cJSON_AddNumberToObject(json, "decayTime", o->decayTime);
+    cJSON_AddNumberToObject(json, "goodness", o->goodness);
+    cJSON_AddNumberToObject(json, "cursed", o->cursed);
+    cJSON_AddNumberToObject(json, "cr", o->color[0]);
+    cJSON_AddNumberToObject(json, "cg", o->color[1]);
+    cJSON_AddNumberToObject(json, "cb", o->color[2]);
+    cJSON_AddNumberToObject(json, "lockBroken", o->lockBroken);
+    cJSON_AddNumberToObject(json, "quantity", o->quantity);
+    cJSON_AddNumberToObject(json, "locked", o->locked);
+    if(o->effects.size){
+        cJSON* tmp = cJSON_CreateArray();
+        
+        void** tmpPtr = o->effects.data;
+        Effect* ptr;
+        while(tmpPtr){
+            ptr = tmpPtr[1];
+            tmpPtr = tmpPtr[0];
+
+            cJSON* tmp2 = cJSON_CreateObject();
+            cJSON_AddStringToObject(tmp2, "type", ptr->type);
+            cJSON_AddNumberToObject(tmp2, "amount", ptr->amount);
+            cJSON_AddNumberToObject(tmp2, "duration", ptr->duration);
+
+            cJSON_AddItemToArray(tmp, tmp2);
+        }
+
+        cJSON_AddItemToObject(json, "effects", tmp);
+    }
+    cJSON_AddNumberToObject(json, "value", o->value);
+    cJSON_AddNumberToObject(json, "collider", o->collider);
+    cJSON_AddNumberToObject(json, "id", o->id);
+    cJSON_AddNumberToObject(json, "relId", o->relId);
+    cJSON_AddNumberToObject(json, "inInventory", o->inInventory);
+    cJSON_AddNumberToObject(json, "decayed", o->decayed);
+    cJSON_AddNumberToObject(json, "x", o->x);
+    cJSON_AddNumberToObject(json, "y", o->y);
+    cJSON_AddNumberToObject(json, "z", o->z);
+
+    return json;
 }
 ItemBase* LoadItemWithName(const char* name){
     cJSON* tmp = itemsJson->child;
@@ -118,12 +197,22 @@ ItemBase* LoadItemWithName(const char* name){
 }
 void defaultItemPickup(ItemBase* o){
     removeItemFromLinkedList(floors[player.z].itemList, o);
+    if(!o->fake){
+        if(o->quantity == 1){
+            if(isVowel(o->name[0])){
+                addMessage(writeLog("You picked up an %s", o->name));
+            }else{
+                addMessage(writeLog("You picked up a %s", o->name));
+            }
+        }else{
+            addMessage(writeLog("You picked up %d %ss", o->quantity, o->name));
+        }
+        addItemToInventory(o);
+    }else{
+        addMessage(writeLog("You are hallucinating", o->quantity, o->name));
+        defaultItemDelete(o);
+    }
 
-    addMessage(writeLog("You picked up %d %s", o->quantity,  o->name));
-
-    addItemToInventory(o);
-    
-    updateWorld(0, 0);
 }
 void addItemToInventory(ItemBase* o){
     ItemBase* tmp;
@@ -145,7 +234,15 @@ void defaultItemDrop(ItemBase* o){
         o->y = player.y;
         linkedListPushBack(floors[player.z].itemList, o);
         removeItemFromLinkedList(&(player.items), o);
-        addMessage(writeLog("You dropped up a %s", o->name));
+        if(o->quantity == 1){
+            if(isVowel(o->name[0])){
+                addMessage(writeLog("You dropped an %s", o->name));
+            }else{
+                addMessage(writeLog("You dropped a %s", o->name));
+            }
+        }else{
+            addMessage(writeLog("You dropped %d %ss", o->quantity, o->name));
+        }
         updateInventoryTab();
         emptyWidget(&mgItemWidget);
         o->inInventory = 0;
@@ -164,9 +261,11 @@ void defaultItemDelete(ItemBase* o){
     free(o->secondaryUseName);
     free(o);
 }
-void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, ColorTexture* colorBuffer, Camera* cam){
+void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, Camera* cam){
     if(isinRect(o->x, o->y, cam->x, cam->y, cam->w, cam->h)){
         frameBuffer->data[o->y - cam->y][o->x - cam->x] = o->sprite;
+        frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
+
     }
 }
 int defaultItemCompare(ItemBase* o1, ItemBase* o2){
@@ -269,4 +368,28 @@ void debugItemInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, primaryUseName->uiBase);
     linkedListPushBack(mgItemWidget.children, secondaryUseName->uiBase);
     linkedListPushBack(mgItemWidget.children, inInventory->uiBase);
+    shownItem = o;
+}
+
+int isPlayerNextTo(ItemBase* o){
+    int x = player.x - o->x, y = player.y - o->y;
+    return x * x + y * y < 2;
+}
+void useItem(ItemBase* o){
+    if(o->quantity > 1){
+        o->quantity--;
+    }
+    else{
+        if(player.heldObject == o){
+            player.heldObject = NULL;
+        }
+        if(shownItem == o){
+            emptyWidget(&mgItemWidget);
+        }
+        checkEquiped();
+        removeItemFromLinkedList(&(player.items), o);
+        defaultItemDelete(o);
+        renderMainGame();
+    }
+    updateInventoryTab();
 }

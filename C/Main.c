@@ -2,12 +2,14 @@
 #include <ncurses.h>
 #include <locale.h>
 #include <wchar.h>
+#include <pthread.h>
 
 #include "ProgramStates/MainMenu.h"
 #include "ProgramStates/NewGameMenu.h"
 #include "ProgramStates/LogInMenu.h"
 #include "ProgramStates/MainGame.h"
 #include "ProgramStates/SignupMenu.h"
+#include "SecondaryThread.h"
 #include "UiElements/PopUp.h"
 #include "GlobalDefines.h"
 #include "Globals.h"
@@ -32,7 +34,7 @@ int main(){
         FOR(j, 6){
             FOR(t, 6){
                 init_color(k, z * i, z * j, z * t);
-                init_pair(k, 0, k);
+                init_pair(k, k, 0);
                 rgb[i][j][t] = k;
                 k++;
             }
@@ -45,6 +47,8 @@ int main(){
     initLogInMenu();
     initMainGame();
     initSignUpMenu();
+
+    initSecondaryThread();
     
     char* tmp;
     fileToStr("../Data/Items.json", &tmp);
@@ -59,6 +63,8 @@ int main(){
         (*(engineState->update))();
         (*(engineState->render))();
     }
+
+    pthread_join(&secondaryThread, NULL);
 
     endwin();
 }

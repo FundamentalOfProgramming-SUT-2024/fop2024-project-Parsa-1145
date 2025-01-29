@@ -1,3 +1,2 @@
-gcc -g GameObjects/Floor.c GameObjects/Player.c UiElements/TextWidget.c UiElements/TabWidget.c UiElements/UiBase.c GameObjects/Items/Intractable.c GameObjects/Items/Action.c GameObjects/Items/Useable.c GameObjects/Items/ItemBase.c Utilities/cJSON.c UiElements/PopUp.c ProgramStates/SignupMenu.c Utilities/MovingCell.c GameObjects/Renderer.c ProgramStates/MainMenu.c Main.c Globals.c UiElements/Button.c UiElements/Widget.c ProgramStates/NewGameMenu.c UiElements/TextBox.c ProgramStates/LogInMenu.c ProgramStates/MainGame.c Utilities/LinkedList.c GameObjects/Room.c Utilities/PointCloud.c GameObjects/Texture.c UiElements/CheckBox.c -o main -lncursesw -lm
+gcc -g Utilities/*.c UiElements/*.c ProgramStates/*.c GameObjects/*.c GameObjects/Items/*.c ./*.c -o main -lncursesw -lm -lpthread 
 ./main 1024
-pause -p "press any key to continue"

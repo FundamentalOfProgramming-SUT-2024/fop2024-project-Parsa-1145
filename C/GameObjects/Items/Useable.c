@@ -81,8 +81,8 @@ void initValueable(ItemBase* o){
     o->render = &defaultItemRender;
     o->openItemInfo = openValueableInfo;
     o->update = &defaultItemUpdate;
-    o->pickUp = &defaultItemPickup;
-    o->drop = &defaultItemDrop;
+    o->pickUp = &pickupValuable;
+    o->drop = &dropValueable;
     o->isEqual = &defaultItemCompare;
 }
 void openWeaponInfo(ItemBase* o){
@@ -102,7 +102,7 @@ void openWeaponInfo(ItemBase* o){
     createButton    (equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
+    drop->contextCallback = o->drop;
     equip->contextObject = o;
     equip->contextCallback = &equipInHand;
 
@@ -116,6 +116,7 @@ void openWeaponInfo(ItemBase* o){
     }
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
+    shownItem = o;
 }
 void openFoodInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
@@ -138,7 +139,7 @@ void openFoodInfo(ItemBase* o){
     createButton    (consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
+    drop->contextCallback = o->drop;
     consume->contextObject = o;
     consume->contextCallback = o->primaryUse;
 
@@ -147,6 +148,7 @@ void openFoodInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, goodness->uiBase);
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, consume->uiBase);
+    shownItem = o;
 }
 void openKeyInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
@@ -165,7 +167,7 @@ void openKeyInfo(ItemBase* o){
     createButton    (equip, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
+    drop->contextCallback = o->drop;
     equip->contextObject = o;
     equip->contextCallback = &equipInHand;
 
@@ -174,6 +176,7 @@ void openKeyInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, openProb->uiBase);
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
+    shownItem = o;
 }
 void openPotionInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
@@ -192,7 +195,7 @@ void openPotionInfo(ItemBase* o){
     createButton    (consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
+    drop->contextCallback = o->drop;
     consume->contextObject = o;
     consume->contextCallback = o->primaryUse;
 
@@ -201,6 +204,7 @@ void openPotionInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, sprite->uiBase);
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, consume->uiBase);
+    shownItem = o;
 }
 void openAmmoInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
@@ -222,7 +226,7 @@ void openAmmoInfo(ItemBase* o){
     createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
+    drop->contextCallback = o->drop;
     
 
     linkedListPushBack(mgItemWidget.children, name->uiBase);
@@ -231,6 +235,7 @@ void openAmmoInfo(ItemBase* o){
     linkedListPushBack(mgItemWidget.children, range->uiBase);
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
+    shownItem = o;
 }
 void openValueableInfo(ItemBase* o){
     TextWidget* name = malloc(sizeof(TextWidget));
@@ -250,14 +255,14 @@ void openValueableInfo(ItemBase* o){
     createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
 
     drop->contextObject = o;
-    drop->contextCallback = &defaultItemDrop;
-    
+    drop->contextCallback = o->drop;
 
     linkedListPushBack(mgItemWidget.children, name->uiBase);
     linkedListPushBack(mgItemWidget.children, quantity->uiBase);
     linkedListPushBack(mgItemWidget.children, value->uiBase);
     linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
+    shownItem = o;
 }
 
 int isConsumableEqual(ItemBase* o1, ItemBase* o2){
@@ -288,18 +293,16 @@ void updateFood(ItemBase* o){
 
 void equipInHand(ItemBase* o){
     player.heldObject = o;
+    checkEquiped();
+}
 
-    changeTextWidget(&mgEquipedNameTextWidget, "%s equiped", o->name);
-    if(o->primaryUse){
-        changeTextWidget(&mgEquipedPrimaryTextWidget, "Press e to %s", o->primaryUseName);
-        mgEquipedPrimaryTextWidget.widget->isVisible = 1;
-    }else{
-        mgEquipedPrimaryTextWidget.widget->isVisible = 0;
-    }
-    if(o->secondaryUse){
-        changeTextWidget(&mgEquipedSecondaryextWidget, "Press q to %s", o->secondaryUseName);
-        mgEquipedSecondaryextWidget.widget->isVisible = 1;
-    }else{
-        mgEquipedSecondaryextWidget.widget->isVisible = 0;
-    }
+void pickupValuable(ItemBase* o){
+    player.totalGold += o->quantity * o->value;
+
+    defaultItemPickup(o);
+}
+void dropValueable(ItemBase* o){
+    player.totalGold -= o->quantity * o->value;
+    defaultItemDrop(o);
+    if(o->inInventory) player.totalGold += o->quantity * o->value;
 }

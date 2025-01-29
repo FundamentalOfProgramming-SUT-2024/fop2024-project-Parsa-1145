@@ -35,6 +35,11 @@ int effectSpeedIncrease(Effect*);
 int effectHealthRegen(Effect*);
 int effectStrengthen(Effect*);
 int effectHeal(Effect*);
+int effectFill(Effect*);
+int effectSicken(Effect*);
+int effectMaxHealthIncrease(Effect*);
+
+
 
 
 void deleteEffect(Effect* effect);

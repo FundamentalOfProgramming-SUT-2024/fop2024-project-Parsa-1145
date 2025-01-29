@@ -15,10 +15,12 @@ void(*getAction(char* name))(ItemBase*){
     else return NULL;
 }
 void(*getEffectFunc(char* name))(Effect*){
-    if(!strcmp(name, "heal")) return &effectHeal;
-    else if (!strcmp(name, "strenghten")) return &effectStrengthen;
-    else if (!strcmp(name, "speedIncrease")) return &effectSpeedIncrease;
-    else if (!strcmp(name, "healthRegen")) return &effectHealthRegen;
+    if(!strcmp(name, "Heal")) return &effectHeal;
+    else if (!strcmp(name, "Strenghten")) return &effectStrengthen;
+    else if (!strcmp(name, "Speed increase")) return &effectSpeedIncrease;
+    else if (!strcmp(name, "Health regeneration")) return &effectHealthRegen;
+    else if (!strcmp(name, "Fill")) return &effectFill;
+    else if (!strcmp(name, "Maxhealth increase")) return &effectMaxHealthIncrease;
     else return NULL;
 }
 void moveInStair(ItemBase* o){
@@ -35,6 +37,11 @@ void moveInStair(ItemBase* o){
 int consume(ItemBase* o){
     Effect* newEffect;
     Effect* tmpEffect;
+
+    addMessage(writeLog("You consumed the %s", o->name));
+    if((!strcmp(o->subType, "food")) && o->goodness == 0){
+        addMessage(writeLog("The %s was rotten", o->name));
+    }
     for(void** i = o->effects.data; i; i = i[0]){
         tmpEffect = i[1];
         newEffect = calloc(1, sizeof(Effect));
@@ -43,8 +50,9 @@ int consume(ItemBase* o){
         newEffect->duration = tmpEffect->duration;
         newEffect->func = tmpEffect->func;
 
-        linkedListPushBack(&(player.effects), newEffect);
+        addPlayerEffect(newEffect);
     }
+    updateWorld(0, 0);
 
     updateEffectsTab();
 }
@@ -73,28 +81,23 @@ int unlockDoor(ItemBase* o){
         itemPtr = tmpPtr[1];
         tmpPtr = tmpPtr[0];
         if((!strcmp(itemPtr->name, "Door")) && (itemPtr->locked)){
-            int x = player.x - itemPtr->x, y = player.y - itemPtr->y;
-            if(x * x + y * y < 2){
-                if(randWithProb(o->openingProb)){
-                    addMessage(writeLog("Door unlocked"));
-                    itemPtr->locked = 0;
-                    itemPtr->collider = 0;
-                    itemPtr->sprite = '+';
+            if(isPlayerNextTo(itemPtr)){
+                if(!itemPtr->lockBroken){
+                    if(randWithProb(o->openingProb)){
+                        addMessage(writeLog("Door unlocked"));
+                        itemPtr->locked = 0;
+                        itemPtr->collider = 0;
+                        itemPtr->sprite = '+';
+                    }else{
+                        addMessage(writeLog("Key broke"));
+                        ItemBase* broken;
+                        broken = LoadItemWithName("Broken key");
+                        broken->quantity = 1;
+                        addItemToInventory(broken);
+                        useItem(o);
+                    }
                 }else{
-                    addMessage(writeLog("Key broke"));
-                    ItemBase* broken;
-                    broken = LoadItemWithName("Broken key");
-                    broken->quantity = 1;
-                    if(o->quantity > 1){
-                        o->quantity--;
-                    }
-                    else{
-                        player.heldObject = NULL;
-                        removeItemFromLinkedList(&(player.items), o);
-                        defaultItemDelete(o);
-                        checkEquiped();
-                    }
-                    addItemToInventory(broken);
+                    addMessage(writeLog("The lock is broken"));
                 }
             }
         }
@@ -113,13 +116,21 @@ int effectStrengthen(struct Effect* e){
 int effectHeal(struct Effect* e){
     player.health = min(player.maxHealth, player.health += e->amount);
 }
-
+int effectFill(Effect* e){
+    player.fullness = min(player.baseFullness, player.fullness + e->amount);
+}
+int effectSicken(Effect*){
+    player.healthRegenModifier = 0;
+}
+int effectMaxHealthIncrease(Effect* e){
+    player.baseMaxHealth += e->amount;
+}
 void deleteEffect(Effect* effect){
     free(effect->type);
     free(effect);
 }
-
 void deleteInteraction(Interaction* a){
+    free(a->name);
     free(a);
 }
 void addInteraction(char* name, void (*func)(ItemBase*),  int key, ItemBase* o){
@@ -131,6 +142,4 @@ void addInteraction(char* name, void (*func)(ItemBase*),  int key, ItemBase* o){
     new->name = copyString(name);
 
     linkedListPushBack(&playerActionList, new);
-
- 
 }

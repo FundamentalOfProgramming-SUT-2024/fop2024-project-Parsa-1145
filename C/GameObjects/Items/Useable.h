@@ -9,7 +9,6 @@ void initAmmo(ItemBase* o);
 void initKey(ItemBase* o);
 void initValueable(ItemBase* o);
 
-
 void defaultUseableInit(ItemBase* o);
 
 void updateFood(ItemBase* o);
@@ -23,6 +22,9 @@ void openFoodInfo(ItemBase* o);
 void openAmmoInfo(ItemBase* o);
 void openWeaponInfo(ItemBase* o);
 void openValueableInfo(ItemBase* o);
+
+void pickupValuable(ItemBase* o);
+void dropValueable(ItemBase* o);
 
 
 void equipInHand(ItemBase* o);

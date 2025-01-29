@@ -14,13 +14,19 @@ typedef struct{
     int roomThemeNum;
     float* roomThemeProb;
 
-    int maxHealth;
-    int healthRegen;
+    int baseMaxHealth;
+    int baseHealthRegenTime;
+    int baseHealthRegenAmount;
+    int baseHungerTime;
+    int baseStrength;
+    int baseSpeed;
+    int maxFullness;
 
     int debugMode;
     int debugShowPointCloud;
     int noClip;
     int debugItemInfo;
+    int debugSeeAll;
 } GameSettings;
 
 

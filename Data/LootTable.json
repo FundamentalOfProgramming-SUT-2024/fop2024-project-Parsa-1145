@@ -44,7 +44,16 @@
             "name" : "Wierd soup",
             "weight" : 5
         },{
-            "name" : "Health Potion",
+            "name" : "Health regen",
+            "weight" : 5
+        },{
+            "name" : "Strength potion",
+            "weight" : 5
+        },{
+            "name" : "Heart crystal",
+            "weight" : 5
+        },{
+            "name" : "Health potion",
             "weight" : 5
         },{
             "name" : "Strength potion",
@@ -70,7 +79,7 @@
     "maxRolls" : 10,
     "enteries":[
         {
-            "name" : "Health Potion",
+            "name" : "Health regen",
             "weight" : 5
         },{
             "name" : "Strength potion",
@@ -126,7 +135,7 @@
             "name" : "Wierd soup",
             "weight" : 5
         },{
-            "name" : "Health Potion",
+            "name" : "Health regen",
             "weight" : 5
         },{
             "name" : "Strength potion",
@@ -135,7 +144,7 @@
             "name" : "Speed potion",
             "weight" : 5
         },{
-            "name" : "Golden coint",
+            "name" : "Golden coin",
             "weight" : 5,
             "min" : 9,
             "max" : 16
@@ -148,11 +157,11 @@
     ]
 },{
     "type" : 3,
-    "minRolls" : 10,
-    "maxRolls" : 15,
+    "minRolls" : 15,
+    "maxRolls" : 20,
     "enteries":[
         {
-            "name" : "Golden coint",
+            "name" : "Golden coin",
             "weight" : 5,
             "min" : 9,
             "max" : 16

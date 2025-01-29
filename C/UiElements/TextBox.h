@@ -19,7 +19,7 @@ typedef struct{
     int sizePolicyX, sizePolicyY;
     int alignmentX, alignmentY;
 
-    voidCB typeCallback;
+    voidCB finishedCallback;
     voidCB clickCallback;
 
     int bgColor;

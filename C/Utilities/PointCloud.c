@@ -41,8 +41,8 @@ int iteratePointCloud(Point** points, int** adjMat, int n, int spread){
                         points[i]->yForce += diffrence * yDir / 2;
                     }else{
                         if(adjMat[i][j]){
-                            points[i]->xForce +=  diffrence * xDir ;
-                            points[i]->yForce +=  diffrence * yDir ;
+                            points[i]->xForce +=  diffrence * xDir / 2 ;
+                            points[i]->yForce +=  diffrence * yDir / 2;
                         }
                     }
 

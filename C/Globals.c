@@ -96,6 +96,7 @@ int randIndexWithProb(int n, float* prob,int seed){
 }
 int randWithProb(float p){
     srand(time(NULL) + randSeed);
+    randSeed++;
 
     float r = ((float)(rand()) / RAND_MAX);
     if(r < p) return 1;
@@ -148,7 +149,6 @@ int saveJsonToFile(char* address, void* json){
     if (file){
         char* str = cJSON_Print(json);
         fprintf(file, "%s", str);
-
         free(str);
         fclose (file);
         return 1;
@@ -198,5 +198,26 @@ extern char* writeLog(const char* format, ...){
     vsnprintf(out, size+1, format, args);
     out[size] = '\0';
     va_end(args);
+    return out;
+}
+int isVowel(char c) {
+    switch(tolower(c)){
+        case 'a':
+        case 'e':
+        case 'i':
+        case 'o':
+        case 'u':
+            return 1;
+        default:
+            return 0;
+    }
+}
+cJSON* openJsonFile(const char * const address){
+    char *str;
+    fileToStr(address, &str);
+
+    cJSON* out = cJSON_Parse(str);
+
+    free(str);
     return out;
 }

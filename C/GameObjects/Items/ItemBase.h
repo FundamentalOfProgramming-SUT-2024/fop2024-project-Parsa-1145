@@ -20,7 +20,7 @@ extern int globalItemIdCounter;
 
 typedef struct ItemBase{
     void (*update)(struct ItemBase*);
-    void (*render)(void*, CharTexture*, ColorTexture*, Camera*);
+    void (*render)(void*, CharTexture*, Camera*);
     int (*isEqual)(void*, void*);
     void (*pickUp)(struct ItemBase*);
     void (*drop)(struct ItemBase*);
@@ -50,20 +50,33 @@ typedef struct ItemBase{
     int collider;
     int locked;
     int inInventory;
+    short color[3];
+    int password, passwordValid, lockBroken;
 }ItemBase;
 
 ItemBase* loadItemFromJson(cJSON* data);
 ItemBase* LoadItemWithName(const char* name);
+cJSON* itemToJson(ItemBase* o);
+
 void defaultItemPickup(ItemBase* o);
-void addItemToInventory(ItemBase* o);
-void defaultItemDrop(ItemBase* o);
-void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, ColorTexture* colorBuffer,  Camera* cam);
-int defaultItemCompare(ItemBase* o1, ItemBase* o2);
-void defaultItemUpdate(ItemBase* o);
-void defaultItemDelete(ItemBase* o);
+
 void noPickUp(ItemBase* o);
+void addItemToInventory(ItemBase* o);
+
+void defaultItemDrop(ItemBase* o);
 void noDrop(ItemBase* o);
+
+void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, Camera* cam);
+
+int defaultItemCompare(ItemBase* o1, ItemBase* o2);
+
+void defaultItemUpdate(ItemBase* o);
+int isPlayerNextTo(ItemBase* o);
+void useItem(ItemBase* o);
 void pickableItemUpdate(ItemBase* o);
+
+void defaultItemDelete(ItemBase* o);
+
 void debugItemInfo(ItemBase* o);
 ItemBase* findItemById(int id);
 

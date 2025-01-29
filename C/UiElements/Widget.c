@@ -248,6 +248,9 @@ void updateWidgetChildren(Widget* w){
                 updateWidgetChildren(w->iterPtr->object);
             }
         }
+    }else{
+        w->canScrollUp = 0;
+        w->layoutOffset = 0;
     }
 }
 void deleteWidget(Widget* w){
@@ -265,23 +268,25 @@ void deleteWidget(Widget* w){
 }
 int WMouseMoveCb(Widget* w){
     w->tmpIterPtr = w->children->data;
+    int flag = 0;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
         w->tmpIterPtr = w->tmpIterPtr[0];
-        w->iterPtr->mouseMove(w->iterPtr->object);
+        flag |= w->iterPtr->mouseMove(w->iterPtr->object);
     }
+    return flag;
 }
 int WMouseClickCb(Widget* w){
     int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
-    int recieved = 0;
+    int flag = 0;
     w->tmpIterPtr = w->children->data;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
         w->tmpIterPtr = w->tmpIterPtr[0];
-        if(w->iterPtr->mouseClick(w->iterPtr->object)) recieved = 1;
+        flag |= w->iterPtr->mouseClick(w->iterPtr->object);
     }
     if(scroll && w->scrollOn){
-        if(!recieved){
+        if(!flag){
             if(isWidgetHovered(w, mEvent.x, mEvent.y)){
                 if(mEvent.bstate & BUTTON5_PRESSED){
                     if(w->canScrollUp){
@@ -298,15 +303,22 @@ int WMouseClickCb(Widget* w){
             }
         }
     }
-    return 0;
+
+    if(flag){
+        return 1;
+    }else{
+        return w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y);
+    }
 }
 int WKeyPressCb(Widget* w, int key){
     w->tmpIterPtr = w->children->data;
+    int flag = 0;
     while(w->tmpIterPtr){
         w->iterPtr = w->tmpIterPtr[1];
         w->tmpIterPtr = w->tmpIterPtr[0];
-        w->iterPtr->keyPress(w->iterPtr->object, key);
+        flag |= w->iterPtr->keyPress(w->iterPtr->object, key);
     }
+    return flag;
 }
 void renderWidget(Widget* w){
     if(isWidgetVisible(w)){

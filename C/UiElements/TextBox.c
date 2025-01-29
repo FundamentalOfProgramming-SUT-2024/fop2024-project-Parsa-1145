@@ -123,6 +123,9 @@ int TBKeyPressCb(TextBox* textBox, int key){
             default:
                 if(key < 129){
                     if((key == '\n') || (key == '\t')){
+                        if(textBox->finishedCallback){
+                            textBox->finishedCallback();
+                        }
                         textBox->focused = 0;
                     }else{
                         if(key == ' '){

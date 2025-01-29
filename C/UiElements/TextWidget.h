@@ -10,10 +10,7 @@ typedef union{
     char* s;
     wchar_t* w;
     float* f;
-}Value;
-typedef struct{
-    Value arg;
-    char argType;
+    int color[3];
 }Arg;
 typedef struct{
     Widget* widget;

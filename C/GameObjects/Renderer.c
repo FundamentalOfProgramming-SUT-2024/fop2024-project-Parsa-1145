@@ -8,7 +8,7 @@
 
 #include "Renderer.h"
 
-void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer){
+void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer){
     if(cam == NULL) cam = &mainCamera;
 
     x1 = x1 - cam->x;
@@ -110,7 +110,7 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
     
 }
 
-void renderTexture(CharTexture* tex, ColorTexture* color, float x, float y, Camera* cam, CharTexture* frameBuffer, ColorTexture* colorBuffer){
+void renderTexture(CharTexture* tex, float x, float y, Camera* cam, CharTexture* frameBuffer){
     if(cam == NULL) cam = &mainCamera;
 
 
@@ -131,36 +131,44 @@ void renderTexture(CharTexture* tex, ColorTexture* color, float x, float y, Came
     if(y + tex->h - 1 < 0) return;
     y2 = min(y + tex->h - 1, cam->h - 1);
 
-    
     for(y1; y1 <= y2; y1++){
         for(int i = x1; i <= x2; i++){
             if(tex->data[(int)(y1 - y)][(int)(i - x)] != '\0'){
                 frameBuffer->data[(int)y1][i] = (tex->data[(int)(y1 - y)][(int)(i - x)]);
+                frameBuffer->color[(int)y1][i] = (tex->color[(int)(y1 - y)][(int)(i - x)]);
             }
         }
     }
 }
 
-void renderFrameBuffer(CharTexture* tex, ColorTexture* colTex){
-    static int prevCollor;
+void renderFrameBuffer(CharTexture* tex){
+    int prevColor = 0, lastColor = 0;
     FOR(i, tex->h){
         move(i, 0);
         FOR(j, tex->w){
             if(tex->data[i][j]){
+                if(tex->color[i][j] != prevColor){
+                    attroff(COLOR_PAIR(prevColor));
+                    attron(COLOR_PAIR(tex->color[i][j]));
+                    lastColor = tex->color[i][j];
+                    prevColor = lastColor;
+                }
                 printw("%lc", tex->data[i][j]);
             }else{
                 addch(' ');
             }
-            
         }
     }
+    attroff(COLOR_PAIR(lastColor));
 }
-void maskFrameBuffer(CharTexture* frb, ColorTexture* clb, CharTexture* mask){
+void maskFrameBuffer(CharTexture* frb, CharTexture* mask){
     if(mask->h > frb->h || mask->w > frb->w) return;
 
     FOR(i, mask->h){
         FOR(j, mask->w){
-            if(!(mask->data[i][j])) frb->data[i][j] = 0;
+            if(!(mask->data[i][j])){
+                frb->data[i][j] = '\0';
+            }
         }
     }
 }

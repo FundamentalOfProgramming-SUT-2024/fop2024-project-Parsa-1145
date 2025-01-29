@@ -15,10 +15,8 @@ void deleteFloor(Floor* f){
     f->roomList = NULL;
     
 
-    ItemBase* tmp;
-    FOR(j, f->itemList->size){
-        tmp = linkedListGetElement(f->itemList, 0);
-        tmp->deleteObject(tmp);
+    while(f->itemList->size){
+        defaultItemDelete((f->itemList->data)[1]);
         popLinkedList(f->itemList);
     }
     free(f->itemList);

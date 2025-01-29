@@ -22,7 +22,6 @@ typedef struct{
     CharTexture* groundMesh;
     CharTexture* featureMesh;
     CharTexture* visited;
-    ColorTexture* groundMeshColor;
 }Floor;
 void deleteFloor(Floor* f);
 

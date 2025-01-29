@@ -21,7 +21,11 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
                 }
                 break;
             case '%':
-                n++;
+                if(format[i+1] == 'o'){
+                    n+= 3;
+                }else if(format[i+1] != 'O'){
+                    n++;
+                }
                 break;
             default:
                 break;
@@ -43,22 +47,31 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
                 break;
             case '%':
                 i++;
-                t->args[k].argType = format[i];
-                switch (t->args[k].argType){
+                switch (format[i]){
                     case 's':
-                        t->args[k].arg.s = va_arg(args, char*);
+                        t->args[k].s = va_arg(args, char*);
+                        k++;
                         break;
                     case 'd':
-                        t->args[k].arg.d = va_arg(args, int*);
+                        t->args[k].d = va_arg(args, int*);
+                        k++;
                         break;
                     case 'u':
-                        t->args[k].arg.w = va_arg(args, wchar_t*);
+                        t->args[k].w = va_arg(args, wchar_t*);
+                        k++;
                         break;
                     case 'f':
-                        t->args[k].arg.f = va_arg(args, float*);
+                        t->args[k].f = va_arg(args, float*);
+                        k++;
+                        break;
+                    case 'o':
+                        t->args[k].color[0] = va_arg(args, int);
+                        t->args[k+1].color[1] = va_arg(args, int);
+                        t->args[k+2].color[2] = va_arg(args, int);
+                        k+= 3;
                         break;
                 }
-                k++;
+                
                 break;
             default:
                 break;
@@ -104,7 +117,11 @@ void changeTextWidget(TextWidget* t, char* format, ...){
                 }
                 break;
             case '%':
-                n++;
+                if(format[i+1] == 'o'){
+                    n+= 3;
+                }else  if(format[i+1] != 'O'){
+                    n++;
+                }
                 break;
             default:
                 break;
@@ -126,22 +143,31 @@ void changeTextWidget(TextWidget* t, char* format, ...){
                 break;
             case '%':
                 i++;
-                t->args[k].argType = format[i];
-                switch (t->args[k].argType){
+                switch (format[i]){
                     case 's':
-                        t->args[k].arg.s = va_arg(args, char*);
+                        t->args[k].s = va_arg(args, char*);
+                        k++;
                         break;
                     case 'd':
-                        t->args[k].arg.d = va_arg(args, int*);
+                        t->args[k].d = va_arg(args, int*);
+                        k++;
                         break;
                     case 'u':
-                        t->args[k].arg.w = va_arg(args, wchar_t*);
+                        t->args[k].w = va_arg(args, wchar_t*);
+                        k++;
                         break;
                     case 'f':
-                        t->args[k].arg.f = va_arg(args, float*);
+                        t->args[k].f = va_arg(args, float*);
+                        k++;
+                        break;
+                    case 'o':
+                        t->args[k].color[0] = va_arg(args, int*);
+                        t->args[k+1].color[1] = va_arg(args, int*);
+                        t->args[k+2].color[1] = va_arg(args, int*);
+                        k+=3;
                         break;
                 }
-                k++;
+                
                 break;
             default:
                 break;
@@ -151,6 +177,7 @@ void changeTextWidget(TextWidget* t, char* format, ...){
     va_end(args);
 }
 void renderTextWidget(TextWidget* t){
+    int prevColor = 0;
     if(isWidgetVisible(t->widget)){
         attron(COLOR_PAIR(t->bgColor));
         move(t->widget->topLeftY, t->widget->topLeftX);
@@ -167,19 +194,32 @@ void renderTextWidget(TextWidget* t){
             case '%':
                 switch (t->format[i+1]){
                     case 's':
-                        printw("%s", t->args[argIter].arg.s);
+                        printw("%s", t->args[argIter].s);
+                        argIter++;
                         break;
                     case 'd':
-                        printw("%d", t->args[argIter].arg.d[0]);
+                        printw("%d", t->args[argIter].d[0]);
+                        argIter++;
                         break;
                     case 'u':
-                        printw("%Lc", t->args[argIter].arg.w[0]);
+                        printw("%Lc", t->args[argIter].w[0]);
+                        argIter++;
                         break;
                     case 'f':
-                        printw("%f", t->args[argIter].arg.f[0]);
+                        printw("%f", t->args[argIter].f[0]);
+                        argIter++;
+                        break;
+                    case 'o':
+                        if (prevColor) attroff(COLOR_PAIR(prevColor));
+                        prevColor = rgb[t->args[argIter].color[0]][t->args[argIter+1].color[1]][t->args[argIter+2].color[2]];
+                        argIter +=3;
+                        attron(COLOR_PAIR(prevColor));
+                        break;
+                    case 'O':
+                        attroff(COLOR_PAIR(prevColor));
+                        prevColor = 0;
                         break;
                 }
-                argIter++;
                 i++;
                 break;
             default:

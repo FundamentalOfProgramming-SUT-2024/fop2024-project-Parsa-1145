@@ -8,7 +8,7 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "/home/parsa/Projects/University/BP/Rouge/C/",
+      "cwd": "/home/parsa/Projects/University/BP/Rouge/C",
       "program": "/home/parsa/Projects/University/BP/Rouge/C/main",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",

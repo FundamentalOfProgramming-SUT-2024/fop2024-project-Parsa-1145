@@ -1,6 +1,7 @@
 #ifndef PLAYER
 #define PLAYER
 
+#include "../GameObjects/Items/Action.h"
 #include "../Utilities/LinkedList.h"
 #include "./Items/ItemBase.h"
 
@@ -9,18 +10,34 @@ typedef struct{
     int visionRadius;
 
     int health;
-    int maxHealth;
-    int healthRegen;
 
+    int baseMaxHealth;
+    float healthModifier;
+    int maxHealth;
+
+    int baseHealthRegenAmount;
+    float healthRegenModifier;
+    int healthRegenAmount;
+
+    int baseStrength;
+    float strengthModifier;
     int strenght;
+
+    int baseSpeed;
+    float speedModifier;
     int speed;
 
-    float speedModifier;
-    float healthModifier;
-    float healthRegenModifier;
-    float strengthModifier;
+    int healthRegenTime;
+    int healthRegenCounter;
+
+    int baseFullness;
+    int fullness;
+    int hungerTime;
+    int hungerCounter;
+
 
     int totalGold;
+    int totalMoves;
 
     LinkedList items;
     LinkedList effects;
@@ -30,5 +47,7 @@ typedef struct{
 int getPlayerSpeed(Player* player);
 int getPlayerStrength(Player* player);
 int getPlayerHealthRegen(Player* player);
+void updatePlayerStats(Player* player);
 void checkEquiped();
+void addPlayerEffect(Effect* e);
 #endif

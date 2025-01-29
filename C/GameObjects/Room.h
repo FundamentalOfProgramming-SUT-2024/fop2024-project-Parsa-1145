@@ -15,6 +15,8 @@ typedef struct Room{
     int neighbours;
     int visited;
     int stairCandidate;
+    int hidden;
+    int instantDiscovery;
     Point* point;
     int index;
 
