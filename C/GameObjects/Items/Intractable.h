@@ -15,7 +15,8 @@ void passwordGeneratorPlayerCollision(ItemBase* o);
 void updatePasswordGenerator(ItemBase* o);
 void updateDoor(ItemBase* o);
 
-void invalidatePassword(ItemBase* o);
+void stairUpdate(ItemBase* o);
 
+void invalidatePassword(ItemBase* o);
 
 #endif

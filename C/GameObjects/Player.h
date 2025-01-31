@@ -39,6 +39,8 @@ typedef struct{
     int totalGold;
     int totalMoves;
 
+    int levitating;
+
     LinkedList items;
     LinkedList effects;
     ItemBase* heldObject;

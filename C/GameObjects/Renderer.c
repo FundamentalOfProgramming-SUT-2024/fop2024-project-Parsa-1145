@@ -73,7 +73,10 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
             x1 = (y1 - b) / m;
             x2 = (y2 - b) / m;
             
-            
+            x1 = floor(x1) + 0.5;
+            x2 = floor(x2) + 0.5;
+            y1 = floor(y1) + 0.5;
+            y2 = floor(y2) + 0.5;
             if(abs(m) < 1){
                 if(x1 > x2){
                     float tmp = x1;
@@ -84,8 +87,8 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
                     y2 = tmp;
                 } 
                 x1 = round(x1);
-                for(x1; x1 <= x2; x1++){
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                for(x1; x1 <= x2 + 0.5; x1++){
+                    frameBuffer->data[(int)(y1)][(int)(x1)] = c;
                     y1+=m;
                 }
             }else{
@@ -99,8 +102,8 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
                 }
                 y1 = round(y1);
                 m = 1/m;
-                for(y1; y1 <= y2; y1++){
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                for(y1; y1 <= y2 + 0.5; y1++){
+                    frameBuffer->data[(int)(y1)][(int)(x1)] = c;
                     x1+=m;
                 }
             }
@@ -135,6 +138,7 @@ void renderTexture(CharTexture* tex, float x, float y, Camera* cam, CharTexture*
         for(int i = x1; i <= x2; i++){
             if(tex->data[(int)(y1 - y)][(int)(i - x)] != '\0'){
                 frameBuffer->data[(int)y1][i] = (tex->data[(int)(y1 - y)][(int)(i - x)]);
+                if(frameBuffer->data[(int)y1][i] < ' ')frameBuffer->data[(int)y1][i] += '0';
                 frameBuffer->color[(int)y1][i] = (tex->color[(int)(y1 - y)][(int)(i - x)]);
             }
         }
@@ -159,7 +163,9 @@ void renderFrameBuffer(CharTexture* tex){
             }
         }
     }
-    attroff(COLOR_PAIR(lastColor));
+    if(lastColor != 0){
+        attroff(COLOR_PAIR(lastColor));
+    }
 }
 void maskFrameBuffer(CharTexture* frb, CharTexture* mask){
     if(mask->h > frb->h || mask->w > frb->w) return;
@@ -168,6 +174,17 @@ void maskFrameBuffer(CharTexture* frb, CharTexture* mask){
         FOR(j, mask->w){
             if(!(mask->data[i][j])){
                 frb->data[i][j] = '\0';
+            }
+        }
+    }
+}
+void colorMaskFrameBuffer(CharTexture* frb,CharTexture* mask){
+    if(mask->h > frb->h || mask->w > frb->w) return;
+
+    FOR(i, mask->h){
+        FOR(j, mask->w){
+            if(!(mask->data[i][j])){
+                frb->color[i][j] = rgb[1][1][1];
             }
         }
     }

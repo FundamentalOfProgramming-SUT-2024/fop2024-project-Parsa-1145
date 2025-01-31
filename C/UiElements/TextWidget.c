@@ -56,8 +56,20 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
                         t->args[k].d = va_arg(args, int*);
                         k++;
                         break;
+                    case 'D':
+                        t->args[k].sd = va_arg(args, int);
+                        k++;
+                        break;
+                    case 'F':
+                        t->args[k].sf = va_arg(args, double);
+                        k++;
+                        break;
                     case 'u':
                         t->args[k].w = va_arg(args, wchar_t*);
+                        k++;
+                        break;
+                    case 'U':
+                        t->args[k].sw = va_arg(args, wchar_t);
                         k++;
                         break;
                     case 'f':
@@ -156,6 +168,18 @@ void changeTextWidget(TextWidget* t, char* format, ...){
                         t->args[k].w = va_arg(args, wchar_t*);
                         k++;
                         break;
+                    case 'U':
+                        t->args[k].sw = va_arg(args, wchar_t);
+                        k++;
+                        break;
+                    case 'D':
+                        t->args[k].sd = va_arg(args, int);
+                        k++;
+                        break;
+                    case 'F':
+                        t->args[k].sf = va_arg(args, double);
+                        k++;
+                        break;
                     case 'f':
                         t->args[k].f = va_arg(args, float*);
                         k++;
@@ -163,7 +187,7 @@ void changeTextWidget(TextWidget* t, char* format, ...){
                     case 'o':
                         t->args[k].color[0] = va_arg(args, int*);
                         t->args[k+1].color[1] = va_arg(args, int*);
-                        t->args[k+2].color[1] = va_arg(args, int*);
+                        t->args[k+2].color[2] = va_arg(args, int*);
                         k+=3;
                         break;
                 }
@@ -201,8 +225,20 @@ void renderTextWidget(TextWidget* t){
                         printw("%d", t->args[argIter].d[0]);
                         argIter++;
                         break;
+                    case 'D':
+                        printw("%d", t->args[argIter].sd);
+                        argIter++;
+                        break;
+                    case 'F':
+                        printw("%d", t->args[argIter].sf);
+                        argIter++;
+                        break;
                     case 'u':
                         printw("%Lc", t->args[argIter].w[0]);
+                        argIter++;
+                        break;
+                    case 'U':
+                        printw("%Lc", t->args[argIter].sw);
                         argIter++;
                         break;
                     case 'f':

@@ -3,6 +3,7 @@
 
 typedef struct{
     void** data;
+    void** end;
 
     int dataSize;
     int size;

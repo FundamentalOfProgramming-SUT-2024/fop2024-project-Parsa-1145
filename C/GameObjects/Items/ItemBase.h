@@ -31,27 +31,35 @@ typedef struct ItemBase{
     void (*playerCollision)(struct ItemBase*);
     void (*keyPress)(struct ItemBase*);
 
-    int id;
-    int relId;
-    char *type, *subType;
-    int damage, range;
-    LinkedList effects;
-    int goodness, decayTime, cursed;
-    int decayed;
-    float openingProb;
-    int fake;
-    int value;
-    char primaryKey, secondaryKey;
-    char* primaryUseName, *secondaryUseName;
     int x, y, z;
     wchar_t sprite;
-    int quantity;
+    int id, relId;
+    char primaryKey, secondaryKey;
+    char* primaryUseName, *secondaryUseName;
     char* name;
+    char *type, *subType;
     int collider;
-    int locked;
-    int inInventory;
     short color[3];
+
+    int quantity;
+
+    int damage, range;
+
+    int health;
+
+    LinkedList effects;
+    int goodness, decayTime, cursed, decayed;
+
+    float openingProb;
+
     int password, passwordValid, lockBroken;
+
+    int value;
+
+    int fake;
+    int locked;
+    int hidden;
+    int inInventory;
 }ItemBase;
 
 ItemBase* loadItemFromJson(cJSON* data);

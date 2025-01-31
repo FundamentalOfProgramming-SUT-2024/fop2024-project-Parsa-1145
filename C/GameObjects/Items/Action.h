@@ -30,6 +30,10 @@ int kick(ItemBase* o);
 int throwAttack(ItemBase* o);
 int shootArrow(ItemBase* o);
 int unlockDoor(ItemBase* o);
+int trapSimpleDamage(ItemBase* o);
+int trapPoisonDamage(ItemBase* o);
+int trapFallToNextFloor(ItemBase* o);
+int trapTeleport(ItemBase* o);
 
 int effectSpeedIncrease(Effect*);
 int effectHealthRegen(Effect*);
@@ -38,11 +42,13 @@ int effectHeal(Effect*);
 int effectFill(Effect*);
 int effectSicken(Effect*);
 int effectMaxHealthIncrease(Effect*);
-
-
-
+int effectPoison(Effect*);
+int effectLevitation(Effect*);
 
 void deleteEffect(Effect* effect);
+cJSON* effectToJson(Effect* e);
+Effect* loadEffect(cJSON* data);
+
 
 void(*getAction(char* name))(ItemBase*);
 void(*getEffectFunc(char* name))(Effect*);

@@ -6,15 +6,13 @@
 #include "ItemTypes.h"
 #include "Action.h"
 
-
 void initWeapon(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->playerCollision = &pickableItemUpdate;
+    o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openWeaponInfo;
-    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &isWeaponEqual;
@@ -28,11 +26,10 @@ void initConsumable(ItemBase* o){
         o->isEqual = &isFoodEqual;
         o->openItemInfo = &openFoodInfo;
     }else if(!strcmp(o->subType, "potion")){
-        o->update = &defaultItemUpdate;
+        o->update = &pickableItemUpdate;
         o->isEqual = &defaultItemCompare;
         o->openItemInfo = &openPotionInfo;
     }
-    o->playerCollision = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
@@ -41,10 +38,9 @@ void initAmmo(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->playerCollision = &pickableItemUpdate;
+    o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openAmmoInfo;
-    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -53,10 +49,9 @@ void initKey(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->playerCollision = &pickableItemUpdate;
+    o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = &openKeyInfo;
-    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -65,10 +60,9 @@ void defaultUseableInit(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->playerCollision = &pickableItemUpdate;
+    o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = NULL;
-    o->update = &defaultItemUpdate;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -77,11 +71,21 @@ void initValueable(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->playerCollision = &pickableItemUpdate;
+    o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
     o->openItemInfo = openValueableInfo;
-    o->update = &defaultItemUpdate;
     o->pickUp = &pickupValuable;
+    o->drop = &dropValueable;
+    o->isEqual = &defaultItemCompare;
+}
+void initAmulet(ItemBase* o){
+    if(!(o->id)){
+        o->id = globalItemIdCounter++;
+    }
+    o->update = &pickableItemUpdate;
+    o->render = &defaultItemRender;
+    o->openItemInfo = openValueableInfo;
+    o->pickUp = &pickupAmulet;
     o->drop = &dropValueable;
     o->isEqual = &defaultItemCompare;
 }
@@ -278,6 +282,7 @@ int isFoodEqual(ItemBase* o1, ItemBase* o2){
 }
 
 void updateFood(ItemBase* o){
+    pickableItemUpdate(o);
     if(deltaTime){
         if(o->inInventory){
             o->decayed += 2;
@@ -305,4 +310,8 @@ void dropValueable(ItemBase* o){
     player.totalGold -= o->quantity * o->value;
     defaultItemDrop(o);
     if(o->inInventory) player.totalGold += o->quantity * o->value;
+}
+void pickupAmulet(ItemBase* o){
+    addFormattedMessage("You found the %oamulet of yendor%O", 5, 5, 0);
+    endGame(1, NULL);
 }

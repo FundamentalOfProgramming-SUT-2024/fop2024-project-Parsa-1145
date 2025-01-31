@@ -35,6 +35,8 @@
 #include "../GameObjects/Items/Useable.h"
 #include "../GameObjects/Items/Intractable.h"
 #include "../GameObjects/Items/Action.h"
+#include "../GameObjects/Items/Monster.h"
+
 
 void generateMap();
 
@@ -68,7 +70,12 @@ CheckBox mgNoClipCb;
 CheckBox mgItemDebugInfo;
 CheckBox mgSeeAllCb;
 
-
+Widget mgEndGameMenu;
+TextWidget mgEndGameDialouge1;
+TextWidget mgEndGameTotalMovesTextWidget;
+TextWidget mgEndGameTotalScoreTextWidget;
+TextWidget mgEndGameTotalTimeTextWidget;
+Button mgEndGameExitBtn;
 
 Widget mgSidePane;
 Widget mgTerminalWidget;
@@ -86,7 +93,7 @@ TextWidget healthTextWidget;
 TextWidget goldTextWidget;
 TextWidget totalMovesTextWidget;
 TextWidget fullnessTextWidget;
-
+TextWidget playerNameTextWidget;
 
 Widget mgEffectsTab;
 
@@ -175,6 +182,19 @@ void saveGame(){
     cJSON_AddNumberToObject(playerJ, "hunger time", player.hungerTime);
     cJSON_AddNumberToObject(playerJ, "health regen time", player.healthRegenTime);
     cJSON_AddNumberToObject(playerJ, "health regen amount", player.baseHealthRegenAmount);
+    {
+        cJSON* effectsJ = cJSON_CreateArray();
+        
+        void** tmp = player.effects.data;
+        Effect* e;
+        while(tmp){
+            e = tmp[1];
+            tmp = tmp[0];
+            cJSON* eJ = effectToJson(e);
+            cJSON_AddItemToArray(effectsJ, eJ);
+        }
+        cJSON_AddItemToObject(playerJ, "effects", effectsJ);
+    }
 
     cJSON_AddItemToObject(json, "player", playerJ);
 
@@ -245,6 +265,15 @@ void loadGame(const char* address){
     if(cJSON_GetObjectItem(playerJ, "held object")){
         player.heldObject = findItemById(cJSON_GetObjectItem(playerJ, "held object")->valueint);
     }
+    {
+        cJSON* effectsJ = cJSON_GetObjectItem(playerJ, "effects");
+        
+        cJSON* e = effectsJ->child;
+        while(e){
+            linkedListPushBack(&(player.effects), loadEffect(e));
+            e = e->next;
+        }
+    }
     player.hungerTime = cJSON_GetObjectItem(playerJ, "hunger time")->valueint;
     player.healthRegenTime = cJSON_GetObjectItem(playerJ, "health regen time")->valueint;
     player.baseHealthRegenAmount = cJSON_GetObjectItem(playerJ, "health regen amount")->valueint;
@@ -258,11 +287,13 @@ void loadGame(const char* address){
     frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
     visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
     updateWorld(0, 0);
+    updateEffectsTab();
 
     engineState = &mainGame;
     timeout(100);
     nodelay(stdscr, FALSE);
 }
+
 void mgToggleStatMenu(){
     mgSidePane.isVisible =! mgSidePane.isVisible;
 
@@ -424,6 +455,49 @@ TextWidget* addMessage(char* message){
     return tmp;
 }
 
+void debugRenderFramebuffer(Floor* f){
+    erase();
+
+    mainCamera.h = scrH;
+    mainCamera.w = scrW;
+    mainCamera.x = player.x;
+    mainCamera.y = player.y;
+
+    renderFrameBuffer(frameBuffer);
+    
+    fillCharTexture(frameBuffer, ' ');
+
+    refresh();
+}
+void debugRenderMesh(Floor* f){
+    erase();
+    fillCharTexture(frameBuffer, ' ');
+
+    mainCamera.h = scrH;
+    mainCamera.w = scrW;
+    mainCamera.x = player.x;
+    mainCamera.y = player.y;
+    
+    if(gameSettings.debugMapGenerationLayer == 0){
+        renderTexture(f->groundMesh, 0, 0, &mainCamera, frameBuffer);
+    }else if (gameSettings.debugMapGenerationLayer==1){
+        renderTexture(f->featureMesh, 0, 0, &mainCamera, frameBuffer);
+    }else{
+        renderTexture(f->visited, 0, 0, &mainCamera, frameBuffer);
+    }
+    FOR(j, f->roomNum){
+        drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
+        for(int k = j+1; k < f->roomNum; k++){
+            if(f->adjMat[k][j]){
+                renderLine('#', f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
+            }
+        }
+    }
+    renderFrameBuffer(frameBuffer);
+
+    refresh();
+}
+
 void initMainGame(){
     createLinkedList(&mgUiList, sizeof(UiBase*));
 
@@ -445,18 +519,37 @@ void initMainGame(){
         linkedListPushBack(mgDebugMenu.children, mgShowPointCloudCb.uiBase);
         linkedListPushBack(mgDebugMenu.children, mgSeeAllCb.uiBase);
 
-
         linkedListPushBack(mgDebugMenu.children, mgCloseDebugBtn.uiBase);
         mgCloseDebugBtn.callBack = &mgtoggleDegbugMenu;
     }
 
+    createWidget(&mgEndGameMenu, NULL, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 90, 90, C_BG_BLACK);
+    mgEndGameMenu.isVisible = 0;
+    mgEndGameMenu.bordered = 1;
+    mgEndGameMenu.layoutType = VERTICAL_LAYOUT;
+    mgEndGameMenu.layoutPadding = 1;
+    {
+        createTextWidget(&mgEndGameDialouge1, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 1, "You Won");
+        createTextWidget(&mgEndGameTotalScoreTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
+        createTextWidget(&mgEndGameTotalMovesTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
+        createTextWidget(&mgEndGameTotalTimeTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
+        createButton(&mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
+        mgEndGameExitBtn.callBack = &enterMainMenu;
+
+        linkedListPushBack(mgEndGameMenu.children, mgEndGameDialouge1.uiBase);
+        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalScoreTextWidget.uiBase);
+        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalMovesTextWidget.uiBase);
+        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalTimeTextWidget.uiBase);
+        linkedListPushBack(mgEndGameMenu.children, mgEndGameExitBtn.uiBase);
+    }
+
 
     createWidget(&mgPauseMenu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 21, 11, C_BG_GRAY0);
+    mgPauseMenu.isVisible = 0;
+    mgPauseMenu.bordered = 1;
+    mgPauseMenu.layoutType = VERTICAL_LAYOUT;
+    mgPauseMenu.layoutPadding = 1;
     {
-        mgPauseMenu.isVisible = 0;
-        mgPauseMenu.bordered = 1;
-        mgPauseMenu.layoutType = VERTICAL_LAYOUT;
-        mgPauseMenu.layoutPadding = 1;
 
         createButton(&mgResumeButton, &mgPauseMenu, "Resume", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 2, 80);
         createButton(&mgOptionsBtn, &mgPauseMenu, "Options", RELATIVE, ALIGN_CENTER, WITH_PARENT, 0, 0, 80);
@@ -497,12 +590,18 @@ void initMainGame(){
                 createWidget(&mgStatsTab, mgTabWidget.tabArea, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
                 mgStatsTab.layoutType = VERTICAL_LAYOUT;
                 mgStatsTab.scrollOn = 1;
-                {
-                    createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Health: %d / %d", &(player.health), &(player.maxHealth));
+                {   
+                    if(account.username){
+                        createTextWidget(&playerNameTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Name: %s", account.username);
+                    }else{
+                        createTextWidget(&playerNameTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Name: Guest");
+                    }
+                    createTextWidget(&healthTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 1, "Health: %d / %d", &(player.health), &(player.maxHealth));
                     createTextWidget(&goldTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Golds: %d", &(player.totalGold));
                     createTextWidget(&totalMovesTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Total moves: %d", &globalTime);
                     createTextWidget(&fullnessTextWidget, &mgStatsTab, ALIGN_LEFT, WITH_PARENT, 0, 0, "Fullness: %d / %d", &player.fullness, &player.baseFullness);
 
+                    linkedListPushBack(mgStatsTab.children, playerNameTextWidget.uiBase);
                     linkedListPushBack(mgStatsTab.children, healthTextWidget.uiBase);
                     linkedListPushBack(mgStatsTab.children, fullnessTextWidget.uiBase);
                     linkedListPushBack(mgStatsTab.children, goldTextWidget.uiBase);
@@ -563,9 +662,10 @@ void initMainGame(){
     }
     linkedListPushBack(&mgUiList, mgSidePane.uiBase);
     linkedListPushBack(&mgUiList, mgTerminalWidget.uiBase);
-    linkedListPushBack(&mgUiList, mgPauseMenu.uiBase);
-    linkedListPushBack(&mgUiList, mgDebugMenu.uiBase);
     linkedListPushBack(&mgUiList, mgEquipedWidget.uiBase);
+    linkedListPushBack(&mgUiList, mgDebugMenu.uiBase);
+    linkedListPushBack(&mgUiList, mgEndGameMenu.uiBase);
+    linkedListPushBack(&mgUiList, mgPauseMenu.uiBase);
 
 
     gameSettings.difficaulity = 0;
@@ -573,9 +673,9 @@ void initMainGame(){
     gameSettings.minRoomNum = 5;
     gameSettings.maxFloorNum = 6;
     gameSettings.minFloorNum = 4;
-    gameSettings.minRoomSize = 4;
-    gameSettings.maxRoomSize = 12;
-    gameSettings.roomSpread = 1;
+    gameSettings.minRoomSize = 6;
+    gameSettings.maxRoomSize = 15;
+    gameSettings.roomSpread = 3;
     gameSettings.roomThemeProb = malloc(4 * 4);
     gameSettings.roomThemeProb[0] = 0.5;
     gameSettings.roomThemeProb[1] = 0.2;
@@ -594,6 +694,8 @@ void initMainGame(){
     gameSettings.noClip = 1;
     gameSettings.debugItemInfo = 0;
     gameSettings.debugSeeAll = 1;
+    gameSettings.debugMapGenerationLayer = 0;
+    gameSettings.debugMapGenerationStepped = 0;
 
     floorNum = 0;
 
@@ -604,6 +706,240 @@ void initMainGame(){
     createLinkedList(&(player.effects), sizeof(Effect*));
     createLinkedList(&(playerActionList), sizeof(Interaction*));
 }
+void resetGame(){
+    FOR(i, floorNum){
+        deleteFloor(floors + i);
+    }
+    free(floors);
+
+    player.x = 0;
+    player.y = 0;
+    player.z = 0;
+    player.heldObject = NULL;
+    while(player.items.size){
+        defaultItemDelete((player.items.data)[1]);
+        popLinkedList(&(player.items));
+    }
+    while(playerActionList.size){
+        deleteInteraction((playerActionList.data)[1]);
+        popLinkedList(&(playerActionList));
+    }
+    while(player.effects.size){
+        deleteEffect((player.effects.data)[1]);
+        popLinkedList(&(player.effects));
+    }
+    updateInventoryTab();
+    updateEffectsTab();
+    updateInteractionsWidget();
+    emptyWidget(&mgItemWidget);
+    emptyWidget(&mgMessagesArea);
+    checkEquiped();
+    player.z = 0;
+    player.totalGold = 0;
+    player.visionRadius = 5;
+    player.baseMaxHealth = gameSettings.baseMaxHealth;
+    player.healthRegenTime = gameSettings.baseHealthRegenTime;
+    player.baseHealthRegenAmount = 1;
+    player.hungerTime = gameSettings.baseHungerTime;
+    player.baseSpeed = gameSettings.baseSpeed;
+    player.baseStrength = gameSettings.baseStrength;
+    player.health = 0;
+    player.fullness = gameSettings.maxFullness;
+    player.baseFullness = gameSettings.maxFullness;
+    player.speedModifier = 1;
+    player.healthRegenModifier = 1;
+    player.healthModifier = 1;
+    player.strengthModifier = 1;
+    player.levitating = 0;
+    globalItemIdCounter = 1;
+
+    if(account.username){
+        changeTextWidget(&playerNameTextWidget, "Name: %s", account.username);
+    }else{
+        changeTextWidget(&playerNameTextWidget, "Name: Guest");
+    }
+
+    mgEndGameMenu.isVisible = 0;
+    mgPauseMenu.isVisible = 0;
+    mgDebugMenu.isVisible = 0;
+}
+void enterMainGame(){
+    clear();
+    refresh();
+    resetGame();
+        
+    getmaxyx(stdscr, scrH, scrW);
+    mainCamera.h = scrH;
+    mainCamera.w = scrW;
+    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+    generateMap();
+
+    player.z = 0;
+    player.x = floors[0].roomList[0]->x+2;
+    player.y = floors[0].roomList[0]->y+2;
+
+    engineState = &mainGame;
+
+    if(account.username){
+        if(!account.gamesPlayed){
+            account.firstPlayTime = time(NULL);
+        }
+        account.gamesPlayed++;
+        saveAccount();
+    }
+
+
+    timeout(100);
+    nodelay(stdscr, FALSE);
+}
+void endGame(int won, const char * const message){
+    mgDebugMenu.isVisible = 0;
+    mgPauseMenu.isVisible = 0;
+    if(won){
+        changeTextWidget(&mgEndGameDialouge1, "%oYou found the Amulet Of Yendor%O", 5, 5, 0);
+        account.gamesFinished++;
+    }else{
+        changeTextWidget(&mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
+    }
+    changeTextWidget(&mgEndGameTotalScoreTextWidget, "Your total score: %o%d%O", 4, 4, 0, &(player.totalGold));
+    changeTextWidget(&mgEndGameTotalMovesTextWidget, "Your total moves: %d", &globalTime);
+    changeTextWidget(&mgEndGameTotalTimeTextWidget, "Total play time: %d", &globalTime);
+
+    account.goldsCollected += player.totalGold;
+    if(player.totalGold >= account.goldRecord) account.goldRecord = player.totalGold;
+
+    saveAccount();
+
+    mgEndGameMenu.isVisible = 1;
+}
+
+int validForItemPosition(int x, int y, int z){
+    Floor* f = floors + z;
+    static void** tmpPtr;
+    static ItemBase* i;
+    tmpPtr = f->itemList->data;
+    if(f->groundMesh->data[y][x] == '.'){
+        while(tmpPtr){
+            i = tmpPtr[1];
+            if((i->x == x) && (i->y == y)){
+                return 0;
+            }else{
+                tmpPtr = tmpPtr[0];
+            }
+        }
+        return 1;
+    }
+    else return 0;
+}
+int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y){
+    do{
+        x[0] = randBetween(x1, x2, 0);
+        y[0] = randBetween(y1, y2, 0);
+    }
+    while(!validForItemPosition(x[0], y[0], f->index));
+}
+int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details){
+    float xdir = x2 - x1, ydir = y2 - y1;
+    float dist = hypot(xdir, ydir);
+    xdir = xdir / dist;
+    ydir = ydir / dist;
+
+    float curx = x1, cury = y1, traversed = 0;
+    while(1){
+        curx += xdir;
+        cury += ydir;
+        traversed += 1;
+
+        if(f->groundMesh->data[(int)cury][(int)curx] != '.'){
+            if(details){
+                details->x = curx;
+                details->y = cury;
+            }
+            return 1;
+        }else if(length > 1){
+            if(traversed >= length){
+                if(details){
+                    details->x = curx;
+                    details->y = cury;
+                }
+                return 1;
+            }
+        }
+
+        if(dist - traversed <= 1){
+            break;
+        }
+    }
+    return 0;
+}
+int castRayAndDraw(int x1, int y1, int x2, int y2, Floor* f, long double length, CharTexture* tex){
+    long double xdir = x2 - x1, ydir = y2 - y1;
+    x2 += 0.5;
+    x1 += 0.5;
+    y1 += 0.5;
+    y2 += 0.5;
+
+    long double dist = hypot(xdir, ydir);
+    xdir = xdir / dist;
+    ydir = ydir / dist;
+
+    long double curx = x1, cury = y1, traversed = 0;
+    int curxd, curyd;
+    while(1){
+        curx += xdir;
+        cury += ydir;
+        curxd = round(curx);
+        curyd = round(cury);
+
+        traversed += 1;
+        tex->data[curyd][curxd] = 1;
+
+        if((f->groundMesh->data[curyd][curxd] != '.')){
+            return 1;
+        }else if(length > 1){
+            if(traversed >= length){
+                return 1;
+            }
+        }
+        if(dist - traversed <= 1){
+            break;
+        }
+    }
+    return 0;
+}
+int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, long double length, CharTexture* tex){
+    x1 += 0.5;
+    y1 += 0.5;
+
+    long double curx = x1, cury = y1, traversed = 0;
+    int curxd, curyd;
+    while(1){
+        curx += x;
+        cury += y;
+        curxd = round(curx);
+        curyd = round(cury);
+        
+        if(!f->featureMesh->data[curyd][curxd]){
+            traversed += 1;
+        }else{
+            if(f->roomList[f->featureMesh->data[curyd][curxd]-1]->theme == 2){
+                traversed+=2;
+            }
+        }
+        tex->data[curyd][curxd] = 1;
+
+        if((curx >= 0) && (curx < f->w) && (cury >= 0) && (cury < f->h) && (f->groundMesh->data[curyd][curxd] != '.')){
+            return 1;
+        }else if(length > 1){
+            if(traversed >= length){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, int maxN, float branchingProb, int depth){
     Room** branchRoomList;
     int roomNum = randBetween(minN, maxN+1, 0);
@@ -721,12 +1057,6 @@ void parseRoomGraph(Room* r, Floor* f, float x, float y){
         }
     }
 }
-void setFloorStairRooms(Floor* f){
-    int k = 0;
-    FOR(i, f->roomNum){
-        if(f->roomList[i]->stairCandidate) f->stairRooms[k++] = i;
-    }
-}
 void createAdjMat(Floor* f){
     f->adjMat = malloc(f->roomNum * sizeof(int*));
     FOR(i, f->roomNum){
@@ -745,91 +1075,411 @@ void createAdjMat(Floor* f){
         }
     }
 }
-void resetGame(){
-    FOR(i, floorNum){
-        deleteFloor(floors + i);
-    }
-    free(floors);
+void placeRoomPointCloud(Floor* f){
+    int roomsPlaced = 0;
+    do{
+        if(roomsPlaced != 0){
+            roomsPlaced = 0;
+            FOR(i, f->roomNum){
+                free(f->roomList[i]);
+                free(f->pointCloud[i]);
+                free(f->adjMat[i]);
+            }
+            free(f->adjMat);
+            f->adjMat = NULL;
+            free(f->pointCloud);
+            f->pointCloud = NULL;
+            free(f->roomList);
+            f->roomList = NULL;
+            f->roomNum = 0;
+        }
 
-    player.x = 0;
-    player.y = 0;
-    player.z = 0;
-    player.heldObject = NULL;
-    while(player.items.size){
-        defaultItemDelete((player.items.data)[1]);
-        popLinkedList(&(player.items));
-    }
-    while(playerActionList.size){
-        deleteInteraction((playerActionList.data)[1]);
-        popLinkedList(&(playerActionList));
-    }
-    while(player.effects.size){
-        deleteEffect((player.effects.data)[1]);
-        popLinkedList(&(player.effects));
-    }
-    updateInventoryTab();
-    updateEffectsTab();
-    updateInteractionsWidget();
-    emptyWidget(&mgItemWidget);
-    emptyWidget(&mgMessagesArea);
-    checkEquiped();
-    player.z = 0;
-    player.totalGold = 0;
-    player.visionRadius = 5;
-    player.baseMaxHealth = gameSettings.baseMaxHealth;
-    player.healthRegenTime = gameSettings.baseHealthRegenTime;
-    player.baseHealthRegenAmount = 1;
-    player.hungerTime = gameSettings.baseHungerTime;
-    player.baseSpeed = gameSettings.baseSpeed;
-    player.baseStrength = gameSettings.baseStrength;
-    player.health = 0;
-    player.fullness = gameSettings.maxFullness;
-    player.baseFullness = gameSettings.maxFullness;
-    player.speedModifier = 1;
-    player.healthRegenModifier = 1;
-    player.healthModifier = 1;
-    player.strengthModifier = 1;
-    globalItemIdCounter = 1;
-}
-void enterMainGame(){
-    clear();
-    refresh();
-    resetGame();
-        
-    generateMap();
+        f->rootRoom = createRoomGraph(NULL, NULL,NULL, gameSettings.minRoomNum, gameSettings.maxRoomNum, 0.7, 0);
+        countRooms(f->rootRoom, f);
+        f->pointCloud = malloc(sizeof(Point*) * f->roomNum);
+        f->roomList = malloc(sizeof(Room*) * f->roomNum);
+        f->roomNum = -1;
+        parseRoomGraph(f->rootRoom,f,  0, 0);
+        f->roomNum++;
+        createAdjMat(f);
+        setFloorStairRooms(f);
 
-    player.z = 0;
-    player.x = floors[0].roomList[0]->x+2;
-    player.y = floors[0].roomList[0]->y+2;
+        if(f->index != 0){
+            Floor* prevF = floors + f->index -1;
+            f->pointCloud[f->stairRooms[0]]->radius = prevF->pointCloud[prevF->stairRooms[1]]->radius;
+        }
+        if(gameSettings.debugMapGenerationStepped){
+            timeout(1000);
+            int tmp = 1;
+            
+            FOR(i, 4000){
+                switch(getch()){
+                    case KEY_RESIZE:
+                        getmaxyx(stdscr, scrH, scrW);
+                        clear();
+                        refresh();
 
-    getmaxyx(stdscr, scrH, scrW);
-    mainCamera.h = scrH;
-    mainCamera.w = scrW;
-    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
-    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+                        mainCamera.h = scrH;
+                        mainCamera.w = scrW;
 
-    engineState = &mainGame;
-
-    timeout(100);
-    nodelay(stdscr, FALSE);
-}
-int validForItemPosition(int x, int y, int z){
-    Floor* f = floors + z;
-    static void** tmpPtr;
-    static ItemBase* i;
-    tmpPtr = f->itemList->data;
-    if(f->groundMesh->data[y][x] == '.'){
-        while(tmpPtr){
-            i = tmpPtr[1];
-            if((i->x == x) && (i->y == y)){
-                return 0;
-            }else{
-                tmpPtr = tmpPtr[0];
+                        resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+                        resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
+                        break;
+                    case 'w':
+                        player.y--;
+                        break;
+                    case 'd':
+                        player.x++;
+                        break;
+                    case 's':
+                        player.y++;
+                        break;
+                    case 'a':
+                        player.x--;
+                        break;
+                    case 't':
+                        if(iteratePointCloud(f->pointCloud, f->adjMat, f->roomNum, gameSettings.roomSpread)){
+                            roomsPlaced++;
+                        }
+                        if(roomsPlaced > 200){
+                            tmp = 0;
+                        }
+                        break;
+                    case 'x':
+                        gameSettings.debugMapGenerationLayer++;
+                        gameSettings.debugMapGenerationLayer %= 3;
+                        break;
+                    case 'l':
+                        tmp = 0;
+                        break;
+                }
+                FOR(j, f->roomNum){
+                    drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
+                    for(int k = j+1; k < f->roomNum; k++){
+                        if(f->adjMat[k][j]){
+                            renderLine('#', f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
+                        }
+                    }
+                }
+                debugRenderFramebuffer(f);
+                if(!tmp) break;
+            }
+            timeout(100);
+        }
+        FOR(i, 4000){
+            if(iteratePointCloud(f->pointCloud, f->adjMat, f->roomNum, gameSettings.roomSpread)){
+                roomsPlaced++;
+            }
+            if(roomsPlaced > 200){
+                break;
             }
         }
-        return 1;
+    }while(roomsPlaced < 200);
+    return;
+}
+void roomDimensions(Floor* f){
+    float lastRatio = 1;
+    int k;
+    FOR(i, f->roomNum){
+        k = f->pointCloud[i]->radius;
+        Room* r = f->roomList[i];
+        r->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1,0);
+        r->h = 2 * floor(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(r->w / 2, 2)));
+        r->z = f->index;
+        if((lastRatio - 1) * ((r->w / r->h) - 1) > 0){
+            int tmp = r->h;
+            r->h = r->w;
+            r->w = tmp;
+        }
+        lastRatio = r->w / r->h;
+
+        r->x = f->pointCloud[i]->x- r->w/2;
+        r->y = f->pointCloud[i]->y- r->h/2;
     }
-    else return 0;
+    
+    return;
+}
+void firstGroundmeshPass(Floor* f){
+    int minx = 0, miny = 0, maxx = 0, maxy = 0;
+    FOR(i, f->roomNum){
+        if(!(minx)) minx = f->roomList[i]->x;
+        else minx = min(f->roomList[i]->x, minx);
+        if(!(miny)) miny = f->roomList[i]->y;
+        else miny = min(f->roomList[i]->y, miny);
+        maxx = max(f->roomList[i]->x + f->roomList[i]->w - 1, maxx);
+        maxy = max(f->roomList[i]->y + f->roomList[i]->h - 1, maxy);
+    }
+   
+    minx -= 5;
+    maxx += 5;
+    miny -= 5;
+    maxy += 5;
+    FOR(i, f->roomNum){
+        f->roomList[i]->x -= minx;
+        f->roomList[i]->y -= miny;
+        f->pointCloud[i]->x -= minx;
+        f->pointCloud[i]->y -= miny;
+    }
+    f->w = maxx - minx;
+    f->h = maxy - miny;
+
+    f->groundMesh = createCharTexture(f->w, f->h);
+    f->featureMesh = createCharTexture(f->w, f->h);
+
+    FOR(i, f->roomNum){
+        for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
+            for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
+               f->groundMesh->data[z][j] = '#';
+               f->groundMesh->color[z][j] = rgb[3][3][3];
+               f->featureMesh->data[z][j] = i + 1;
+            }
+        }
+        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x - 1] = 97;
+        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x + f->roomList[i]->w ] = 97;
+        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x - 1] = 97;
+        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x + f->roomList[i]->w ] = 97;
+
+        for(int j = f->roomList[i]->x; j < f->roomList[i]->x + f->roomList[i]->w; j++){
+            for(int z = f->roomList[i]->y; z < f->roomList[i]->y + f->roomList[i]->h; z++){
+               f->groundMesh->data[z][j] = '.';
+               f->groundMesh->color[z][j] = rgb[2][2][2];
+               f->featureMesh->data[z][j] = 0;
+
+            }
+        }
+        f->roomList[i]->neighbours = 0;
+        if(f->roomList[i]->right) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->left) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->bottom) f->roomList[i]->neighbours++;
+        if(f->roomList[i]->top) f->roomList[i]->neighbours++;
+    }
+}
+void secondGroundMeshPass(Floor* f){
+    FOR(i, f->roomNum){
+        for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
+            for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
+               f->featureMesh->data[z][j] = i + 1;
+            }
+        }
+        for(int j = f->roomList[i]->x; j < f->roomList[i]->x + f->roomList[i]->w; j++){
+            for(int z = f->roomList[i]->y; z < f->roomList[i]->y + f->roomList[i]->h; z++){
+                if(f->roomList[i]->theme == 1){
+                    f->groundMesh->color[z][j] = rgb[1][1][2];
+                }else if(f->roomList[i]->theme == 2){
+                    f->groundMesh->color[z][j] = rgb[2][1][1];
+                }else if(f->roomList[i]->theme == 3){
+                    f->groundMesh->color[z][j] = rgb[3][3][1];
+                }
+            }
+        }
+    }
+}
+void setFloorStairRooms(Floor* f){
+    int k = 0;
+    FOR(i, f->roomNum){
+        if(f->roomList[i]->stairCandidate) f->stairRooms[k++] = i;
+    }
+}
+void postProccessFloor(Floor* f){
+    int tmp = 0;
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
+            if(!(f->groundMesh->data[i][j])){
+                tmp = 0;
+                if(f->groundMesh->data[i+1][j] == '.') tmp++;
+                if(f->groundMesh->data[i-1][j] == '.') tmp++;
+                if(f->groundMesh->data[i][j+1] == '.') tmp++;
+                if(f->groundMesh->data[i][j-1] == '.') tmp++;
+                if(tmp == 3) f->groundMesh->data[i][j] = ';';
+            }else if(f->groundMesh->data[i][j] == 'D'){
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
+                d->name = writeLog("Door");
+                d->sprite = '+';
+                d->x = j;
+                d->y = i;
+                d->z = f->index;
+                d->locked = 0;
+                d->color[1] = 2;
+                d->color[0] = 2;
+                d->color[2] = 0;
+                linkedListPushBack(f->itemList, d);
+                f->groundMesh->data[i][j] = ';';
+            }else if(f->groundMesh->data[i][j] == 'L'){
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
+                d->name = writeLog("Door");
+                d->sprite = '$';
+                d->x = j;
+                d->y = i;
+                d->z = f->index;
+                d->locked = 1;
+                d->collider = 1;
+                d->color[0] = 5;
+                d->color[1] = 1;
+                d->color[2] = 0;
+                linkedListPushBack(f->itemList, d);
+                f->groundMesh->data[i][j] = ';';
+
+                ItemBase* p = calloc(1, sizeof(ItemBase));
+                initPasswordGenerator(p);
+                p->name = writeLog("Password generator");
+                p->sprite = '&';
+                p->relId = d->id;
+                Room* r = f->roomList[f->featureMesh->data[i][j]-1];
+                placeInRange(f, r->x + 1, r->y + 1, r->x + r->w-1, r->y + r->h-1, &(p->x), &(p->y));
+                p->z = f->index;
+                p->collider = 1;
+                p->color[1] = 5;
+                p->color[0] = 5;
+                p->color[2] = 5;
+                linkedListPushBack(f->itemList, p);
+            }else if(f->groundMesh->data[i][j] == 'H'){
+                ItemBase* d = calloc(1, sizeof(ItemBase));
+                initDoor(d);
+                d->name = writeLog("Door");
+                d->sprite = '+';
+                d->x = j;
+                d->y = i;
+                d->z = f->index;
+                d->locked = 0;
+                d->hidden = 1;
+                d->color[1] = 2;
+                d->color[0] = 2;
+                d->color[2] = 0;
+                f->groundMesh->data[i][j] = '#';
+                linkedListPushBack(f->itemList, d);
+            }
+        }
+    }
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
+            if(f->groundMesh->data[i][j] == ';'){
+                f->groundMesh->data[i][j] = '.';
+            }
+        }
+    }
+    // for(int i = 1; i < f->h -1 ; i++){
+    //     for(int j = 1; j < f->w -1; j++){
+    //         if(!(f->groundMesh->data[i][j])){
+    //             tmp = 0;
+    //             if(f->groundMesh->data[i+1][j] == '.') tmp++;
+    //             if(f->groundMesh->data[i-1][j] == '.') tmp++;
+    //             if(f->groundMesh->data[i][j+1] == '.') tmp++;
+    //             if(f->groundMesh->data[i][j-1] == '.') tmp++;
+    //             if(tmp >= 3) f->groundMesh->data[i][j] = ';';
+    //         }
+    //     }
+    // }
+    for(int i = 1; i < f->h -1 ; i++){
+        for(int j = 1; j < f->w -1; j++){
+            if(f->groundMesh->data[i][j] == ';'){
+                //f->groundMesh->data[i][j] = '.';
+            }
+        }
+    }
+}
+void placeTraps(Floor* f){
+    float trapProbs[4] = {0.5, 0.3, 0.1, 0.2};
+    FOR(i, f->roomNum){
+        Room* r = f->roomList[i];
+
+        int n;
+
+        if(r->theme == 0){
+            n = randBetween(0, 4, 0);
+        }else if(r->theme == 1){
+            n = 0;
+        }else if(r->theme == 2){
+            n = randBetween(2, 5, 0);
+        }else if(r->theme == 3){
+            n = randBetween(5, 12, 0);
+            n = min(r->w * r->h / 2 - 1, n);
+        }
+
+        FOR(j, n){
+            ItemBase* t = calloc(1, sizeof(ItemBase));
+
+            t->name = writeLog("Trap");
+            placeInRange(f, r->x, r->y, r->x + r->w, r->y + r->h, &(t->x), &(t->y));
+
+            int type = randIndexWithProb(4, trapProbs, 0);
+            if((type == 3) && (f->index == floorNum-1)) type = 2;
+
+            switch(type){
+                case 0:
+                    t->damage = 2;
+                    t->sprite = '^';
+                    t->color[0] = 5;
+                    t->color[1] = 2;
+                    t->color[2] = 2;
+                    t->primaryUseName = writeLog("trapSimpleDamage");
+                    t->primaryUse = trapSimpleDamage;
+                    break;
+                case 1:
+                    t->sprite = '^';
+                    t->color[0] = 1;
+                    t->color[1] = 4;
+                    t->color[2] = 1;
+                    t->primaryUseName = writeLog("trapPoisonDamage");
+                    t->primaryUse = trapPoisonDamage;
+                    break;
+                case 2:
+                    t->sprite = 9635;
+                    t->color[0] = 1;
+                    t->color[1] = 4;
+                    t->color[2] = 5;
+                    t->primaryUseName = writeLog("trapTeleport");
+                    t->primaryUse = trapTeleport;
+                    break;
+                case 3:
+                    t->sprite = 11041;
+                    t->color[0] = 3;
+                    t->color[1] = 3;
+                    t->color[2] = 2;
+                    t->primaryUseName = writeLog("trapFallToNextFloor");
+                    t->primaryUse = trapFallToNextFloor;
+                    break;
+            }
+            t->hidden = 1;
+            initTrap(t);
+            linkedListPushBack(f->itemList, t);
+        }
+    }
+}
+void placePillars(Floor* f){
+    FOR(i, f->roomNum){
+        Room* r = f->roomList[i];
+        int n = randBetween(0, (r->w-2) * (r->h-2) / 5, 0);
+        n = min(n, 4);
+        int x, y;
+        FOR(j, n){
+            placeInRange(f, r->x + 1, r->y + 1, r->x + r->w - 1, r->y + r->h - 1, &x, &y);
+            f->groundMesh->data[y][x] = 'O';
+            f->groundMesh->color[y][x] = rgb[3][3][3];
+        }
+    }
+}
+void placeMonsters(Floor* f){
+    FOR(i, f->roomNum){
+        Room* r = f->roomList[i];
+        ItemBase* m = malloc(sizeof(ItemBase));
+
+        placeInRange(f, r->x, r->y, r->x + r->w, r->y + r->h, &(m->x), &(m->y));
+        m->sprite = 'M';
+
+        m->type = writeLog("monster");
+        m->name = writeLog("daemon");
+
+        m->render = &defaultMonsterRender;
+        m->update = &defaultMonsterUpdate;
+        m->decayTime = 35;
+        m->decayed = 0;
+        m->collider = 1;
+
+
+        linkedListPushBack(f->itemList, m);
+    }
 }
 void generateLoot(){
     char* lootTableData;
@@ -860,6 +1510,8 @@ void generateLoot(){
                 ItemBase* s2 = calloc(1, sizeof(ItemBase));
                 initStair(s1);
                 initStair(s2);
+                s1->name = writeLog("Stair");
+                s2->name = writeLog("Stair");
                 s1->z = j;
                 s1->x = x1;
                 s1->y = y1;
@@ -905,18 +1557,20 @@ void generateLoot(){
                         }else{
                             gen->quantity = 1;
                         }
-                        gen->x = randBetween(r->x, r->w + r->x, 0);
-                        gen->y = randBetween(r->y, r->h  + r->y, 0);
-                        while(!validForItemPosition(gen->x, gen->y, j)){
-                            gen->x = randBetween(r->x, r->w + r->x, 0);
-                            gen->y = randBetween(r->y, r->h  + r->y, 0);
-                        }
+                        placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(gen->x), &(gen->y));
                         gen->z = j;
                         if(r->theme == 2) gen->fake = 1;
                         linkedListPushBack(f->itemList, gen);
 
                     }
-                     
+                }
+                if(r->theme == 3){
+                    ItemBase* amulet = LoadItemWithName("Amulet of yendor");
+                    amulet->quantity = 1;
+
+                    placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(amulet->x), &(amulet->y));
+                    amulet->z = j;
+                    linkedListPushBack(f->itemList, amulet);
                 }
             }
         }
@@ -925,260 +1579,7 @@ void generateLoot(){
         free(itemDb);
     }
 }
-void postProccessFloor(Floor* f){
-    int tmp = 0;
-    for(int i = 1; i < f->h -1 ; i++){
-        for(int j = 1; j < f->w -1; j++){
-            if(!(f->groundMesh->data[i][j])){
-                tmp = 0;
-                if(f->groundMesh->data[i+1][j] == '.') tmp++;
-                if(f->groundMesh->data[i-1][j] == '.') tmp++;
-                if(f->groundMesh->data[i][j+1] == '.') tmp++;
-                if(f->groundMesh->data[i][j-1] == '.') tmp++;
-                if(tmp == 3) f->groundMesh->data[i][j] = ';';
-            }else if(f->groundMesh->data[i][j] == 'D'){
-                ItemBase* d = calloc(1, sizeof(ItemBase));
-                initDoor(d);
-                d->sprite = '+';
-                d->x = j;
-                d->y = i;
-                d->z = f->index;
-                d->locked = 0;
-                d->color[1] = 5;
-                d->color[0] = 5;
-                d->color[2] = 5;
-                linkedListPushBack(f->itemList, d);
-                f->groundMesh->data[i][j] = ';';
-            }else if(f->groundMesh->data[i][j] == 'L'){
-                ItemBase* d = calloc(1, sizeof(ItemBase));
-                initDoor(d);
-                d->sprite = '$';
-                d->x = j;
-                d->y = i;
-                d->z = f->index;
-                d->locked = 1;
-                d->collider = 1;
-                d->color[1] = 0;
-                d->color[0] = 5;
-                d->color[2] = 1;
-                linkedListPushBack(f->itemList, d);
-                f->groundMesh->data[i][j] = ';';
 
-                ItemBase* p = calloc(1, sizeof(ItemBase));
-                initPasswordGenerator(p);
-                p->sprite = '&';
-                p->relId = d->id;
-                p->x = j + 2;
-                p->y = i + 2;
-                p->z = f->index;
-                p->collider = 1;
-                p->color[1] = 5;
-                p->color[0] = 5;
-                p->color[2] = 5;
-                linkedListPushBack(f->itemList, p);
-            }else if(f->groundMesh->data[i][j] == 'H'){
-                ItemBase* d = calloc(1, sizeof(ItemBase));
-                initDoor(d);
-                d->sprite = '#';
-                d->x = j;
-                d->y = i;
-                d->z = f->index;
-                d->locked = 0;
-                d->color[1] = 5;
-                d->color[0] = 5;
-                d->color[2] = 5;
-                linkedListPushBack(f->itemList, d);
-                f->groundMesh->data[i][j] = ';';
-            }
-        }
-    }
-    for(int i = 1; i < f->h -1 ; i++){
-        for(int j = 1; j < f->w -1; j++){
-            if(f->groundMesh->data[i][j] == ';'){
-                f->groundMesh->data[i][j] = '.';
-            }
-        }
-    }
-    // for(int i = 1; i < f->h -1 ; i++){
-    //     for(int j = 1; j < f->w -1; j++){
-    //         if(!(f->groundMesh->data[i][j])){
-    //             tmp = 0;
-    //             if(f->groundMesh->data[i+1][j] == '.') tmp++;
-    //             if(f->groundMesh->data[i-1][j] == '.') tmp++;
-    //             if(f->groundMesh->data[i][j+1] == '.') tmp++;
-    //             if(f->groundMesh->data[i][j-1] == '.') tmp++;
-    //             if(tmp >= 3) f->groundMesh->data[i][j] = ';';
-    //         }
-    //     }
-    // }
-    for(int i = 1; i < f->h -1 ; i++){
-        for(int j = 1; j < f->w -1; j++){
-            if(f->groundMesh->data[i][j] == ';'){
-                //f->groundMesh->data[i][j] = '.';
-            }
-        }
-    }
-}
-
-void placeRoomPointCloud(Floor* f){
-    int roomsPlaced = 0;
-    do{
-        if(roomsPlaced != 0){
-            roomsPlaced = 0;
-            FOR(i, f->roomNum){
-                free(f->roomList[i]);
-                free(f->pointCloud[i]);
-                free(f->adjMat[i]);
-            }
-            free(f->adjMat);
-            f->adjMat = NULL;
-            free(f->pointCloud);
-            f->pointCloud = NULL;
-            free(f->roomList);
-            f->roomList = NULL;
-            f->roomNum = 0;
-        }
-
-        f->rootRoom = createRoomGraph(NULL, NULL,NULL, gameSettings.minRoomNum, gameSettings.maxRoomNum, 0.7, 0);
-        countRooms(f->rootRoom, f);
-        f->pointCloud = malloc(sizeof(Point*) * f->roomNum);
-        f->roomList = malloc(sizeof(Room*) * f->roomNum);
-        f->roomNum = -1;
-        parseRoomGraph(f->rootRoom,f,  0, 0);
-        f->roomNum++;
-        createAdjMat(f);
-        setFloorStairRooms(f);
-
-        if(f->index != 0){
-            Floor* prevF = floors + f->index -1;
-            f->pointCloud[f->stairRooms[0]]->radius = prevF->pointCloud[prevF->stairRooms[1]]->radius;
-        }
-
-        int z = 1;
-
-        FOR(i, 4000){
-            if(iteratePointCloud(f->pointCloud, f->adjMat, f->roomNum, gameSettings.roomSpread)){
-                roomsPlaced++;
-            }
-            if(roomsPlaced > 200){
-                break;
-            }
-            // if(z){
-            // getmaxyx(stdscr, scrH, scrW);
-            // erase();
-            // FOR(j, f->roomNum){
-            //     mvprintw(j, 0, "%.2f %.2f", f->pointCloud[j]->x, f->pointCloud[j]->y);
-            //     mvaddch(f->pointCloud[j]->y + scrH/2, f->pointCloud[j]->x + scrW/2, '0');
-            // }mvprintw(f->roomNum, 0, "%d", roomsPlaced);
-            // refresh();
-            //     int ch;
-
-            // while(1){
-            //     ch = getch();
-            //     if(ch=='l') break;
-            //     if(ch == 'p'){
-            //         z = 0;
-            //         break; 
-            //     }
-            // }
-
-            // }
-        }
-    }while(roomsPlaced < 200);
-    return;
-}
-void roomDimensions(Floor* f){
-    float lastRatio = 1;
-    int k;
-    FOR(i, f->roomNum){
-        k = f->pointCloud[i]->radius;
-        Room* r = f->roomList[i];
-        r->w = randBetween(gameSettings.minRoomSize, 2 * ceil(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(gameSettings.minRoomSize / 2,2)))-1,0);
-        r->h = 2 * floor(sqrt(pow(f->pointCloud[i]->radius, 2) - pow(r->w / 2, 2)));
-        r->z = f->index;
-        if((lastRatio - 1) * ((r->w / r->h) - 1) > 0){
-            int tmp = r->h;
-            r->h = r->w;
-            r->w = tmp;
-        }
-        lastRatio = r->w / r->h;
-
-        r->x = 2 * f->pointCloud[i]->x- r->w/2;
-        r->y = f->pointCloud[i]->y- r->h/2;
-    }
-    
-    return;
-}
-void firstGroundmeshPass(Floor* f){
-    int minx = 0, miny = 0, maxx = 0, maxy = 0;
-    FOR(i, f->roomNum){
-        if(!(minx)) minx = f->roomList[i]->x;
-        else minx = min(f->roomList[i]->x, minx);
-        if(!(miny)) miny = f->roomList[i]->y;
-        else miny = min(f->roomList[i]->y, miny);
-        maxx = max(f->roomList[i]->x + f->roomList[i]->w - 1, maxx);
-        maxy = max(f->roomList[i]->y + f->roomList[i]->h - 1, maxy);
-    }
-   
-    minx -= 5;
-    maxx += 5;
-    miny -= 5;
-    maxy += 5;
-    FOR(i, f->roomNum){
-        f->roomList[i]->x -= minx;
-        f->roomList[i]->y -= miny;
-        f->pointCloud[i]->x -= minx;
-        f->pointCloud[i]->y -= miny;
-    }
-    f->w = maxx - minx;
-    f->h = maxy - miny;
-
-    f->groundMesh = createCharTexture(f->w, f->h);
-    f->featureMesh = createCharTexture(f->w, f->h);
-
-    FOR(i, f->roomNum){
-        for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
-            for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
-               f->groundMesh->data[z][j] = '#';
-               f->groundMesh->color[z][j] = rgb[3][3][3];
-               f->featureMesh->data[z][j] = i + 1;
-            }
-        }
-        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x - 1] = 0;
-        f->featureMesh->data[f->roomList[i]->y - 1][f->roomList[i]->x + f->roomList[i]->w ] = 0;
-        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x - 1] = 0;
-        f->featureMesh->data[f->roomList[i]->y + f->roomList[i]->h][f->roomList[i]->x + f->roomList[i]->w ] = 0;
-
-        for(int j = f->roomList[i]->x; j < f->roomList[i]->x + f->roomList[i]->w; j++){
-            for(int z = f->roomList[i]->y; z < f->roomList[i]->y + f->roomList[i]->h; z++){
-               f->groundMesh->data[z][j] = '.';
-               f->groundMesh->color[z][j] = rgb[1][1][1];
-               f->featureMesh->data[z][j] = 0;
-
-            }
-        }
-        f->roomList[i]->neighbours = 0;
-        if(f->roomList[i]->right) f->roomList[i]->neighbours++;
-        if(f->roomList[i]->left) f->roomList[i]->neighbours++;
-        if(f->roomList[i]->bottom) f->roomList[i]->neighbours++;
-        if(f->roomList[i]->top) f->roomList[i]->neighbours++;
-    }
-}
-void secondGroundMeshPass(Floor* f){
-    FOR(i, f->roomNum){
-        for(int j = f->roomList[i]->x; j < f->roomList[i]->x + f->roomList[i]->w; j++){
-            for(int z = f->roomList[i]->y; z < f->roomList[i]->y + f->roomList[i]->h; z++){
-                if(f->roomList[i]->theme == 1){
-                    f->groundMesh->color[z][j] = rgb[1][1][2];
-                }else if(f->roomList[i]->theme == 2){
-                    f->groundMesh->color[z][j] = rgb[2][1][1];
-                }else if(f->roomList[i]->theme == 3){
-                    f->groundMesh->color[z][j] = rgb[3][3][1];
-                }
-            }
-        }
-    }
-}
 void generateFloor(Floor* f){
     f->roomNum = 0;
     f->pointCloud = NULL;
@@ -1195,6 +1596,10 @@ void generateFloor(Floor* f){
         f->roomList[f->stairRooms[0]]->h = prevF->roomList[prevF->stairRooms[1]]->h;
     }
     firstGroundmeshPass(f);
+    f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h);
+    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h);
+    f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h);
+    fillCharTexture(f->visited, 0);
     
     MovingCell* cell;
     FOR(i, f->roomNum){
@@ -1215,7 +1620,7 @@ void generateFloor(Floor* f){
 
                 float xdif = x2[0] - x1[0], ydif = y2[0] - y1[0];
 
-                cell = malloc(sizeof(MovingCell));
+                cell = calloc(1, sizeof(MovingCell));
                 linkedListPushBack(&PathCells, cell);
                 cell->x = randBetween(f->roomList[i]->x, f->roomList[i]->x+ f->roomList[i]->w, 0);
                 cell->y = randBetween(f->roomList[i]->y, f->roomList[i]->y+ f->roomList[i]->h, 0);
@@ -1240,9 +1645,57 @@ void generateFloor(Floor* f){
             }
         }
     }
+
+    if(gameSettings.debugMapGenerationStepped){
+        int tmp = 1;
+        timeout(1000);
+        while(PathCells.size && tmp){
+        switch(getch()){
+            case KEY_RESIZE:
+                //getmaxyx(stdscr, scrH, scrW);
+                clear();
+                refresh();
+
+                mainCamera.h = scrH;
+                mainCamera.w = scrW;
+
+                resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+                resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
+                break;
+            case 'w':
+                player.y--;
+                break;
+            case 'd':
+                player.x++;
+                break;
+            case 's':
+                player.y++;
+                break;
+            case 'a':
+                player.x--;
+                break;
+            case 't':
+                iterateMovingCells(&PathCells, f);
+                break;
+            case 'x':
+                gameSettings.debugMapGenerationLayer++;
+                gameSettings.debugMapGenerationLayer %= 3;
+                break;
+            case 'l':
+                tmp = 0;
+                break;
+        }
+        
+        debugRenderMesh(f);
+        
+        
+        }
+        timeout(100);
+    }
     while(PathCells.size){
         iterateMovingCells(&PathCells, f);
     }
+    
     FOR(i, f->roomNum){
         if(f->roomList[i]->hidden) f->roomList[i]->theme = 1;
         else if(f->roomList[i]->stairCandidate && randWithProb(0.7)){
@@ -1266,9 +1719,8 @@ void generateFloor(Floor* f){
 
     secondGroundMeshPass(f);
     postProccessFloor(f);
-    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h);
-    fillCharTexture(f->visited, 0);
 }
+
 void generateMap(){
     floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
     floors = malloc(floorNum * sizeof(Floor));
@@ -1276,9 +1728,65 @@ void generateMap(){
     FOR(i, floorNum){
         floors[i].index = i;
         generateFloor(floors + i);
+        placePillars(floors + i);
+        placeTraps(floors + i);
+        placeMonsters(floors + i);
+        fillCharTexture(floors[i].visited, '\0');
     }
 
     generateLoot();
+}
+
+int rays = 800;
+void updateVisionMesh(){
+    Floor* f = floors + player.z;
+    fillCharTexture(f->visionMesh, '\0');
+
+    static RayCollision c;
+    int x2 = mainCamera.x + mainCamera.w, y2 = mainCamera.y + mainCamera.h;
+    // for(int i = mainCamera.x; i < x2; i++){
+    //     if(castRay(player.x, player.y, i, mainCamera.y, f, 0, &c)){
+    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
+    //     }
+    //     if(castRay(player.x, player.y, i, y2, f, 0, &c)){
+    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
+    //     }
+    // }
+    // for(int i = mainCamera.y; i < y2; i++){
+    //     if(castRay(player.x, player.y, mainCamera.x, i, f, 0, &c)){
+    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
+    //     }
+    //     if(castRay(player.x, player.y, x2, i, f, 0, &c)){
+    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
+    //     }
+    // }
+    FOR(i, rays){
+        castRayWithDirAndDraw(player.x, player.y, cos(PI * i / (rays / 2)), sin(PI * i / (rays / 2)), f, 5, f->visionMesh);
+    }
+    // for(int i = mainCamera.x; i < x2; i++){
+    //     castRayAndDraw(player.x, player.y, i, mainCamera.y, f, 0, f->visionMesh);
+    //     castRayAndDraw(player.x, player.y, i, y2, f, 0, f->visionMesh);
+    // }
+    // for(int i = mainCamera.y; i < y2; i++){
+    //     castRayAndDraw(player.x, player.y, mainCamera.x, i, f, 0, f->visionMesh);
+    //     castRayAndDraw(player.x, player.y, x2, i, f, 0, f->visionMesh);
+    // }
+}
+void searchForHidden(ItemBase* o){
+    void** tmpPtr;
+    ItemBase* tmpItemBase;
+    tmpPtr = floors[player.z].itemList->data;
+    while(tmpPtr){
+        tmpItemBase = tmpPtr[1];
+        tmpPtr = *tmpPtr;
+
+        if(tmpItemBase->hidden && isPlayerNextTo(tmpItemBase)){
+            tmpItemBase->hidden = 0;
+            addMessage(writeLog("found a hidden %s", tmpItemBase->name));
+            floors[player.z].groundMesh->data[tmpItemBase->y][tmpItemBase->x] = '.';
+        }
+    }
+    updateWorld(0, 0);
 }
 void updateWorld(int x, int y){
     void** tmpPtr;
@@ -1299,6 +1807,7 @@ void updateWorld(int x, int y){
     player.y += y;
     int moveValid = 1;
 
+
     if((floors[player.z].groundMesh->data[player.y][player.x] != '.')){
         moveValid = 0;
     }
@@ -1308,7 +1817,7 @@ void updateWorld(int x, int y){
         i = i[0];
 
         if((player.x == tmpItemBase->x) && (player.y == tmpItemBase->y)){
-            tmpItemBase->playerCollision(tmpItemBase);
+            if(tmpItemBase->playerCollision) tmpItemBase->playerCollision(tmpItemBase);
             if(tmpItemBase->collider){
                 moveValid = 0;
             }
@@ -1330,27 +1839,37 @@ void updateWorld(int x, int y){
     }else{
         deltaTime = 0;
     }
-    drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
 
     player.speedModifier = 1;
     player.healthRegenModifier = 1;
     player.healthModifier = 1;
     player.strengthModifier = 1;
+    player.levitating = 0;
+
+    //drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
+
 
     for(void** i = player.effects.data; i ;){
         tmpEffect = i[1];
         i = i[0];
-        tmpEffect->elapsed += deltaTime;
-        tmpEffect->func(tmpEffect);
-        if(tmpEffect->duration <= tmpEffect->elapsed){
+        if(tmpEffect->duration == 0){
+            tmpEffect->func(tmpEffect);
             deleteEffect(tmpEffect);
             removeItemFromLinkedList(&(player.effects), tmpEffect);
             updateEffectsTab();
+        }else{
+            tmpEffect->elapsed += deltaTime;
+            if(tmpEffect->duration <= tmpEffect->elapsed){
+                deleteEffect(tmpEffect);
+                removeItemFromLinkedList(&(player.effects), tmpEffect);
+                updateEffectsTab();
+            }else{
+                tmpEffect->func(tmpEffect);
+            }
         }
     }
 
     updatePlayerStats(&player);
-
     if(deltaTime){
         player.hungerCounter++;
         if(player.hungerCounter >= player.hungerTime){
@@ -1384,6 +1903,8 @@ void updateWorld(int x, int y){
         tmpPtr = *tmpPtr;
         if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
     }
+
+    addInteraction("search for hidden doors and traps", &searchForHidden, 'f', NULL);
 
     updateInteractionsWidget();
     checkEquiped();
@@ -1430,6 +1951,12 @@ void playerKeyPress(int ch){
                 player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
             }
             break;
+        case 'i':
+            mgToggleStatMenu();
+            break;
+        case 't':
+            mgtoggleDegbugMenu();
+            break;
     }
 
     int update = 0;
@@ -1471,19 +1998,17 @@ void updateMainGame(){
                 }
             }
             break;
+        case 'k':
+            rays += 100;
+            break;
+        case 'l':
+            rays -= 100;
+            break;  
         case ERR:
             break;
         default:
             if(!uiKeyPress(ch)){
                 playerKeyPress(ch);
-            }
-            switch(ch){
-                case 'i':
-                    mgToggleStatMenu();
-                    break;
-                case 't':
-                    mgtoggleDegbugMenu();
-                    break;  
             }
             break;
             
@@ -1499,18 +2024,31 @@ void renderMainGame(){
     mainCamera.x = player.x-mainCamera.w/2;
     mainCamera.y = player.y-mainCamera.h/2;
 
+    updateVisionMesh();
     
     renderTexture(floors[player.z].groundMesh, 0, 0, &mainCamera, frameBuffer);
-    
-    renderTexture(floors[player.z].visited, 0, 0, &mainCamera, visitedMaskBuffer);
+    mixTextures(floors[player.z].visited, floors[player.z].visionMesh);
+    renderTexture(floors[player.z].visionMesh, 0, 0, &mainCamera, visitedMaskBuffer);
 
     void** tmpPtr = floors[player.z].itemList->data;
     ItemBase* tmp;
-    FOR(i, floors[player.z].itemList->size){
+    while(tmpPtr){
         tmp = tmpPtr[1];
-        tmp->render(tmp, frameBuffer, &mainCamera);
-        if(tmpPtr) tmpPtr = *tmpPtr;
+        tmpPtr = tmpPtr[0];
+        if((!tmp->type) || strcmp(tmp->type, "monster")){
+            tmp->render(tmp, frameBuffer, &mainCamera);
+        }
     }
+    tmpPtr = floors[player.z].itemList->data;
+    while(tmpPtr){
+        tmp = tmpPtr[1];
+        tmpPtr = tmpPtr[0];
+        if((tmp->type) && !strcmp(tmp->type, "monster")){
+            tmp->render(tmp, frameBuffer, &mainCamera);
+        }
+    }
+    colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
+    renderTexture(floors[player.z].visited, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 
     renderFrameBuffer(frameBuffer);
@@ -1522,8 +2060,8 @@ void renderMainGame(){
     refresh();
 }
 
+
 void exitMainGame(){
-    
 }
 int terminalGetInt(){
     mgTerminalTextBox.focused = 1;

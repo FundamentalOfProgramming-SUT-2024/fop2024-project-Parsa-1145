@@ -111,49 +111,34 @@ void signUp(){
                     int new = 1;
                     cJSON* user;
                     char* buffer;
-                    if(usersData[0]){
-                        json = cJSON_Parse(usersData);
-                        if(json){
-                            user = cJSON_GetArrayItem(json, 0);
-                            while(user){
-                                buffer = cJSON_GetObjectItem(user, "username")->valuestring;
-                                if(buffer){
-                                    if(!strcmp(suEnteredUsername, buffer)){
-                                        new = 0;
-                                        break;
-                                    }
+                    json = cJSON_Parse(usersData);
+                    if(json){
+                        user = cJSON_GetArrayItem(json, 0);
+                        while(user){
+                            buffer = cJSON_GetObjectItem(user, "username")->valuestring;
+                            if(buffer){
+                                if(!strcmp(suEnteredUsername, buffer)){
+                                    new = 0;
+                                    break;
                                 }
-                                user = user->next;
-                            }   
-                        }
-                    }else{
-                        json = cJSON_CreateArray();
+                            }
+                            user = user->next;
+                        }   
                     }
+                    cJSON_free(json);
                     if(new){
-                        user = cJSON_CreateObject();
-                        cJSON_AddStringToObject(user, "username", suEnteredUsername);
-                        cJSON_AddStringToObject(user, "password", suEnteredPssword);
-                        cJSON_AddStringToObject(user, "email", suEnteredEmail);
-                        cJSON_AddNumberToObject(user, "gameNum", 0);
-                        cJSON_AddNumberToObject(user, "firstGame", 0);
-                        cJSON_AddNumberToObject(user, "golds", 0);
-                        cJSON_AddNumberToObject(user, "record", 0);
-
-                        cJSON_AddItemToArray(json, user);
-                        saveJsonToFile(playerDbAddress, json);
+                        addAccount(suEnteredUsername, suEnteredPssword, suEnteredEmail);
                         suInvalidPopup = createPopUp("User created. you need to log in.", NULL, 20, 20, &returnToMainMenu);
-
-
                     }else{
                         suInvalidPopup = createPopUp("Username exists.", NULL, 20, 20, &closeInvalidPopup);
 
                     }
-                    cJSON_free(json);
 
                 }else{
                     suInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &closeInvalidPopup);
                     return;
                 }
+                free(usersData);
 
             }else{
                 suInvalidPopup = createPopUp("Please enter a valid email.", NULL, 20, 20, &closeInvalidPopup);
@@ -215,9 +200,6 @@ void initSignUpMenu(){
     linkedListPushBack(&suTextBoxList, &suEmailTb);
     linkedListPushBack(&suTextBoxList, &suPasswordTb);
     linkedListPushBack(&suTextBoxList, &suUserNameTb);
-
-
-
 
     suBackButton.callBack = maineMenu.enter;
     suSignupButton.callBack = &signUp;

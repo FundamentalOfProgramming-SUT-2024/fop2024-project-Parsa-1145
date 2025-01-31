@@ -194,6 +194,28 @@
         "cg" : 1,
         "cb" : 0
     },{
+        "name" : "Levitation",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 11223,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "Levitation",
+                "duration" : 20
+            }
+        ],
+        "cr" : 4,
+        "cg" : 4,
+        "cb" : 5
+    },{
+        "name" : "Amulet of yendor",
+        "type" : "endgame",
+        "sprite" : 11097,
+        "cr" : 5,
+        "cg" : 5,
+        "cb" : 0
+    },{
         "name" : "Health potion",
         "type" : "consumable",
         "subType" : "potion",

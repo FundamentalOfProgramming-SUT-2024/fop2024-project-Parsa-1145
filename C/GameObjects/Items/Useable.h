@@ -8,6 +8,7 @@ void initWeapon(ItemBase* o);
 void initAmmo(ItemBase* o);
 void initKey(ItemBase* o);
 void initValueable(ItemBase* o);
+void initAmulet(ItemBase* o);
 
 void defaultUseableInit(ItemBase* o);
 
@@ -25,6 +26,7 @@ void openValueableInfo(ItemBase* o);
 
 void pickupValuable(ItemBase* o);
 void dropValueable(ItemBase* o);
+void pickupAmulet(ItemBase* o);
 
 
 void equipInHand(ItemBase* o);

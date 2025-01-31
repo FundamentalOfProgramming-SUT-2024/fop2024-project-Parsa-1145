@@ -6,6 +6,7 @@ void createLinkedList(LinkedList* linkedList, int dataSize){
     linkedList->dataSize = dataSize;
     linkedList->data = NULL;
     linkedList->size = 0;
+    linkedList->end = NULL;
 }
 
 void** linkedListGetElement(LinkedList* list, int index){
@@ -35,9 +36,14 @@ void linkedListDeleteElement(LinkedList* list, int index){
         if(index == 0){
             popLinkedList(list);
         }else{
-            void** tmp = (getLinkedListPtr(list, index));
-            *(getLinkedListPtr(list, index-1)) = *tmp;
-            free(tmp);
+            void*** tmp = (getLinkedListPtr(list, index-1));
+            if(index==list->size-1){
+                list->end = tmp;
+            }
+            void** tmp2 = tmp[0];
+            tmp[0] = (tmp[0])[0];
+
+            free(tmp2);
             list->size--;
         }
     }
@@ -45,9 +51,11 @@ void linkedListDeleteElement(LinkedList* list, int index){
 void linkedListPushBack(LinkedList* list, void* element){
     void** tmp = malloc(sizeof(void*) + list->dataSize);
     if(list->size){
-        *(getLinkedListPtr(list, list->size - 1)) = tmp;
+        list->end[0] = tmp;
+        list->end = tmp;
     }else{
         list->data = tmp;
+        list->end = tmp;
     }
 
     tmp[0] = NULL;
@@ -83,6 +91,9 @@ void removeItemFromLinkedList(LinkedList* list, void* element){
 
     FOR(i, list->size){
         if(tmp[1] == element){
+            if(i == list->size-1){
+                list->end = prev;
+            }
             if(prev){
                 prev[0] = tmp[0];
                 free(tmp);
@@ -103,5 +114,6 @@ void emptyLinkedList(LinkedList* list){
         popLinkedList(list);
     }
     list->data = NULL;
+    list->end = NULL;
     
 }

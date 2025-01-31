@@ -7,6 +7,7 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
 void renderTexture(CharTexture* tex, float x, float y, Camera* cam, CharTexture* frameBuffer);
 void renderFrameBuffer(CharTexture* tex);
 void maskFrameBuffer(CharTexture* frb,CharTexture* mask);
+void colorMaskFrameBuffer(CharTexture* frb,CharTexture* mask);
 
 #define mrenderLine(z, x1,y1,x2,y2, frb, clb) renderLine(z, x1, y1, x2, y2, NULL, frb, clb);
 #define mrenderHLine(z, x, y, l, frb, clb) renderLine(z, x, y,x + l-1, y, NULL, frb, clb);

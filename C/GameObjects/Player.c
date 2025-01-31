@@ -15,6 +15,7 @@ int getPlayerHealthRegen(Player* player){
 }
 void checkEquiped(){
     if(!(player.heldObject) || !(player.heldObject->inInventory)){
+        player.heldObject = NULL;
         changeTextWidget(&mgEquipedNameTextWidget, "Nothing equiped");
         mgEquipedPrimaryTextWidget.widget->isVisible = 0;
         mgEquipedSecondaryextWidget.widget->isVisible = 0;
@@ -38,7 +39,7 @@ void updatePlayerStats(Player* player){
     player->healthRegenAmount = player->baseHealthRegenAmount * player->healthRegenModifier;
     player->speed = player->baseSpeed * player->speedModifier;
     player->strenght = player->baseStrength * player->strengthModifier;
-    player->maxHealth = player->baseMaxHealth * player->healthModifier;
+    player->maxHealth = player->baseMaxHealth;
 }
 void addPlayerEffect(Effect* e){
     void** tmp = player.effects.data;
@@ -55,5 +56,5 @@ void addPlayerEffect(Effect* e){
     }
     linkedListPushBack(&(player.effects), e);
     e->elapsed = 0;
-    
+    updateEffectsTab();
 }

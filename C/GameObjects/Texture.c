@@ -121,3 +121,13 @@ void loadColorTextureFromJson(cJSON* data, CharTexture* t){
         tmp1 = tmp1->next;
     }
 }
+
+void mixTextures( CharTexture* t1, CharTexture* t2){
+    FOR(i, t1->w){
+        FOR(j, t2->h){
+            if(!t1->data[j][i] && t2->data[j][i]){
+                t1->data[j][i] = t2->data[j][i];
+            }
+        }
+    }
+}

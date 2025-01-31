@@ -161,6 +161,10 @@ int updateWidgetSize(Widget* widget){
                     if(widget->hCopy + widget->y > h){
                         widget->hCopy = h - widget->y - 1;
                     }
+                }else if(widget->alignment[1] == ALIGN_TOP){
+                    if(widget->hCopy + widget->y > h){
+                        widget->hCopy = h - widget->y - 1;
+                    }
                 }
                 break;
         }
@@ -267,58 +271,70 @@ void deleteWidget(Widget* w){
     free(w);
 }
 int WMouseMoveCb(Widget* w){
-    w->tmpIterPtr = w->children->data;
-    int flag = 0;
-    while(w->tmpIterPtr){
-        w->iterPtr = w->tmpIterPtr[1];
-        w->tmpIterPtr = w->tmpIterPtr[0];
-        flag |= w->iterPtr->mouseMove(w->iterPtr->object);
+    if(isWidgetVisible(w)){
+        w->tmpIterPtr = w->children->data;
+        int flag = 0;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            w->tmpIterPtr = w->tmpIterPtr[0];
+            flag |= w->iterPtr->mouseMove(w->iterPtr->object);
+        }
+        return flag || (w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y));
+    }else{
+        return 0;
     }
-    return flag;
 }
 int WMouseClickCb(Widget* w){
-    int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
-    int flag = 0;
-    w->tmpIterPtr = w->children->data;
-    while(w->tmpIterPtr){
-        w->iterPtr = w->tmpIterPtr[1];
-        w->tmpIterPtr = w->tmpIterPtr[0];
-        flag |= w->iterPtr->mouseClick(w->iterPtr->object);
-    }
-    if(scroll && w->scrollOn){
-        if(!flag){
-            if(isWidgetHovered(w, mEvent.x, mEvent.y)){
-                if(mEvent.bstate & BUTTON5_PRESSED){
-                    if(w->canScrollUp){
-                        w->layoutOffset += 1;
-                        return 1;
+    if(isWidgetVisible(w)){
+        int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
+        int flag = 0;
+        w->tmpIterPtr = w->children->data;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            w->tmpIterPtr = w->tmpIterPtr[0];
+            flag |= w->iterPtr->mouseClick(w->iterPtr->object);
+        }
+        if(scroll && w->scrollOn){
+            if(!flag){
+                if(isWidgetHovered(w, mEvent.x, mEvent.y)){
+                    if(mEvent.bstate & BUTTON5_PRESSED){
+                        if(w->canScrollUp){
+                            w->layoutOffset += 1;
+                            return 1;
+                        }
+                    }else if(mEvent.bstate & BUTTON4_PRESSED){
+                        if(w->layoutOffset){
+                            w->layoutOffset--;
+                            return 1;
+                        } 
                     }
-                }else if(mEvent.bstate & BUTTON4_PRESSED){
-                    if(w->layoutOffset){
-                        w->layoutOffset--;
-                        return 1;
-                    } 
+                    w->bordered != w->bordered;
                 }
-                w->bordered != w->bordered;
             }
         }
-    }
 
-    if(flag){
-        return 1;
+        if(flag){
+            return 1;
+        }else{
+            return w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y);
+        }
     }else{
-        return w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y);
+        return 0;
     }
 }
 int WKeyPressCb(Widget* w, int key){
-    w->tmpIterPtr = w->children->data;
-    int flag = 0;
-    while(w->tmpIterPtr){
-        w->iterPtr = w->tmpIterPtr[1];
-        w->tmpIterPtr = w->tmpIterPtr[0];
-        flag |= w->iterPtr->keyPress(w->iterPtr->object, key);
+    if(isWidgetVisible(w)){
+        w->tmpIterPtr = w->children->data;
+        int flag = 0;
+        while(w->tmpIterPtr){
+            w->iterPtr = w->tmpIterPtr[1];
+            w->tmpIterPtr = w->tmpIterPtr[0];
+            flag |= w->iterPtr->keyPress(w->iterPtr->object, key);
+        }
+        return flag || (w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y));
+    }else{
+        return 0;
     }
-    return flag;
 }
 void renderWidget(Widget* w){
     if(isWidgetVisible(w)){

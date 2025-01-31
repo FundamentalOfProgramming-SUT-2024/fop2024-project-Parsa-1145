@@ -52,6 +52,8 @@ void createButton(Button* btn, Widget* parent, char* str, int sizePolicyX, int a
     btn->str = copyString(str);
     btn->textAlign = ALIGN_CENTER;
     btn->bgColor = C_BG_WHITE;
+    btn->contextCallback = 0;
+    btn->callBack = 0;
 
     btn->uiBase = malloc(sizeof(UiBase));
     btn->uiBase->render = &renderButton;

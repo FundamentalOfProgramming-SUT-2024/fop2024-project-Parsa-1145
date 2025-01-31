@@ -2,14 +2,16 @@
 #include "../Globals.h"
 
 void deleteFloor(Floor* f){
-    FOR(j, f->roomNum){
-        deleteRoom(f->roomList[j]);
-        deletePoint(f->pointCloud[j]);
-        free(f->adjMat[j]);
+    if(f->roomNum){
+        FOR(j, f->roomNum){
+            deleteRoom(f->roomList[j]);
+            deletePoint(f->pointCloud[j]);
+            free(f->adjMat[j]);
+        }
+        free(f->roomList);
+        free(f->pointCloud);
+        free(f->adjMat);
     }
-    free(f->roomList);
-    free(f->pointCloud);
-    free(f->adjMat);
     f->adjMat = NULL;
     f->pointCloud = NULL;
     f->roomList = NULL;
@@ -24,5 +26,6 @@ void deleteFloor(Floor* f){
     deleteCharTexture(f->groundMesh);
     deleteCharTexture(f->visited);
     deleteCharTexture(f->featureMesh);
+    deleteCharTexture(f->pathFindMesh);
     f->itemList = NULL;
 }

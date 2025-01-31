@@ -6,9 +6,9 @@
 
 typedef struct{
     int type;
-    int attr[10];
+    int attr[14];
     
-    float x, y;
+    int x, y;
 } MovingCell;
 
 int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f);

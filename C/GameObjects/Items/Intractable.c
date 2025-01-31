@@ -7,7 +7,6 @@ void initDoor(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->name = writeLog("Door");
     o->update = &updateDoor;
     o->render = &defaultItemRender;
     o->playerCollision = &doorPlayerCollision;
@@ -16,16 +15,13 @@ void initStair(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->name = writeLog("Stair");
-    o->update = &defaultItemUpdate;
+    o->update = &stairUpdate;
     o->render = &defaultItemRender;
-    o->playerCollision = &stairPlayerCollision;
 }
 void initTrap(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->name = writeLog("Trap");
     o->update = &defaultItemUpdate;
     o->render = &defaultItemRender;
     o->playerCollision = &trapPlayerCollision;
@@ -34,7 +30,6 @@ void initPasswordGenerator(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
-    o->name = writeLog("Password generator");
     o->update = &updatePasswordGenerator;
     o->render = &defaultItemRender;
     o->playerCollision = &passwordGeneratorPlayerCollision;
@@ -44,13 +39,19 @@ void initPasswordGenerator(ItemBase* o){
 }
 
 void trapPlayerCollision(ItemBase* o){
-    player.health -= 2;
-
-    o->sprite = '^';
+    if(o->hidden){
+        if(!player.levitating){
+            o->hidden = 0;
+            o->primaryUse(o);
+        }
+    }else{
+        addMessage(writeLog("You avoided the trap"));
+    }
 }
 void doorPlayerCollision(ItemBase* o){
-    if(o->sprite == '#'){
-        o->sprite = '+';
+    if(o->hidden){
+        floors[player.z].groundMesh->data[o->y][o->x] = '.';
+        o->hidden = 0;
         addMessage(writeLog("You found a hidden door"));
     }
     if(o->locked){
@@ -58,13 +59,15 @@ void doorPlayerCollision(ItemBase* o){
     }
 }
 
-void stairPlayerCollision(ItemBase* o){
+void stairUpdate(ItemBase* o){
     ItemBase* dest = findItemById(o->relId);
 
-    if(dest->z > o->z){
-        addInteraction("go down", &moveInStair, KEY_DOWN, o);
-    }else{
-        addInteraction("go up", &moveInStair, KEY_UP, o);
+    if((player.x == o->x) && (player.y == o->y)){
+        if(dest->z > o->z){
+            addInteraction("go down", &moveInStair, KEY_DOWN, o);
+        }else{
+            addInteraction("go up", &moveInStair, KEY_UP, o);
+        }
     }
 }
 

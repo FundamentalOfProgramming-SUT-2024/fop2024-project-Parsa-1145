@@ -9,7 +9,10 @@ typedef union{
     int* d;
     char* s;
     wchar_t* w;
+    wchar_t sw;
     float* f;
+    int sd;
+    float sf;
     int color[3];
 }Arg;
 typedef struct{

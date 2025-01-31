@@ -27,6 +27,8 @@ typedef struct{
     int noClip;
     int debugItemInfo;
     int debugSeeAll;
+    int debugMapGenerationStepped;
+    int debugMapGenerationLayer;
 } GameSettings;
 
 

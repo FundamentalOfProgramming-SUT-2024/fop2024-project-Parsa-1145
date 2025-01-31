@@ -31,15 +31,24 @@ extern TextWidget mgEquipedPrimaryTextWidget;
 extern TextWidget mgEquipedSecondaryextWidget;
 
 extern LinkedList playerActionList;
-extern int terminalGetInt();
-extern void loadGame(const char* address);
+int terminalGetInt();
+void loadGame(const char* address);
 
-extern void updateInventoryTab();
-extern void updateEffectsTab();
-extern void updateWorld(int x, int y);
+void updateInventoryTab();
+void updateEffectsTab();
+void updateWorld(int x, int y);
 
-extern int validForItemPosition(int x, int y, int z);
+int validForItemPosition(int x, int y, int z);
+int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y);
+
+typedef struct RayCollision{
+    int x, y;
+    ItemBase* entity;
+}RayCollision;
+int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details);
 extern TextWidget* addMessage(char* message);
+
+void endGame(int won, const char * const message);
 #define addFormattedMessage(f, ...) changeTextWidget(addMessage(writeLog(" ")), f, __VA_ARGS__)
 
 #endif

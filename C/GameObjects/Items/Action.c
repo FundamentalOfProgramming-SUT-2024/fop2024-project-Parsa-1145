@@ -12,6 +12,10 @@ void(*getAction(char* name))(ItemBase*){
     else if (!strcmp(name, "Swing attack")) return &swingAttack;
     else if (!strcmp(name, "Throw")) return &throwAttack;
     else if (!strcmp(name, "Kick")) return &kick;
+    else if (!strcmp(name, "trapSimpleDamage")) return &trapSimpleDamage;
+    else if (!strcmp(name, "trapPoisonDamage")) return &trapPoisonDamage;
+    else if (!strcmp(name, "trapFallToNextFloor")) return &trapFallToNextFloor;
+    else if (!strcmp(name, "trapTeleport")) return &trapTeleport;
     else return NULL;
 }
 void(*getEffectFunc(char* name))(Effect*){
@@ -21,6 +25,9 @@ void(*getEffectFunc(char* name))(Effect*){
     else if (!strcmp(name, "Health regeneration")) return &effectHealthRegen;
     else if (!strcmp(name, "Fill")) return &effectFill;
     else if (!strcmp(name, "Maxhealth increase")) return &effectMaxHealthIncrease;
+    else if (!strcmp(name, "Poison")) return &effectPoison;
+    else if (!strcmp(name, "Levitation")) return &effectLevitation;
+
     else return NULL;
 }
 void moveInStair(ItemBase* o){
@@ -29,8 +36,6 @@ void moveInStair(ItemBase* o){
     player.x = dest->x;
     player.y = dest->y;
     player.z = dest->z;
-
-    updateWorld(0, 0);
 }
 
 
@@ -57,7 +62,19 @@ int consume(ItemBase* o){
     updateEffectsTab();
 }
 int swingAttack(ItemBase* o){
-    addMessage(writeLog("HOHO Swing"));
+    void** tmp = floors[player.z].itemList->data;
+    ItemBase* ptr;
+    while(tmp){
+        ptr = tmp[1];
+        tmp = tmp[0];
+
+        if((ptr->type) && !strcmp(ptr->type, "monster")){
+            if(hypot(player.x - ptr->x, player.y - ptr->y) < 1.5){
+                ptr->health -= player.heldObject->damage;
+                addFormattedMessage("You dealth %o%D%O damage to %s", 1, 4, 1, player.heldObject->damage, ptr->name);
+            }
+        }
+    }
 }
 int stab(ItemBase* o){
     addMessage(writeLog("stab the shit out of it"));
@@ -74,20 +91,48 @@ int throwAttack(ItemBase* o){
 int shootArrow(ItemBase* o){
     addMessage(writeLog("HOHO Shoot arrow"));
 }
+int trapSimpleDamage(ItemBase* o){
+    player.health -= o->damage;
+    addFormattedMessage("%oYou stepped on a spike%O", 5, 1, 1);
+}
+int trapPoisonDamage(ItemBase* o){
+    Effect* poison = malloc(sizeof(Effect));
+    poison->duration = 10;
+    poison->amount = 1;
+    poison->type = writeLog("Poison");
+    poison->func = getEffectFunc("Poison");
+    poison->elapsed = 0;
+    addPlayerEffect(poison);
+    addFormattedMessage("%oYou stepped on a poisoned spike%O", 1, 4, 1);
+}
+int trapFallToNextFloor(ItemBase* o){
+    player.z++;
+    placeInRange(floors + player.z, 0, 0, floors[player.z].w, floors[player.z].h, &(player.x), &(player.y));
+    addFormattedMessage("%oYou fell down from a hole%O", 5, 4, 3);
+    player.health -= 20;
+    player.health = max(10, player.health);
+}
+int trapTeleport(ItemBase* o){
+    placeInRange(floors + player.z, 0, 0, floors[player.z].w, floors[player.z].h, &(player.x), &(player.y));
+    addFormattedMessage("%oYou where teleported by a trap%O", 1, 3, 5);
+    player.health -= 10;
+    player.health = max(10, player.health);
+}
 int unlockDoor(ItemBase* o){
     ItemBase* itemPtr;
     void** tmpPtr = floors[player.z].itemList->data;
     while(tmpPtr){
         itemPtr = tmpPtr[1];
         tmpPtr = tmpPtr[0];
-        if((!strcmp(itemPtr->name, "Door")) && (itemPtr->locked)){
+        if((itemPtr->name) && (!strcmp(itemPtr->name, "Door")) && (itemPtr->locked)){
             if(isPlayerNextTo(itemPtr)){
                 if(!itemPtr->lockBroken){
                     if(randWithProb(o->openingProb)){
                         addMessage(writeLog("Door unlocked"));
                         itemPtr->locked = 0;
                         itemPtr->collider = 0;
-                        itemPtr->sprite = '+';
+                        itemPtr->color[0] = 1;
+                        itemPtr->color[1] = 5;
                     }else{
                         addMessage(writeLog("Key broke"));
                         ItemBase* broken;
@@ -125,6 +170,14 @@ int effectSicken(Effect*){
 int effectMaxHealthIncrease(Effect* e){
     player.baseMaxHealth += e->amount;
 }
+int effectPoison(Effect* e){
+    if(deltaTime){
+        player.health -= e->amount;
+    }
+}
+int effectLevitation(Effect*){
+    player.levitating = 1;
+}
 void deleteEffect(Effect* effect){
     free(effect->type);
     free(effect);
@@ -142,4 +195,28 @@ void addInteraction(char* name, void (*func)(ItemBase*),  int key, ItemBase* o){
     new->name = copyString(name);
 
     linkedListPushBack(&playerActionList, new);
+}
+cJSON* effectToJson(Effect* e){
+    cJSON* out = cJSON_CreateObject();
+    cJSON_AddStringToObject(out, "type", e->type);
+    cJSON_AddNumberToObject(out, "amount", e->amount);
+    cJSON_AddNumberToObject(out, "duration", e->duration);
+    cJSON_AddNumberToObject(out, "elapsed", e->elapsed);
+
+    return out;
+}
+Effect* loadEffect(cJSON* data){
+    Effect* new = malloc(sizeof(Effect));
+    new->duration = 0;
+    if(cJSON_GetObjectItem(data, "type")){
+        new->type = copyString(cJSON_GetObjectItem(data, "type")->valuestring);
+        new->func = getEffectFunc(new->type);
+    }if(cJSON_GetObjectItem(data, "amount")){
+        new->amount = cJSON_GetObjectItem(data, "amount")->valuedouble;
+    }if(cJSON_GetObjectItem(data, "duration")){
+        new->duration = cJSON_GetObjectItem(data, "duration")->valueint;
+    }if(cJSON_GetObjectItem(data, "elapsed")){
+        new->elapsed = cJSON_GetObjectItem(data, "elapsed")->valueint;
+    }
+    return new;
 }

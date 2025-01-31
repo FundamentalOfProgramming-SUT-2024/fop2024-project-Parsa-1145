@@ -9,6 +9,7 @@
 #include "ProgramStates/LogInMenu.h"
 #include "ProgramStates/MainGame.h"
 #include "ProgramStates/SignupMenu.h"
+#include "ProgramStates/Scoreboard.h"
 #include "SecondaryThread.h"
 #include "UiElements/PopUp.h"
 #include "GlobalDefines.h"
@@ -47,6 +48,7 @@ int main(){
     initLogInMenu();
     initMainGame();
     initSignUpMenu();
+    initScoreBoard();
 
     initSecondaryThread();
     
@@ -64,7 +66,7 @@ int main(){
         (*(engineState->render))();
     }
 
-    pthread_join(&secondaryThread, NULL);
+    pthread_join(secondaryThread, NULL);
 
     endwin();
 }

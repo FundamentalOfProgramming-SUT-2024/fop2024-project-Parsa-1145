@@ -6,6 +6,7 @@
 #include "NewGameMenu.h"
 #include "LogInMenu.h"
 #include "SignupMenu.h"
+#include "Scoreboard.h"
 #include "MainGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
@@ -57,8 +58,8 @@ void initMainMenu(){
 
     createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 2, 100);
     createButton(&mmLoadGameBtn, &menu, "Load Game" , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 4, 100);
-    createButton(&mmSettingsBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 6, 100);
-    createButton(&mmSocreboardBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 8, 100);
+    createButton(&mmSocreboardBtn, &menu, "Scoreboard", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 6, 100);
+    createButton(&mmSettingsBtn, &menu, "Settings", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 8, 100);
     createButton(&mmLoginBtn, &menu, "Log in", RELATIVE, ALIGN_LEFT, ALIGN_TOP, 2, 10, 41);
     createButton(&mmNewCharacterBtn, &menu, "Sign up", RELATIVE, ALIGN_RIGHT, ALIGN_TOP, 2, 10, 41);
     createButton(&mmLogOutBtn, &menu, "Log out", RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 10, 100);
@@ -83,6 +84,7 @@ void initMainMenu(){
     mmLogOutBtn.callBack = &logOut;
     mmLoadGameBtn.contextCallback = &loadGame;
     mmLoadGameBtn.contextObject = "outa.json";
+    mmSocreboardBtn.callBack = &enterScoreBoard;
 
 
 }

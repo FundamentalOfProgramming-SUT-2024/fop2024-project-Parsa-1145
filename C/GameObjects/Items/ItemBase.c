@@ -61,20 +61,13 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->lockBroken = object->valueint;
         }else if(!strcmp(object->string, "locked")){
             o->locked = object->valueint;
+        }else if(!strcmp(object->string, "hidden")){
+            o->hidden = object->valueint;
         }else if(!strcmp(object->string, "effects")){
             createLinkedList(&(o->effects), sizeof(Effect*));
             cJSON* effects = object->child;
             while(effects){
-                Effect* new = malloc(sizeof(Effect));
-                if(cJSON_GetObjectItem(effects, "type")){
-                    new->type = copyString(cJSON_GetObjectItem(effects, "type")->valuestring);
-                    new->func = getEffectFunc(new->type);
-                }if(cJSON_GetObjectItem(effects, "amount")){
-                    new->amount = cJSON_GetObjectItem(effects, "amount")->valuedouble;
-                }if(cJSON_GetObjectItem(effects, "duration")){
-                    new->duration = cJSON_GetObjectItem(effects, "duration")->valueint;
-                }
-                linkedListPushBack(&(o->effects), new);
+                linkedListPushBack(&(o->effects), loadEffect(effects));
                 effects = effects->next;
             }
         }else if(!strcmp(object->string, "value")){
@@ -114,6 +107,8 @@ ItemBase* loadItemFromJson(cJSON* data){
             initAmmo(o);
         }else if(!strcmp(o->type, "valueable")){
             initValueable(o);
+        }else if(!strcmp(o->type, "endgame")){
+            initAmulet(o);
         }else{
             defaultUseableInit(o);
         }
@@ -152,6 +147,7 @@ cJSON* itemToJson(ItemBase* o){
     cJSON_AddNumberToObject(json, "lockBroken", o->lockBroken);
     cJSON_AddNumberToObject(json, "quantity", o->quantity);
     cJSON_AddNumberToObject(json, "locked", o->locked);
+    cJSON_AddNumberToObject(json, "hidden", o->hidden);
     if(o->effects.size){
         cJSON* tmp = cJSON_CreateArray();
         
@@ -161,14 +157,10 @@ cJSON* itemToJson(ItemBase* o){
             ptr = tmpPtr[1];
             tmpPtr = tmpPtr[0];
 
-            cJSON* tmp2 = cJSON_CreateObject();
-            cJSON_AddStringToObject(tmp2, "type", ptr->type);
-            cJSON_AddNumberToObject(tmp2, "amount", ptr->amount);
-            cJSON_AddNumberToObject(tmp2, "duration", ptr->duration);
+            cJSON* tmp2 = effectToJson(ptr);
 
             cJSON_AddItemToArray(tmp, tmp2);
         }
-
         cJSON_AddItemToObject(json, "effects", tmp);
     }
     cJSON_AddNumberToObject(json, "value", o->value);
@@ -262,10 +254,11 @@ void defaultItemDelete(ItemBase* o){
     free(o);
 }
 void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, Camera* cam){
-    if(isinRect(o->x, o->y, cam->x, cam->y, cam->w, cam->h)){
+    if(((!o->hidden) || gameSettings.debugSeeAll) && isinRect(o->x, o->y, cam->x, cam->y, cam->w, cam->h)){
         frameBuffer->data[o->y - cam->y][o->x - cam->x] = o->sprite;
-        frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
-
+        if(o->color[0] != -1){
+            frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
+        }
     }
 }
 int defaultItemCompare(ItemBase* o1, ItemBase* o2){
