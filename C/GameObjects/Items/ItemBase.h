@@ -29,7 +29,7 @@ typedef struct ItemBase{
     void (*primaryUse)(struct ItemBase*);
     void (*secondaryUse)(struct ItemBase*);
     void (*playerCollision)(struct ItemBase*);
-    void (*keyPress)(struct ItemBase*);
+    void (*inHandUpdate)(struct ItemBase*);
 
     int x, y, z;
     int tarx, tary;

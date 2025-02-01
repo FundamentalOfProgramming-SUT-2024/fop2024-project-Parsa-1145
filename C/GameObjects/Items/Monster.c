@@ -82,11 +82,8 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f, int o){
 
     iterPtr = path->data;
 
-    //CharTexture* fb = createCharTexture(scrW, scrH);
-
     while(iterPtr){
         curPoint = (iterPtr)[1];
-        //fillCharTexture(fb, '\0');
         dirSeed = randWithProb(0.5);
         FOR(i, 4){
             if(validForVisit(curPoint, directions[dirSeed][i][0], directions[dirSeed][i][1], f, o)){
@@ -105,10 +102,6 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f, int o){
             break;
         }
         if(curPoint->depth > 20)return NULL;
-        // erase();
-        // renderTexture(f->pathFindMesh, 0, 0, &mainCamera, fb);
-        // renderFrameBuffer(fb);
-        // refresh();
         
         iterPtr = iterPtr[0];
     }
@@ -179,21 +172,16 @@ int defaultMonsterUpdate(ItemBase* m){
                 }
                 break;
             case 1:
-                if(player.z == m->z){
+                if((player.z == m->z) && (!player.invisible)){
                     PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 1);
                     if(!tmpPoint) tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 0);
                     if(tmpPoint){
                         if(hypot(player.x - m->x, player.y - m->y) > 1.5){
-                            // if(tmpPoint[0].depth > 2 && (hypot(tmpPoint[2].x - m->x, tmpPoint[2].y - m->y) < 2) && validForMove(tmpPoint[2].x, tmpPoint[2].y, floors + player.z)){
-                            //     m->x = tmpPoint[2].x;
-                            //     m->y = tmpPoint[2].y;
                             if (validForMove(tmpPoint[1].x, tmpPoint[1].y, floors + player.z)){
                                 m->x = tmpPoint[1].x;
                                 m->y = tmpPoint[1].y;
                                 m->decayed--;
                             }
-                            // m->x = tmpPoint[1].x;
-                            //     m->y = tmpPoint[1].y;
                         }else{
                             m->primaryUse(m);
                         }

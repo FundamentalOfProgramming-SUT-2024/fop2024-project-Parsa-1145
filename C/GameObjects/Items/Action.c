@@ -1,4 +1,8 @@
 #include <string.h>
+#include <math.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdio.h>
 
 #include "Action.h"
 #include "../../ProgramStates/MainGame.h"
@@ -18,6 +22,8 @@ void(*getAction(char* name))(ItemBase*){
     else if (!strcmp(name, "trapPoisonDamage")) return &trapPoisonDamage;
     else if (!strcmp(name, "trapFallToNextFloor")) return &trapFallToNextFloor;
     else if (!strcmp(name, "trapTeleport")) return &trapTeleport;
+    else if (!strcmp(name, "takeAim")) return &takeAim;
+
     else return NULL;
 }
 void(*getEffectFunc(char* name))(Effect*){
@@ -43,6 +49,11 @@ void moveInStair(ItemBase* o){
     player.z = dest->z;
 }
 
+int takeAim(ItemBase* o){
+    RayCollision collision;
+    castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range, &collision);
+    renderLine(0, rgb[1][5][2], UINT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+}
 
 int consume(ItemBase* o){
     Effect* newEffect;
@@ -163,20 +174,78 @@ int throwAttack(ItemBase* o){
                     default:
                         if(mEvent.bstate & BUTTON3_PRESSED){
                             exit = 1;
+                        }else if(mEvent.bstate & BUTTON1_PRESSED){
+                            if(o->quantity == 1){
+                                o->inInventory = 0;
+                                removeItemFromLinkedList(&(player.items), o);
+                                checkEquiped();
+                                updateInventoryTab();
+                            }else{
+                                o->quantity--;
+                                o = LoadItemWithName(o->name);
+                                o->quantity = 1;
+
+                                o->inInventory = 0;
+                                o->x = player.x;
+                                o->z = player.z;
+                                o->y = player.y;
+                            }
+
+                            linkedListPushBack(floors[player.z].itemList, o);
+
+                            RayCollision c;
+                            int collision = castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, o->range, &c);
+
+                            if(collision){
+                                c.x = c.prevx;
+                                c.y = c.prevy;
+                            }
+
+                            float xdir = c.x - player.x, ydir = c.y - player.y, curx = player.x, cury = player.y;
+
+                            float dist = hypot(xdir, ydir);
+                            xdir /= dist;
+                            ydir /= dist;
+
+                            if(dist > 1.5){
+                                dist = 0;
+                                while(1){
+                                    sleepMili(20000);
+                                    curx += xdir;
+                                    cury += ydir;
+                                    o->x = round(curx);
+                                    o->y = round(cury);
+                                    
+                                    dist++;
+
+                                    if(hypot(c.x - curx, c.y - cury) <= 0.5){
+                                        break;
+                                    }else if(dist > o->range){
+                                        break;
+                                    }else{
+                                        renderMainGame();
+                                    }
+                                }
+
+                            }
+
+                            return 0;
                         }
                         break;
                     }
                 }
                 break;
             default:
-                if(!uiKeyPress(ch)){
-                    playerKeyPress(ch);
-                }
                 break;
                 
         }
         renderMainGameToFramebuffer();
-        renderLine(0, bgRgb[rgb[1][1][1]][rgb[5][5][5]], -1, player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, &mainCamera, frameBuffer);
+
+        RayCollision collision;
+        //castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, 5, &coli);
+        castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range, &collision);
+        renderLine(0, rgb[1][5][2], -1, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+
         renderMainGameToTerminal();
     }
 }

@@ -19,8 +19,10 @@ extern Player player;
 extern Floor* floors;
 extern int floorNum;
 extern int gameEnded;
+
 extern CharTexture* frameBuffer;
 extern CharTexture* visitedMaskBuffer;
+extern CharTexture* depthBuffer;
 
 
 extern int globalTime;
@@ -49,9 +51,14 @@ int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y);
 
 typedef struct RayCollision{
     int x, y;
+    int prevx, prevy;
     ItemBase* entity;
 }RayCollision;
+
+
 int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details);
+int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, long double length, CharTexture* tex, wchar_t c, int color, RayCollision* details);
+int castRayAndDraw(int x1, int y1, int x2, int y2, Floor* f, long double length, CharTexture* tex, wchar_t c, int color, RayCollision* details);
 extern TextWidget* addMessage(char* message);
 
 void endGame(int won, char * message);

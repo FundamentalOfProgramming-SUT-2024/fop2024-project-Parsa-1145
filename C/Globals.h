@@ -17,7 +17,6 @@ extern int terminate;
 extern Account account;
 extern cJSON* itemsJson;
 extern short rgb[6][6][6];
-extern int bgRgb[256][256];
 
 
 extern char* playerDbAddress;
@@ -38,5 +37,6 @@ char* copyString(char* str);
 char* writeLog(const char* format, ...);
 int isVowel(char c);
 cJSON* openJsonFile(const char * const address);
+void sleepMili(unsigned int m);
 
 extern MEVENT mEvent;

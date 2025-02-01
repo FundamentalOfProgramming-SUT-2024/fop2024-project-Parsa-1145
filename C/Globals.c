@@ -1,7 +1,8 @@
 #include <string.h>
 #include <stdlib.h>
+#define __USE_XOPEN_EXTENDED
+#include <unistd.h>
 #include <time.h>
-
 #include "Globals.h"
 
 #include "Utilities/LinkedList.h"
@@ -18,7 +19,6 @@ int colorPairNum = 5;
 cJSON* itemsJson = NULL;
 Account account;
 short rgb[6][6][6];
-int bgRgb[256][256];
 
 
 
@@ -222,4 +222,7 @@ cJSON* openJsonFile(const char * const address){
 
     free(str);
     return out;
+}
+void sleepMili(unsigned int m){
+    usleep(m);
 }

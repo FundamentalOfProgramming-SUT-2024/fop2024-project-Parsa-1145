@@ -8,7 +8,7 @@
 
 #include "Renderer.h"
 
-void renderLine(wchar_t c, int color, float length, double x1, double y1, double x2, double y2, Camera* cam, CharTexture* frameBuffer){
+void renderLine(wchar_t c, int color, int depth, double x1, double y1, double x2, double y2, Camera* cam, CharTexture* frameBuffer){
     if(cam == NULL) cam = &mainCamera;
     static char drawTypes[2][2] = {{0, 1}, {2, 3}};
     char drawType = drawTypes[c != 0][color != -1];
@@ -17,6 +17,9 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
     x2 = x2 - cam->x + 0.5;
     y1 = y1 - cam->y + 0.5;
     y2 = y2 - cam->y + 0.5;
+
+    double m, b;
+    int dir;
 
     if(abs(x1 - x2) < 1){
         if(!((x1 >= 0) && (x1 < cam->w))) return;
@@ -30,22 +33,8 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
         y1 = max(0, y1);
         y2 = min(cam->h - 1, y2);
 
-        for(y1; y1 <= y2;y1++){
-            switch (drawType){
-                case 1:
-                    frameBuffer->color[(int)(y1)][(int)x1] = color;
-                    break;
-                case 2:
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
-                    break;
-                case 3:
-                    frameBuffer->color[(int)(y1)][(int)x1] = color;
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
-                    break;
-                default:
-                    break;
-            }
-        }
+        dir = 1;
+        m = 0;
     }else if(abs(y1 - y2) < 1){
         if(!((y1 >= 0) && (y1 < + cam->h))) return;
 
@@ -58,25 +47,11 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
         x1 = max(0, x1);
         x2 = min(cam->w - 1, x2);
 
-        for(x1; x1 <= x2; x1++){
-            switch (drawType){
-                case 1:
-                    frameBuffer->color[(int)(y1)][(int)x1] = color;
-                    break;
-                case 2:
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
-                    break;
-                case 3:
-                    frameBuffer->color[(int)(y1)][(int)x1] = color;
-                    frameBuffer->data[(int)(y1)][(int)x1] = c;
-                    break;
-                default:
-                    break;
-            }
-        }
+        dir = 0;
+        m = 0;
     }else{
-        double m = (y2 - y1) / (x2 - x1);
-        double b = (y1 - x1 * m);
+        m = (y2 - y1) / (x2 - x1);
+        b = (y1 - x1 * m);
 
         x1 = max(x1, 0);
         x1 = min(x1, cam->w - 1);
@@ -85,8 +60,6 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
 
         y1 = x1 * m + b;
         y2 = x2 * m + b;
-
-        //mvprintw(2, 0, "%f %f %f %f %f %f", x1, y1, x2, y2, m, b);
 
         if((((y1 >= 0) && (y1 < cam->h))) || (((y2 >= 0) && (y2 <cam->h)))){
             y1 = max(y1, 0);
@@ -105,8 +78,73 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
                     tmp = y1;
                     y1 = y2;
                     y2 = tmp;
-                } 
-                //x1 = round(x1);
+                }
+            }else{
+                if(y1 > y2){
+                    double tmp = x1;
+                    x1 = x2;
+                    x2 = tmp;
+                    tmp = y1;
+                    y1 = y2;
+                    y2 = tmp;
+                }
+                m = 1/m;
+            }
+        }else{
+            return;
+        }
+    }
+
+    if(frameBuffer->hasDepth){
+        switch(dir){
+            case 0:
+                for(x1; x1 <= x2 + 0.5; x1++){
+                    if(frameBuffer->depth[(int)(y1)][(int)x1] < depth){
+                        switch (drawType){
+                            case 1:
+                                frameBuffer->color[(int)(y1)][(int)x1] = color;
+                                break;
+                            case 2:
+                                frameBuffer->data[(int)(y1)][(int)x1] = c;
+                                break;
+                            case 3:
+                                frameBuffer->color[(int)(y1)][(int)x1] = color;
+                                frameBuffer->data[(int)(y1)][(int)x1] = c;
+                                break;
+                            default:
+                                break;
+                        }
+                        frameBuffer->depth[(int)(y1)][(int)x1] = depth;
+                    }
+                    y1+=m;
+                }
+                break;
+            case 1:
+                for(y1; y1 <= y2 + 0.5; y1++){
+                    if(frameBuffer->depth[(int)(y1)][(int)x1] < depth){
+                        switch (drawType){
+                            case 1:
+                                frameBuffer->color[(int)(y1)][(int)x1] = color;
+                                break;
+                            case 2:
+                                frameBuffer->data[(int)(y1)][(int)x1] = c;
+                                break;
+                            case 3:
+                                frameBuffer->color[(int)(y1)][(int)x1] = color;
+                                frameBuffer->data[(int)(y1)][(int)x1] = c;
+                                break;
+                            default:
+                                break;
+                        }
+                        frameBuffer->depth[(int)(y1)][(int)x1] = depth;
+                    }
+                    x1+=m;
+                }
+                break;
+        }
+    }else{
+        switch(dir){
+            case 0:
                 for(x1; x1 <= x2 + 0.5; x1++){
                     switch (drawType){
                         case 1:
@@ -124,17 +162,8 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
                     }
                     y1+=m;
                 }
-            }else{
-                if(y1 > y2){
-                    double tmp = x1;
-                    x1 = x2;
-                    x2 = tmp;
-                    tmp = y1;
-                    y1 = y2;
-                    y2 = tmp;
-                }
-                //y1 = round(y1);
-                m = 1/m;
+                break;
+            case 1:
                 for(y1; y1 <= y2 + 0.5; y1++){
                     switch (drawType){
                         case 1:
@@ -152,18 +181,18 @@ void renderLine(wchar_t c, int color, float length, double x1, double y1, double
                     }
                     x1+=m;
                 }
-            }
-            
+                break;
         }
     }
     
+    
 }
 
-void renderTexture(CharTexture* tex, float x, float y, Camera* cam, CharTexture* frameBuffer){
+void renderTexture(CharTexture* tex, int x, int y, Camera* cam, CharTexture* frameBuffer){
     if(cam == NULL) cam = &mainCamera;
 
 
-    float x1, y1, x2, y2;
+    int x1, y1, x2, y2;
 
     x -= cam->x;
     y -= cam->y;
@@ -180,17 +209,127 @@ void renderTexture(CharTexture* tex, float x, float y, Camera* cam, CharTexture*
     if(y + tex->h - 1 < 0) return;
     y2 = min(y + tex->h - 1, cam->h - 1);
 
-    for(y1; y1 <= y2; y1++){
-        for(int i = x1; i <= x2; i++){
-            if(tex->data[(int)(y1 - y)][(int)(i - x)] != '\0'){
-                frameBuffer->data[(int)y1][i] = (tex->data[(int)(y1 - y)][(int)(i - x)]);
-                if(frameBuffer->data[(int)y1][i] < ' ')frameBuffer->data[(int)y1][i] += '0';
-                frameBuffer->color[(int)y1][i] = (tex->color[(int)(y1 - y)][(int)(i - x)]);
+
+    int u = x1 - x;
+    int v = y1 - y;
+
+    if(frameBuffer->hasDepth){
+        if(frameBuffer->hasColor){
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0') && (frameBuffer->depth[y1][i] <= tex->depth[v][u])){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->color[y1][i] = (tex->color[v][u]);
+                        frameBuffer->depth[y1][i] = tex->depth[v][u];
+                    }
+                }
+            }
+        }else{
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0') && (frameBuffer->depth[y1][i] <= tex->depth[v][u])){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->depth[y1][i] = tex->depth[v][u];
+                    }
+                }
+            }
+        }
+    }else{
+        if(frameBuffer->hasColor){
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0')){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->color[y1][i] = (tex->color[v][u]);
+                    }
+                }
+            }
+        }else{
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0')){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                    }
+                }
             }
         }
     }
 }
+void renderDepthlessTexture(CharTexture* tex, int x, int y, int depth, Camera* cam, CharTexture* frameBuffer){
+    if(cam == NULL) cam = &mainCamera;
 
+
+    int x1, y1, x2, y2;
+
+    x -= cam->x;
+    y -= cam->y;
+
+    x1 = max(0, x);
+    if(x > cam->w - 1) return;
+
+    if(x + tex->w - 1 < 0) return;
+    x2 = min(x + tex->w - 1, cam->w - 1);
+
+    if(y > cam->h - 1) return;
+    y1 = max(y, 0);
+
+    if(y + tex->h - 1 < 0) return;
+    y2 = min(y + tex->h - 1, cam->h - 1);
+
+
+    int u = x1 - x;
+    int v = y1 - y;
+
+    if(frameBuffer->hasDepth){
+        if(frameBuffer->hasColor){
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0') && (frameBuffer->depth[y1][i] <= depth)){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->color[y1][i] = (tex->color[v][u]);
+                        frameBuffer->depth[y1][i] = depth;
+                    }
+                }
+            }
+        }else{
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0') && (frameBuffer->depth[y1][i] <= depth)){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->depth[y1][i] = depth;
+                    }
+                }
+            }
+        }
+    }else{
+        if(frameBuffer->hasColor){
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0')){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                        frameBuffer->color[y1][i] = (tex->color[v][u]);
+                    }
+                }
+            }
+        }else{
+            for(y1; y1 <= y2; y1++, v++){
+                u = x1 - x;
+                for(int i = x1; i <= x2; i++, u++){
+                    if((tex->data[v][u] != '\0')){
+                        frameBuffer->data[y1][i] = (tex->data[v][u]);
+                    }
+                }
+            }
+        }
+    }
+}
 void renderFrameBuffer(CharTexture* tex){
     int prevColor = 0, lastColor = 0;
     FOR(i, tex->h){

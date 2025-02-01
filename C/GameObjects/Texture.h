@@ -5,25 +5,26 @@
 
 typedef struct{
     wchar_t** data;
+    char** depth;
     int** color;
+
+    int hasDepth, hasColor;
     int w, h;
 }CharTexture;
 
-CharTexture* createCharTexture(int w, int h);
+CharTexture* createCharTexture(int w, int h, int hasDepth, int hasColor);
+void deleteCharTexture(CharTexture* tex);
+
+void resizeCharTexture(CharTexture** tex, int w, int h);
+
 void fillCharTexture(CharTexture* tex, wchar_t c);
 void fillColorTexture(CharTexture* tex, int c);
+void fillDepthTexture(CharTexture* tex, char c);
+
 void mixTextures( CharTexture* t1, CharTexture* t2);
 void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, wchar_t c);
-void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, wchar_t c);
-void deleteCharTexture(CharTexture* tex);
-void resizeCharTexture(CharTexture** tex, int w, int h);
+
 cJSON* saveCharTextureToJson(CharTexture* t);
-cJSON* saveColorTextureToJson(CharTexture* t);
-
-void loadCharTextureFromJson(cJSON* data, CharTexture* t);
-void loadColorTextureFromJson(cJSON* data, CharTexture* t);
-
-
-
+CharTexture* loadCharTextureFromJson(cJSON* data);
 
 #endif

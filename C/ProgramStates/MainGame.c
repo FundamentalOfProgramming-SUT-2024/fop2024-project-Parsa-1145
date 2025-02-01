@@ -223,14 +223,10 @@ void loadGame(const char* address){
         f->w = cJSON_GetObjectItem(fJ, "width")->valueint;
         f->h = cJSON_GetObjectItem(fJ, "height")->valueint;
 
-        f->groundMesh = createCharTexture(f->w, f->h);
-        f->featureMesh = createCharTexture(f->w, f->h);
-        f->visited = createCharTexture(f->w, f->h);
-
-        loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "ground mesh"), f->groundMesh);
-        loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "feature mesh"), f->featureMesh);
-        loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "visited"), f->visited);
-        loadColorTextureFromJson(cJSON_GetObjectItem(fJ, "ground color"), f->groundMesh);
+        f->groundMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "ground mesh"));
+        f->featureMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "feature mesh"));
+        f->visited = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "visited"));
+        f->groundMesh = loadColorTextureFromJson(cJSON_GetObjectItem(fJ, "ground color"));
 
         f->itemList = malloc(sizeof(LinkedList));
         createLinkedList(f->itemList, sizeof(ItemBase*));
@@ -285,8 +281,8 @@ void loadGame(const char* address){
 
     mainCamera.h = scrH;
     mainCamera.w = scrW;
-    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
-    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h, 1, 1);
+    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h, 0, 0);
     updateWorld(0, 0);
     updateEffectsTab();
 
@@ -785,8 +781,8 @@ void enterMainGame(){
     getmaxyx(stdscr, scrH, scrW);
     mainCamera.h = scrH;
     mainCamera.w = scrW;
-    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h);
-    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h);
+    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h, 1, 1);
+    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h, 0, 0);
     generateMap();
 
     player.z = 0;
@@ -862,79 +858,205 @@ int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y){
     }
     while(!validForItemPosition(x[0], y[0], f->index));
 }
-int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details){
-    float xdir = x2 - x1, ydir = y2 - y1;
-    float dist = hypot(xdir, ydir);
-    if(dist < 0.001){
-        return 0;
+
+int castRayWithDir(int x1, int y1, double x, double y, Floor* f, float length, RayCollision* details){
+    x1 += 0.45;
+    y1 += 0.45;
+
+    long double curx = x1, cury = y1, traversed = 0;
+    int curxd, curyd, prevy, prevx;
+
+    void** tmp;
+    ItemBase* ptr;
+
+    while((curx >= 0) && (curx < f->w) && (cury >= 0) && (cury < f->h)){
+        curx += x;
+        cury += y;
+        curxd = round(curx);
+        curyd = round(cury);
+
+        traversed++;
+
+        if((f->groundMesh->data[curyd][curxd] != '.')){
+            if(details){
+                details->x = curxd;
+                details->y = curyd;
+                details->prevx = prevx;
+                details->prevy = prevy;
+                details->entity = NULL;
+            }
+            return 1;
+        }else{
+            tmp = f->itemList->data;
+            while(tmp){
+                ptr = tmp[1];
+                tmp = tmp[0];
+                if(ptr->collider && (ptr->x == curxd) && (ptr->y == curyd)){
+                    if(details){
+                        details->x = curxd;
+                        details->y = curyd;
+                        details->prevx = prevx;
+                        details->prevy = prevy;
+                        details->entity = ptr;
+                    }
+                    return 1;
+                }
+            }
+        }
+        if(length > 0){
+            if(fabs(traversed-length) < 0.5){
+                if(details){
+                    details->x = curxd;
+                    details->y = curyd;
+                    details->prevx = prevx;
+                    details->prevy = prevy;
+                    details->entity = NULL;
+                }
+                return 0;
+            }
+        }
+        prevy = curyd;
+        prevx = curxd;
     }
+    if(details){
+        details->x = curxd;
+        details->y = curyd;
+        details->prevx = prevx;
+        details->prevy = prevy;
+        details->entity = NULL;
+    }
+    return 0;
+}
+int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details){
+
+    double xdir = x2 - x1, ydir = y2 - y1;
+
+    double dist = hypot(xdir, ydir);
+
+    if(dist <= 0.01) return 0;
+
     xdir = xdir / dist;
     ydir = ydir / dist;
 
-    float curx = x1, cury = y1, traversed = 0;
-    while(1){
-        curx += xdir;
-        cury += ydir;
-        traversed += 1;
+    if(dist > length){
+        castRayWithDir(x1, y1, xdir, ydir, f, length, details);
+        return 1;
+    }
+    else return castRayWithDir(x1, y1, xdir, ydir, f, dist, details);
 
-        if(f->groundMesh->data[(int)cury][(int)curx] != '.'){
+    
+}
+int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, long double length, CharTexture* tex, wchar_t c, int color, RayCollision* details){
+    static char drawTypes[2][2] = {{0, 1}, {2, 3}};
+    char drawType = drawTypes[c][color != -1];
+
+    x1 += 0.45;
+    y1 += 0.45;
+
+    long double curx = x1, cury = y1, traversed = 0;
+    int curxd, curyd;
+    while(1){
+        curx += x;
+        cury += y;
+        curxd = round(curx);
+        curyd = round(cury);
+
+        traversed++;
+        
+        switch (drawType){
+            case 1:
+                tex->color[(curyd)][curxd] = color;
+                break;
+            case 2:
+                tex->data[(curyd)][curxd] = c;
+                break;
+            case 3:
+                tex->color[(curyd)][curxd] = color;
+                tex->data[(curyd)][curxd] = c;
+                break;
+            default:
+                break;
+        }
+
+        if((curx >= 0) && (curx < f->w) && (cury >= 0) && (cury < f->h) && (f->groundMesh->data[curyd][curxd] != '.')){
             if(details){
-                details->x = curx;
-                details->y = cury;
+                details->x = curxd;
+                details->y = curyd;
             }
             return 1;
-        }else if(length > 0){
-            if(traversed > length){
+        }else if(length > 1){
+            if(traversed >= length){
                 if(details){
-                    details->x = curx;
-                    details->y = cury;
+                    details->x = curxd;
+                    details->y = curyd;
                 }
                 return 1;
             }
         }
-
-        if(dist - traversed <= 1){
-            break;
-        }
     }
     return 0;
 }
-int castRayAndDraw(int x1, int y1, int x2, int y2, Floor* f, long double length, CharTexture* tex){
+int castRayAndDraw(int x1, int y1, int x2, int y2, Floor* f, long double length, CharTexture* tex, wchar_t c, int color, RayCollision* details){
+    static char drawTypes[2][2] = {{0, 1}, {2, 3}};
+    char drawType = drawTypes[c][color != -1];
+
     long double xdir = x2 - x1, ydir = y2 - y1;
-    x2 += 0.5;
-    x1 += 0.5;
-    y1 += 0.5;
-    y2 += 0.5;
 
     long double dist = hypot(xdir, ydir);
     xdir = xdir / dist;
     ydir = ydir / dist;
 
-    long double curx = x1, cury = y1, traversed = 0;
-    int curxd, curyd;
-    while(1){
-        curx += xdir;
-        cury += ydir;
-        curxd = round(curx);
-        curyd = round(cury);
 
-        traversed += 1;
-        tex->data[curyd][curxd] = 1;
+    // x1 += 0.5;
+    // y1 += 0.5;
+    // x2 += 0.5;
+    // y2 += 0.5;
 
-        if((f->groundMesh->data[curyd][curxd] != '.')){
-            return 1;
-        }else if(length > 1){
-            if(traversed >= length){
-                return 1;
-            }
-        }
-        if(dist - traversed <= 1){
-            break;
-        }
-    }
-    return 0;
+    // long double curx = x1, cury = y1, traversed = 0;
+    // int curxd, curyd;
+    // while(1){
+    //     curx += x;
+    //     cury += y;
+    //     curxd = round(curx);
+    //     curyd = round(cury);
+
+    //     traversed++;
+        
+    //     switch (drawType){
+    //         case 1:
+    //             tex->color[(curyd)][curxd] = color;
+    //             break;
+    //         case 2:
+    //             tex->data[(curyd)][curxd] = c;
+    //             break;
+    //         case 3:
+    //             tex->color[(curyd)][curxd] = color;
+    //             tex->data[(curyd)][curxd] = c;
+    //             break;
+    //         default:
+    //             break;
+    //     }
+
+    //     if((curx >= 0) && (curx < f->w) && (cury >= 0) && (cury < f->h) && (f->groundMesh->data[curyd][curxd] != '.')){
+    //         if(details){
+    //             details->x = curxd;
+    //             details->y = curyd;
+    //         }
+    //         return 1;
+    //     }else if(length > 1){
+    //         if(traversed >= length){
+    //             if(details){
+    //                 details->x = curxd;
+    //                 details->y = curyd;
+    //             }
+    //             return 1;
+    //         }
+    //     }
+    // }
+
+    return castRayWithDirAndDraw(x1, y1, xdir, ydir, f, min(length, dist), tex, c, color, details);
 }
-int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, long double length, CharTexture* tex){
+int castVisionRay(int x1, int y1, double x, double y, Floor* f, long double length, CharTexture* tex){
     x1 += 0.5;
     y1 += 0.5;
 
@@ -945,7 +1067,7 @@ int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, 
         cury += y;
         curxd = round(curx);
         curyd = round(cury);
-        
+
         if(!f->featureMesh->data[curyd][curxd]){
             traversed += 1;
         }else{
@@ -953,9 +1075,10 @@ int castRayWithDirAndDraw(int x1, int y1,long double x,long double y, Floor* f, 
                 traversed+=2;
             }
         }
+
         tex->data[curyd][curxd] = 1;
 
-        if((curx >= 0) && (curx < f->w) && (cury >= 0) && (cury < f->h) && (f->groundMesh->data[curyd][curxd] != '.')){
+        if((f->groundMesh->data[curyd][curxd] != '.')){
             return 1;
         }else if(length > 1){
             if(traversed >= length){
@@ -1249,14 +1372,14 @@ void firstGroundmeshPass(Floor* f){
     f->w = maxx - minx;
     f->h = maxy - miny;
 
-    f->groundMesh = createCharTexture(f->w, f->h);
-    f->featureMesh = createCharTexture(f->w, f->h);
+    f->groundMesh = createCharTexture(f->w, f->h, 0, 1);
+    f->featureMesh = createCharTexture(f->w, f->h, 0, 0);
 
     FOR(i, f->roomNum){
         for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
             for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
                f->groundMesh->data[z][j] = '#';
-               f->groundMesh->color[z][j] = bgRgb[rgb[3][3][3]][rgb[3][3][3]];
+               f->groundMesh->color[z][j] = rgb[3][3][3];
                f->featureMesh->data[z][j] = i + 1;
             }
         }
@@ -1476,14 +1599,18 @@ void placeTraps(Floor* f){
 void placePillars(Floor* f){
     FOR(i, f->roomNum){
         Room* r = f->roomList[i];
-        int n = randBetween(0, (r->w-2) * (r->h-2) / 5, 0);
-        n = min(n, 4);
-        int x, y;
-        FOR(j, n){
-            placeInRange(f, r->x + 1, r->y + 1, r->x + r->w - 1, r->y + r->h - 1, &x, &y);
-            f->groundMesh->data[y][x] = 'O';
-            f->groundMesh->color[y][x] = rgb[3][3][3];
+        
+        if((r->w-2) * (r->h-2) > 16){
+            int n = randBetween(0, (r->w-2) * (r->h-2) / 5, 0);
+            n = min(n, 4);
+            int x, y;
+            FOR(j, n){
+                placeInRange(f, r->x + 1, r->y + 1, r->x + r->w - 1, r->y + r->h - 1, &x, &y);
+                f->groundMesh->data[y][x] = 'O';
+                f->groundMesh->color[y][x] = rgb[3][3][3];
+            }
         }
+        
     }
 }
 void placeMonsters(){
@@ -1640,9 +1767,9 @@ void generateFloor(Floor* f){
         f->roomList[f->stairRooms[0]]->h = prevF->roomList[prevF->stairRooms[1]]->h;
     }
     firstGroundmeshPass(f);
-    f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h);
-    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h);
-    f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h);
+    f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+    f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0 ,0);
     fillCharTexture(f->visited, 0);
     
     MovingCell* cell;
@@ -1782,39 +1909,21 @@ void generateMap(){
 }
 
 int rays = 800;
+double visionRadius = PI / 6;
 void updateVisionMesh(){
     Floor* f = floors + player.z;
     fillCharTexture(f->visionMesh, '\0');
 
     static RayCollision c;
-    int x2 = mainCamera.x + mainCamera.w, y2 = mainCamera.y + mainCamera.h;
-    // for(int i = mainCamera.x; i < x2; i++){
-    //     if(castRay(player.x, player.y, i, mainCamera.y, f, 0, &c)){
-    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
-    //     }
-    //     if(castRay(player.x, player.y, i, y2, f, 0, &c)){
-    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
-    //     }
-    // }
-    // for(int i = mainCamera.y; i < y2; i++){
-    //     if(castRay(player.x, player.y, mainCamera.x, i, f, 0, &c)){
-    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
-    //     }
-    //     if(castRay(player.x, player.y, x2, i, f, 0, &c)){
-    //         renderLine(97, player.x, player.y, c.x, c.y, &mainCamera, visitedMaskBuffer);
-    //     }
-    // }
+    float x2 = mainCamera.x + mEvent.x, y2 = mainCamera.y + mEvent.y;
+
+    double a = atan2((y2 - player.y), (x2 - player.x));
+    a -= visionRadius;
+    double da = 2 * visionRadius / rays;
     FOR(i, rays){
-        castRayWithDirAndDraw(player.x, player.y, cos(PI * i / (rays / 2)), sin(PI * i / (rays / 2)), f, 5, f->visionMesh);
+        castVisionRay(player.x, player.y, cos(a), sin(a), f, 5, f->visionMesh);
+        a += da;
     }
-    // for(int i = mainCamera.x; i < x2; i++){
-    //     castRayAndDraw(player.x, player.y, i, mainCamera.y, f, 0, f->visionMesh);
-    //     castRayAndDraw(player.x, player.y, i, y2, f, 0, f->visionMesh);
-    // }
-    // for(int i = mainCamera.y; i < y2; i++){
-    //     castRayAndDraw(player.x, player.y, mainCamera.x, i, f, 0, f->visionMesh);
-    //     castRayAndDraw(player.x, player.y, x2, i, f, 0, f->visionMesh);
-    // }
 }
 void searchForHidden(ItemBase* o){
     void** tmpPtr;
@@ -1890,9 +1999,6 @@ void updateWorld(int x, int y){
     }
 
     resetPlayerStats(&player);
-
-    //drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
-
 
     for(void** i = player.effects.data; i ;){
         tmpEffect = i[1];
@@ -1992,7 +2098,7 @@ void playerKeyPress(int ch){
             if(player.heldObject && player.heldObject->primaryUse){
                 player.heldObject->secondaryUse(player.heldObject);
             }
-            updateWorld(100, 0);
+            //updateWorld(100, 0);
             break;
         case 'u':
             if(player.z != 0){
@@ -2106,7 +2212,6 @@ void renderMainGameToFramebuffer(){
     colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
     renderTexture(floors[player.z].visited, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
-
 }
 void renderMainGameToTerminal(){
     erase();

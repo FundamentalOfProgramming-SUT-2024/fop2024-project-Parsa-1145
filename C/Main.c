@@ -41,23 +41,6 @@ int main(){
             }
         }
     }
-    FOR(i, 6){
-        FOR(j, 6){
-            FOR(t, 6){
-                FOR(x, 6){
-                    FOR(y, 6){
-                        FOR(l, 6){
-                            if((x || y) || l){
-                                init_pair(k, rgb[i][j][t], rgb[x][y][l]);
-                                bgRgb[rgb[i][j][t]][rgb[x][y][l]] = k;
-                                k++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
     getmaxyx(stdscr, scrH, scrW);
 
     initMainMenu();
