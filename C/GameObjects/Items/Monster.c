@@ -1,11 +1,23 @@
+#include <string.h>
 #include "Monster.h"
 #include "../../ProgramStates/MainGame.h"
 #include "../Renderer.h"
 #include <math.h>
 
+void initMonster(ItemBase* m){
+    m->render = &defaultItemRender;
+    m->update = &defaultMonsterUpdate;
+    m->primaryUse = &defaultMonsterAttack;
+
+    m->collider = 1;
+    m->goodness = 0;
+}
+int canSeePlayer(ItemBase* m){
+    return !((castRay(m->x, m->y, player.x, player.y,floors + player.z, m->visionRadius, NULL)) || (player.invisible));
+}
 int defaultMonsterRender(ItemBase* m, CharTexture* frameBuffer, Camera* cam){
     if(isinRect(m->x, m->y, cam->x, cam->y, cam->w, cam->h)){
-        if(!castRay(m->x, m->y, player.x, player.y,floors + player.z, 5, NULL)){
+        if(canSeePlayer(m)){
             m->color[0] = 0;
             m->color[1] = 5;
             m->color[2] = 0;
@@ -35,21 +47,21 @@ int validForMove(int x, int y, Floor* f){
     while(tmp){
         ptr = tmp[1];
         tmp = tmp[0];
-        if(ptr->collider && (ptr->x == x) && (ptr->y == y)){
+        if(ptr->collider && (ptr->x == x) && (ptr->y == y) && ((!ptr->type || (ptr->type && strcmp(ptr->type, "monster"))) || ptr->decayed)){
             return 0;
         }
     }
     return 1;
 
 }
-int validForVisit(PathPoint* p, int x, int y, Floor* f){
+int validForVisit(PathPoint* p, int x, int y, Floor* f, int o){
     x = p->x + x;
     y = p->y + y;
-    return ((x < f->w) && (y < f->h) && (x >= 0) && (y >= 0) && (!f->pathFindMesh->data[y][x]) && (f->groundMesh->data[y][x] == '.'));
+    return ((x < f->w) && (y < f->h) && (x >= 0) && (y >= 0) && (!f->pathFindMesh->data[y][x]) && ((!o && (f->groundMesh->data[y][x] == '.')) || (o &&(validForMove(x, y, f)))));
 }
 
 int directions[2][4][2] = {{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}, {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}};
-PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f){
+PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f, int o){
     fillCharTexture(f->pathFindMesh, '\0');
     LinkedList* path = malloc(sizeof(LinkedList));
     createLinkedList(path, sizeof(PathPoint*));
@@ -77,7 +89,7 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f){
         //fillCharTexture(fb, '\0');
         dirSeed = randWithProb(0.5);
         FOR(i, 4){
-            if(validForVisit(curPoint, directions[dirSeed][i][0], directions[dirSeed][i][1], f)){
+            if(validForVisit(curPoint, directions[dirSeed][i][0], directions[dirSeed][i][1], f, o)){
                 tmpPoint = malloc(sizeof(PathPoint));
                 tmpPoint->x = curPoint->x + directions[dirSeed][i][0];
                 tmpPoint->y = curPoint->y + directions[dirSeed][i][1];
@@ -91,7 +103,8 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f){
         if((curPoint->x == x2) && (curPoint->y == y2)){
             found = 1;
             break;
-        }   
+        }
+        if(curPoint->depth > 20)return NULL;
         // erase();
         // renderTexture(f->pathFindMesh, 0, 0, &mainCamera, fb);
         // renderFrameBuffer(fb);
@@ -121,33 +134,103 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f){
         return out;
     }else return NULL;
 }
-int defaultMonsterUpdate(ItemBase* m){
-    if(0){
-        if(!castRay(m->x, m->y, player.x, player.y,floors + player.z, 10, NULL)){
-            m->decayed = m->decayTime;
-        }
-        if(m->decayed){
-            PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z);
-            if(tmpPoint){
-                if(tmpPoint[0].depth > 2){
-                    if((hypot(tmpPoint[2].x - m->x, tmpPoint[2].y - m->y) < 2) && validForMove(tmpPoint[2].x, tmpPoint[2].y, floors + player.z)){
-                        m->x = tmpPoint[2].x;
-                        m->y = tmpPoint[2].y;
-                    }else if (validForMove(tmpPoint[1].x, tmpPoint[1].y, floors + player.z)){
-                        m->x = tmpPoint[1].x;
-                        m->y = tmpPoint[1].y;
-                    }
-                    // m->x = tmpPoint[1].x;
-                    //     m->y = tmpPoint[1].y;
-                }else{
-                    addMessage(writeLog("Damagoiaos!!!"));
-                }
-                free(tmpPoint);
 
+
+void defaultMonsterAttack(ItemBase* m){
+    if(randWithProb(m->openingProb)){
+        if(randWithProb(0.5)){
+            addFormattedMessage("%S layed a %ohit%O on you", m->name, 5, 1, 1);
+        }else{
+            addFormattedMessage("%S inflicts %odamage%O", m->name, 5, 1, 1);
+        }
+
+        player.health -= m->damage;
+
+        
+        if(player.health <= 0){
+            if(randWithProb(0.5)){
+                endGame(0, writeLog("You were slain by a %s.", m->name));
+            }else{
+                endGame(0, writeLog("A %s has defeated you.", m->name));
             }
-            m->decayed--;
         }
+    }else{
+        if(randWithProb(0.5)){
+            addFormattedMessage("%S barely %omisses%O", m->name, 1, 5, 1);
+        }else{
+            addFormattedMessage("%S attacked but you %odoged%O", m->name, 1, 5, 1);
+        }
+    }
+}
+int defaultMonsterUpdate(ItemBase* m){
+    if(deltaTime){
+        switch(m->goodness){
+            case 0:
+                if(canSeePlayer(m)){
+                    if(hypot(player.x - m->x, player.y - m->y) < 1.5){
+                        m->primaryUse(m);
+                    }else{
+                        addFormattedMessage("%o%S saw you%O", 5, 1, 1, m->name);
+                        m->tarx = player.x;
+                        m->tary = player.y;
+                        m->goodness = 1;
+                        m->decayed = m->decayTime;
+                    }
+                }
+                break;
+            case 1:
+                if(player.z == m->z){
+                    PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 1);
+                    if(!tmpPoint) tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 0);
+                    if(tmpPoint){
+                        if(hypot(player.x - m->x, player.y - m->y) > 1.5){
+                            // if(tmpPoint[0].depth > 2 && (hypot(tmpPoint[2].x - m->x, tmpPoint[2].y - m->y) < 2) && validForMove(tmpPoint[2].x, tmpPoint[2].y, floors + player.z)){
+                            //     m->x = tmpPoint[2].x;
+                            //     m->y = tmpPoint[2].y;
+                            if (validForMove(tmpPoint[1].x, tmpPoint[1].y, floors + player.z)){
+                                m->x = tmpPoint[1].x;
+                                m->y = tmpPoint[1].y;
+                                m->decayed--;
+                            }
+                            // m->x = tmpPoint[1].x;
+                            //     m->y = tmpPoint[1].y;
+                        }else{
+                            m->primaryUse(m);
+                        }
+                        free(tmpPoint);
+                    }
+                    
+                    if(!m->decayed){
+                        m->cursed = m->decayTime / 2;
+                        if(randWithProb(0.5)){
+                            m->goodness = 2;
+                            addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
+                        }else{
+                            m->goodness = 3;
+                            addFormattedMessage("%S lost %ointrest%O in you", m->name, 1, 5, 1 );
+                        }
+                        
+                    }
+                }else{
+                    m->goodness = 0;
+                }
+                break;
+            case 2:
+                m->cursed--;
+                if(!m->cursed) m->goodness = 0;
+                break;
+            case 3:
+                PathPoint* tmpPoint = pathFind(m->x, m->y, m->tarx, m->tary, floors + m->z, 1);
+                if(tmpPoint && (tmpPoint[0].depth > 1)){
+                    m->x = tmpPoint[1].x;
+                    m->y = tmpPoint[1].y;
+                    free(tmpPoint);
+                }else{
+                    m->goodness = 0;
+                }
 
+                break;
+        }
     }
 
     

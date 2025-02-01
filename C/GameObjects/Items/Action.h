@@ -35,15 +35,18 @@ int trapPoisonDamage(ItemBase* o);
 int trapFallToNextFloor(ItemBase* o);
 int trapTeleport(ItemBase* o);
 
-int effectSpeedIncrease(Effect*);
-int effectHealthRegen(Effect*);
-int effectStrengthen(Effect*);
-int effectHeal(Effect*);
-int effectFill(Effect*);
-int effectSicken(Effect*);
-int effectMaxHealthIncrease(Effect*);
-int effectPoison(Effect*);
-int effectLevitation(Effect*);
+int effectSpeedIncrease(Effect* e);
+int effectHealthRegen(Effect* e);
+int effectStrengthen(Effect* e);
+int effectHeal(Effect* e);
+int effectFill(Effect* e);
+int effectSicken(Effect* e);
+int effectMaxHealthIncrease(Effect* e);
+int effectPoison(Effect* e);
+int effectLevitation(Effect* e);
+int effectBurning(Effect* e);
+int effectGreatLuck(Effect* e);
+int effectInvisibility(Effect* e);
 
 void deleteEffect(Effect* effect);
 cJSON* effectToJson(Effect* e);

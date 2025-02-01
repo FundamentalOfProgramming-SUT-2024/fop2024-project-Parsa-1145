@@ -35,11 +35,16 @@ typedef struct{
     int hungerTime;
     int hungerCounter;
 
+    float baseLuck;
+    float luckModifier;
+    float luck;
+
 
     int totalGold;
     int totalMoves;
 
     int levitating;
+    int invisible;
 
     LinkedList items;
     LinkedList effects;
@@ -52,4 +57,6 @@ int getPlayerHealthRegen(Player* player);
 void updatePlayerStats(Player* player);
 void checkEquiped();
 void addPlayerEffect(Effect* e);
+void resetPlayerStats(Player* player);
+void renderPlayer(CharTexture* frameBuffer, Camera* cam);
 #endif

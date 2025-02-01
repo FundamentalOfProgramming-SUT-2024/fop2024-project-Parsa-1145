@@ -9,6 +9,7 @@
 #include "Action.h"
 #include "Useable.h"
 #include "Intractable.h"
+#include "Monster.h"
 #include "../Floor.h"
 
 int globalItemIdCounter = 1;
@@ -57,6 +58,10 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->color[1] = object->valueint;
         }else if(!strcmp(object->string, "cb")){
             o->color[2] = object->valueint;
+        }else if(!strcmp(object->string, "visionRadius")){
+            o->visionRadius = object->valueint;
+        }else if(!strcmp(object->string, "health")){
+            o->health = object->valueint;
         }else if(!strcmp(object->string, "lockBroken")){
             o->lockBroken = object->valueint;
         }else if(!strcmp(object->string, "locked")){
@@ -95,7 +100,10 @@ ItemBase* loadItemFromJson(cJSON* data){
     }
 
     if(o->type){
-        if(!strcmp(o->type, "consumable")){
+        if(!strcmp(o->type, "monster")){
+            initMonster(o);
+        }
+        else if(!strcmp(o->type, "consumable")){
             initConsumable(o);
         }else if(!strcmp(o->type, "weapon")){
             initWeapon(o);
@@ -148,6 +156,17 @@ cJSON* itemToJson(ItemBase* o){
     cJSON_AddNumberToObject(json, "quantity", o->quantity);
     cJSON_AddNumberToObject(json, "locked", o->locked);
     cJSON_AddNumberToObject(json, "hidden", o->hidden);
+    cJSON_AddNumberToObject(json, "visionRadius", o->visionRadius);
+    cJSON_AddNumberToObject(json, "health", o->health);
+    cJSON_AddNumberToObject(json, "value", o->value);
+    cJSON_AddNumberToObject(json, "collider", o->collider);
+    cJSON_AddNumberToObject(json, "id", o->id);
+    cJSON_AddNumberToObject(json, "relId", o->relId);
+    cJSON_AddNumberToObject(json, "inInventory", o->inInventory);
+    cJSON_AddNumberToObject(json, "decayed", o->decayed);
+    cJSON_AddNumberToObject(json, "x", o->x);
+    cJSON_AddNumberToObject(json, "y", o->y);
+    cJSON_AddNumberToObject(json, "z", o->z);
     if(o->effects.size){
         cJSON* tmp = cJSON_CreateArray();
         
@@ -163,15 +182,6 @@ cJSON* itemToJson(ItemBase* o){
         }
         cJSON_AddItemToObject(json, "effects", tmp);
     }
-    cJSON_AddNumberToObject(json, "value", o->value);
-    cJSON_AddNumberToObject(json, "collider", o->collider);
-    cJSON_AddNumberToObject(json, "id", o->id);
-    cJSON_AddNumberToObject(json, "relId", o->relId);
-    cJSON_AddNumberToObject(json, "inInventory", o->inInventory);
-    cJSON_AddNumberToObject(json, "decayed", o->decayed);
-    cJSON_AddNumberToObject(json, "x", o->x);
-    cJSON_AddNumberToObject(json, "y", o->y);
-    cJSON_AddNumberToObject(json, "z", o->z);
 
     return json;
 }

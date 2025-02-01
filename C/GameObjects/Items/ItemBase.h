@@ -32,6 +32,7 @@ typedef struct ItemBase{
     void (*keyPress)(struct ItemBase*);
 
     int x, y, z;
+    int tarx, tary;
     wchar_t sprite;
     int id, relId;
     char primaryKey, secondaryKey;
@@ -45,7 +46,7 @@ typedef struct ItemBase{
 
     int damage, range;
 
-    int health;
+    int health, visionRadius;
 
     LinkedList effects;
     int goodness, decayTime, cursed, decayed;

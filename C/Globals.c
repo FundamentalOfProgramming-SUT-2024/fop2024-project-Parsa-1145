@@ -18,6 +18,8 @@ int colorPairNum = 5;
 cJSON* itemsJson = NULL;
 Account account;
 short rgb[6][6][6];
+int bgRgb[256][256];
+
 
 
 

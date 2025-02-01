@@ -18,6 +18,10 @@ extern Camera mainCamera;
 extern Player player;
 extern Floor* floors;
 extern int floorNum;
+extern int gameEnded;
+extern CharTexture* frameBuffer;
+extern CharTexture* visitedMaskBuffer;
+
 
 extern int globalTime;
 extern int deltaTime;
@@ -37,6 +41,8 @@ void loadGame(const char* address);
 void updateInventoryTab();
 void updateEffectsTab();
 void updateWorld(int x, int y);
+void renderMainGameToFramebuffer();
+void renderMainGameToTerminal();
 
 int validForItemPosition(int x, int y, int z);
 int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y);
@@ -48,7 +54,7 @@ typedef struct RayCollision{
 int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details);
 extern TextWidget* addMessage(char* message);
 
-void endGame(int won, const char * const message);
+void endGame(int won, char * message);
 #define addFormattedMessage(f, ...) changeTextWidget(addMessage(writeLog(" ")), f, __VA_ARGS__)
 
 #endif

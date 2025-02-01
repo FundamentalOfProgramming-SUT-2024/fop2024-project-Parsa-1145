@@ -8,19 +8,21 @@
 
 #include "Renderer.h"
 
-void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, CharTexture* frameBuffer){
+void renderLine(wchar_t c, int color, float length, double x1, double y1, double x2, double y2, Camera* cam, CharTexture* frameBuffer){
     if(cam == NULL) cam = &mainCamera;
+    static char drawTypes[2][2] = {{0, 1}, {2, 3}};
+    char drawType = drawTypes[c != 0][color != -1];
 
-    x1 = x1 - cam->x;
-    x2 = x2 - cam->x;
-    y1 = y1 - cam->y;
-    y2 = y2 - cam->y;
+    x1 = x1 - cam->x + 0.5;
+    x2 = x2 - cam->x + 0.5;
+    y1 = y1 - cam->y + 0.5;
+    y2 = y2 - cam->y + 0.5;
 
     if(abs(x1 - x2) < 1){
         if(!((x1 >= 0) && (x1 < cam->w))) return;
 
         if(y1 > y2){
-            float tmp = y1;
+            double tmp = y1;
             y1 = y2;
             y2 = tmp;
         }
@@ -29,13 +31,26 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
         y2 = min(cam->h - 1, y2);
 
         for(y1; y1 <= y2;y1++){
-            frameBuffer->data[(int)(y1)][(int)x1] = c;
+            switch (drawType){
+                case 1:
+                    frameBuffer->color[(int)(y1)][(int)x1] = color;
+                    break;
+                case 2:
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                    break;
+                case 3:
+                    frameBuffer->color[(int)(y1)][(int)x1] = color;
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                    break;
+                default:
+                    break;
+            }
         }
     }else if(abs(y1 - y2) < 1){
         if(!((y1 >= 0) && (y1 < + cam->h))) return;
 
         if(x1 > x2){
-            float tmp = x1;
+            double tmp = x1;
             x1 = x2;
             x2 = tmp;
         }
@@ -44,25 +59,34 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
         x2 = min(cam->w - 1, x2);
 
         for(x1; x1 <= x2; x1++){
-            frameBuffer->data[(int)(y1)][(int)x1] = c;
+            switch (drawType){
+                case 1:
+                    frameBuffer->color[(int)(y1)][(int)x1] = color;
+                    break;
+                case 2:
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                    break;
+                case 3:
+                    frameBuffer->color[(int)(y1)][(int)x1] = color;
+                    frameBuffer->data[(int)(y1)][(int)x1] = c;
+                    break;
+                default:
+                    break;
+            }
         }
     }else{
-        float m = (y2 - y1) / (x2 - x1);
-        float b = (y1 - x1 * m);
+        double m = (y2 - y1) / (x2 - x1);
+        double b = (y1 - x1 * m);
 
         x1 = max(x1, 0);
         x1 = min(x1, cam->w - 1);
         x2 = max(x2, 0);
         x2 = min(x2, cam->w-1);
 
-
-
         y1 = x1 * m + b;
         y2 = x2 * m + b;
 
         //mvprintw(2, 0, "%f %f %f %f %f %f", x1, y1, x2, y2, m, b);
-
-
 
         if((((y1 >= 0) && (y1 < cam->h))) || (((y2 >= 0) && (y2 <cam->h)))){
             y1 = max(y1, 0);
@@ -73,37 +97,59 @@ void renderLine(wchar_t c, float x1, float y1, float x2, float y2, Camera* cam, 
             x1 = (y1 - b) / m;
             x2 = (y2 - b) / m;
             
-            x1 = floor(x1) + 0.5;
-            x2 = floor(x2) + 0.5;
-            y1 = floor(y1) + 0.5;
-            y2 = floor(y2) + 0.5;
             if(abs(m) < 1){
                 if(x1 > x2){
-                    float tmp = x1;
+                    double tmp = x1;
                     x1 = x2;
                     x2 = tmp;
                     tmp = y1;
                     y1 = y2;
                     y2 = tmp;
                 } 
-                x1 = round(x1);
+                //x1 = round(x1);
                 for(x1; x1 <= x2 + 0.5; x1++){
-                    frameBuffer->data[(int)(y1)][(int)(x1)] = c;
+                    switch (drawType){
+                        case 1:
+                            frameBuffer->color[(int)(y1)][(int)x1] = color;
+                            break;
+                        case 2:
+                            frameBuffer->data[(int)(y1)][(int)x1] = c;
+                            break;
+                        case 3:
+                            frameBuffer->color[(int)(y1)][(int)x1] = color;
+                            frameBuffer->data[(int)(y1)][(int)x1] = c;
+                            break;
+                        default:
+                            break;
+                    }
                     y1+=m;
                 }
             }else{
                 if(y1 > y2){
-                    float tmp = x1;
+                    double tmp = x1;
                     x1 = x2;
                     x2 = tmp;
                     tmp = y1;
                     y1 = y2;
                     y2 = tmp;
                 }
-                y1 = round(y1);
+                //y1 = round(y1);
                 m = 1/m;
                 for(y1; y1 <= y2 + 0.5; y1++){
-                    frameBuffer->data[(int)(y1)][(int)(x1)] = c;
+                    switch (drawType){
+                        case 1:
+                            frameBuffer->color[(int)(y1)][(int)x1] = color;
+                            break;
+                        case 2:
+                            frameBuffer->data[(int)(y1)][(int)x1] = c;
+                            break;
+                        case 3:
+                            frameBuffer->color[(int)(y1)][(int)x1] = color;
+                            frameBuffer->data[(int)(y1)][(int)x1] = c;
+                            break;
+                        default:
+                            break;
+                    }
                     x1+=m;
                 }
             }

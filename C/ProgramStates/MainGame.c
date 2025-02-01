@@ -51,6 +51,7 @@ CharTexture* visitedMaskBuffer;
 
 Floor* floors;
 int floorNum;
+int gameEnded;
 LinkedList PathCells;
 
 int globalTime = 0;
@@ -489,7 +490,7 @@ void debugRenderMesh(Floor* f){
         drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
         for(int k = j+1; k < f->roomNum; k++){
             if(f->adjMat[k][j]){
-                renderLine('#', f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
+                renderLine('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
             }
         }
     }
@@ -683,12 +684,13 @@ void initMainGame(){
     gameSettings.roomThemeProb[3] = 0.05;
     gameSettings.roomThemeNum = 4;
     
-    gameSettings.baseMaxHealth = 100;
+    gameSettings.baseMaxHealth = 1000;
     gameSettings.baseHealthRegenTime = 5;
     gameSettings.baseHungerTime = 10;
     gameSettings.baseSpeed = 1;
     gameSettings.baseStrength = 1;
     gameSettings.maxFullness = 20;
+    gameSettings.baseLuck = 1;
     gameSettings.debugMode = 1;
     gameSettings.debugShowPointCloud = 1;
     gameSettings.noClip = 1;
@@ -734,23 +736,35 @@ void resetGame(){
     emptyWidget(&mgItemWidget);
     emptyWidget(&mgMessagesArea);
     checkEquiped();
+
     player.z = 0;
     player.totalGold = 0;
     player.visionRadius = 5;
+    
     player.baseMaxHealth = gameSettings.baseMaxHealth;
-    player.healthRegenTime = gameSettings.baseHealthRegenTime;
-    player.baseHealthRegenAmount = 1;
-    player.hungerTime = gameSettings.baseHungerTime;
-    player.baseSpeed = gameSettings.baseSpeed;
-    player.baseStrength = gameSettings.baseStrength;
-    player.health = 0;
-    player.fullness = gameSettings.maxFullness;
-    player.baseFullness = gameSettings.maxFullness;
-    player.speedModifier = 1;
-    player.healthRegenModifier = 1;
     player.healthModifier = 1;
+    player.baseHealthRegenAmount = 1;
+    player.healthRegenModifier = 1;
+    player.healthRegenTime = gameSettings.baseHealthRegenTime;
+    player.health = gameSettings.baseMaxHealth;
+
+    player.baseStrength = gameSettings.baseStrength;
     player.strengthModifier = 1;
+
+    player.baseSpeed = gameSettings.baseSpeed;
+    player.speedModifier = 1;
+
+    player.baseFullness = gameSettings.maxFullness;
+    player.fullness = gameSettings.maxFullness;
+    player.hungerTime = gameSettings.baseHungerTime;
+
+    player.baseLuck = gameSettings.baseLuck;
+    player.luck = player.baseLuck;
+    player.luckModifier = 1;
+
     player.levitating = 0;
+    player.invisible = 0;
+
     globalItemIdCounter = 1;
 
     if(account.username){
@@ -793,23 +807,32 @@ void enterMainGame(){
     timeout(100);
     nodelay(stdscr, FALSE);
 }
-void endGame(int won, const char * const message){
+void endGame(int won, char * message){
     mgDebugMenu.isVisible = 0;
     mgPauseMenu.isVisible = 0;
+    gameEnded = 1;
     if(won){
         changeTextWidget(&mgEndGameDialouge1, "%oYou found the Amulet Of Yendor%O", 5, 5, 0);
-        account.gamesFinished++;
+        if(account.username){
+            account.gamesFinished++;
+        }
     }else{
-        changeTextWidget(&mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
+        if(message){
+            changeTextWidget(&mgEndGameDialouge1, "%o%S%O", 5, 1, 0, message);
+            free(message);
+        }else{
+            changeTextWidget(&mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
+        }
     }
     changeTextWidget(&mgEndGameTotalScoreTextWidget, "Your total score: %o%d%O", 4, 4, 0, &(player.totalGold));
     changeTextWidget(&mgEndGameTotalMovesTextWidget, "Your total moves: %d", &globalTime);
     changeTextWidget(&mgEndGameTotalTimeTextWidget, "Total play time: %d", &globalTime);
+    if(account.username){
+        account.goldsCollected += player.totalGold;
+        if(player.totalGold >= account.goldRecord) account.goldRecord = player.totalGold;
+        saveAccount();
+    }
 
-    account.goldsCollected += player.totalGold;
-    if(player.totalGold >= account.goldRecord) account.goldRecord = player.totalGold;
-
-    saveAccount();
 
     mgEndGameMenu.isVisible = 1;
 }
@@ -842,6 +865,9 @@ int placeInRange(Floor* f, int x1, int y1, int x2, int y2, int* x, int* y){
 int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision* details){
     float xdir = x2 - x1, ydir = y2 - y1;
     float dist = hypot(xdir, ydir);
+    if(dist < 0.001){
+        return 0;
+    }
     xdir = xdir / dist;
     ydir = ydir / dist;
 
@@ -857,8 +883,8 @@ int castRay(int x1, int y1, int x2, int y2, Floor* f, float length, RayCollision
                 details->y = cury;
             }
             return 1;
-        }else if(length > 1){
-            if(traversed >= length){
+        }else if(length > 0){
+            if(traversed > length){
                 if(details){
                     details->x = curx;
                     details->y = cury;
@@ -1157,7 +1183,7 @@ void placeRoomPointCloud(Floor* f){
                     drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
                     for(int k = j+1; k < f->roomNum; k++){
                         if(f->adjMat[k][j]){
-                            renderLine('#', f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
+                            renderLine('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
                         }
                     }
                 }
@@ -1230,7 +1256,7 @@ void firstGroundmeshPass(Floor* f){
         for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
             for(int z = f->roomList[i]->y - 1; z <= f->roomList[i]->y + f->roomList[i]->h; z++){
                f->groundMesh->data[z][j] = '#';
-               f->groundMesh->color[z][j] = rgb[3][3][3];
+               f->groundMesh->color[z][j] = bgRgb[rgb[3][3][3]][rgb[3][3][3]];
                f->featureMesh->data[z][j] = i + 1;
             }
         }
@@ -1460,124 +1486,142 @@ void placePillars(Floor* f){
         }
     }
 }
-void placeMonsters(Floor* f){
-    FOR(i, f->roomNum){
-        Room* r = f->roomList[i];
-        ItemBase* m = malloc(sizeof(ItemBase));
+void placeMonsters(){
 
-        placeInRange(f, r->x, r->y, r->x + r->w, r->y + r->h, &(m->x), &(m->y));
-        m->sprite = 'M';
+    cJSON* monsterTable = openJsonFile("../Data/MonsterTable.json");
 
-        m->type = writeLog("monster");
-        m->name = writeLog("daemon");
+    int themeNum = cJSON_GetArraySize(monsterTable);
+    cJSON* roomMonsterTable[themeNum];
 
-        m->render = &defaultMonsterRender;
-        m->update = &defaultMonsterUpdate;
-        m->decayTime = 35;
-        m->decayed = 0;
-        m->collider = 1;
-
-
-        linkedListPushBack(f->itemList, m);
+    FOR(i, themeNum){
+        roomMonsterTable[i] = cJSON_GetArrayItem(monsterTable, i);
     }
+    FOR(j, floorNum){ 
+        Floor* f = floors + j;
+        FOR(i, f->roomNum){
+            Room* r = f->roomList[i];
+            int num = randBetween(cJSON_GetObjectItem(roomMonsterTable[r->theme], "min")->valueint, cJSON_GetObjectItem(roomMonsterTable[r->theme], "max")->valueint + 1, i + j);
+            num = min(num, (r->w-1) * (r->h-1) / 2);
+
+            cJSON* enteries = cJSON_GetObjectItem(roomMonsterTable[r->theme], "enteries");
+            FOR(z, num){
+                int index = chooseWithWeight(enteries);
+
+                cJSON* entery = cJSON_GetArrayItem(enteries, index);
+                char* name = cJSON_GetObjectItem(entery, "name")->valuestring;
+                ItemBase* gen;
+
+                cJSON* tmp = itemsJson->child;
+                int found = 0;
+                while(tmp){
+                    if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
+                        gen = loadItemFromJson(tmp);
+                        found = 1;
+                        break;
+                    }else{
+                        tmp = tmp->next;
+                    }
+                }
+                if(found){
+                    placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(gen->x), &(gen->y));
+                    gen->z = j;
+                    linkedListPushBack(f->itemList, gen);
+                }
+            }
+        }
+    }
+    cJSON_free(monsterTable);
 }
 void generateLoot(){
-    char* lootTableData;
-    char* itemDb;
-    if(fileToStr("../Data/LootTable.json", &lootTableData) && fileToStr("../Data/Items.json", &itemDb)){
-        cJSON* lootTableJson = cJSON_Parse(lootTableData);
+    cJSON* lootTableJson = openJsonFile("../Data/LootTable.json");
 
-        int themeNum = cJSON_GetArraySize(lootTableJson);
-        cJSON* roomLootTable[themeNum];
+    int themeNum = cJSON_GetArraySize(lootTableJson);
+    cJSON* roomLootTable[themeNum];
 
-        FOR(i, themeNum){
-            roomLootTable[i] = cJSON_GetArrayItem(lootTableJson, i);
-        }
-
-        FOR(j, floorNum){ 
-            Floor* f = floors + j;
-            Floor* nextF = floors + j + 1;
-            if(j!=floorNum-1){
-                int x1, y1, x2, y2;
-                do{
-                    x1 = randBetween(f->roomList[f->stairRooms[1]]->x + 1,f->roomList[f->stairRooms[1]]->x + f->roomList[f->stairRooms[1]]->w-1, 0);
-                    y1 = randBetween(f->roomList[f->stairRooms[1]]->y + 1,f->roomList[f->stairRooms[1]]->y + f->roomList[f->stairRooms[1]]->h - 1, 0);
-                    x2 = x1 - f->roomList[f->stairRooms[1]]->x + (f+1)->roomList[f->stairRooms[0]]->x;
-                    y2 = y1 - f->roomList[f->stairRooms[1]]->y + (f+1)->roomList[f->stairRooms[0]]->y;;
-                }
-                while((!validForItemPosition(x2, y2, j+1)) && (!validForItemPosition(x1, y1, j)));
-                ItemBase* s1 = calloc(1, sizeof(ItemBase));
-                ItemBase* s2 = calloc(1, sizeof(ItemBase));
-                initStair(s1);
-                initStair(s2);
-                s1->name = writeLog("Stair");
-                s2->name = writeLog("Stair");
-                s1->z = j;
-                s1->x = x1;
-                s1->y = y1;
-                s1->sprite = '#';
-                s1->color[0] = 5; s1->color[1] = 5;s1->color[2] = 5;
-                linkedListPushBack(f->itemList, s1);
-                s2->z = j+1;
-                s2->x = x2;
-                s2->y = y2;
-                s2->sprite = '#';
-                s2->color[0] = 5; s2->color[1] = 5;s2->color[2] = 5;
-                linkedListPushBack(nextF->itemList, s2);
-                s1->relId = s2->id;
-                s2->relId = s1->id;
-            }
-            FOR(i, f->roomNum){
-                Room* r = f->roomList[i];
-                int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "minRolls")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "maxRolls")->valueint + 1, i + j);
-                num = min(num, (r->w-1) * (r->h-1) / 2);
-
-                cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme], "enteries");
-                FOR(z, num){
-                    int index = chooseWithWeight(enteries);
-
-                    cJSON* entery = cJSON_GetArrayItem(enteries, index);
-                    char* name = cJSON_GetObjectItem(entery, "name")->valuestring;
-                    ItemBase* gen;
-
-                    cJSON* tmp = itemsJson->child;
-                    int found = 0;
-                    while(tmp){
-                        if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
-                            gen = loadItemFromJson(tmp);
-                            found = 1;
-                            break;
-                        }else{
-                            tmp = tmp->next;
-                        }
-                    }
-                    if(found){
-                        if(cJSON_GetObjectItem(entery, "min")){
-                            gen->quantity = randBetween(cJSON_GetObjectItem(entery, "min")->valueint, cJSON_GetObjectItem(entery, "max")->valueint + 1, 0);
-                        }else{
-                            gen->quantity = 1;
-                        }
-                        placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(gen->x), &(gen->y));
-                        gen->z = j;
-                        if(r->theme == 2) gen->fake = 1;
-                        linkedListPushBack(f->itemList, gen);
-
-                    }
-                }
-                if(r->theme == 3){
-                    ItemBase* amulet = LoadItemWithName("Amulet of yendor");
-                    amulet->quantity = 1;
-
-                    placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(amulet->x), &(amulet->y));
-                    amulet->z = j;
-                    linkedListPushBack(f->itemList, amulet);
-                }
-            }
-        }
-        cJSON_free(lootTableJson);
-        free(lootTableData);
-        free(itemDb);
+    FOR(i, themeNum){
+        roomLootTable[i] = cJSON_GetArrayItem(lootTableJson, i);
     }
+
+    FOR(j, floorNum){ 
+        Floor* f = floors + j;
+        Floor* nextF = floors + j + 1;
+        if(j!=floorNum-1){
+            int x1, y1, x2, y2;
+            do{
+                x1 = randBetween(f->roomList[f->stairRooms[1]]->x + 1,f->roomList[f->stairRooms[1]]->x + f->roomList[f->stairRooms[1]]->w-1, 0);
+                y1 = randBetween(f->roomList[f->stairRooms[1]]->y + 1,f->roomList[f->stairRooms[1]]->y + f->roomList[f->stairRooms[1]]->h - 1, 0);
+                x2 = x1 - f->roomList[f->stairRooms[1]]->x + (f+1)->roomList[f->stairRooms[0]]->x;
+                y2 = y1 - f->roomList[f->stairRooms[1]]->y + (f+1)->roomList[f->stairRooms[0]]->y;;
+            }
+            while((!validForItemPosition(x2, y2, j+1)) && (!validForItemPosition(x1, y1, j)));
+            ItemBase* s1 = calloc(1, sizeof(ItemBase));
+            ItemBase* s2 = calloc(1, sizeof(ItemBase));
+            initStair(s1);
+            initStair(s2);
+            s1->name = writeLog("Stair");
+            s2->name = writeLog("Stair");
+            s1->z = j;
+            s1->x = x1;
+            s1->y = y1;
+            s1->sprite = '#';
+            s1->color[0] = 5; s1->color[1] = 5;s1->color[2] = 5;
+            linkedListPushBack(f->itemList, s1);
+            s2->z = j+1;
+            s2->x = x2;
+            s2->y = y2;
+            s2->sprite = '#';
+            s2->color[0] = 5; s2->color[1] = 5;s2->color[2] = 5;
+            linkedListPushBack(nextF->itemList, s2);
+            s1->relId = s2->id;
+            s2->relId = s1->id;
+        }
+        FOR(i, f->roomNum){
+            Room* r = f->roomList[i];
+            int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme], "minRolls")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme], "maxRolls")->valueint + 1, i + j);
+            num = min(num, (r->w-1) * (r->h-1) / 2);
+
+            cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme], "enteries");
+            FOR(z, num){
+                int index = chooseWithWeight(enteries);
+
+                cJSON* entery = cJSON_GetArrayItem(enteries, index);
+                char* name = cJSON_GetObjectItem(entery, "name")->valuestring;
+                ItemBase* gen;
+
+                cJSON* tmp = itemsJson->child;
+                int found = 0;
+                while(tmp){
+                    if(!strcmp(cJSON_GetObjectItem(tmp, "name")->valuestring, name)){
+                        gen = loadItemFromJson(tmp);
+                        found = 1;
+                        break;
+                    }else{
+                        tmp = tmp->next;
+                    }
+                }
+                if(found){
+                    if(cJSON_GetObjectItem(entery, "min")){
+                        gen->quantity = randBetween(cJSON_GetObjectItem(entery, "min")->valueint, cJSON_GetObjectItem(entery, "max")->valueint + 1, 0);
+                    }else{
+                        gen->quantity = 1;
+                    }
+                    placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(gen->x), &(gen->y));
+                    gen->z = j;
+                    if(r->theme == 2) gen->fake = 1;
+                    linkedListPushBack(f->itemList, gen);
+                }
+            }
+            if(r->theme == 3){
+                ItemBase* amulet = LoadItemWithName("Amulet of yendor");
+                amulet->quantity = 1;
+
+                placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(amulet->x), &(amulet->y));
+                amulet->z = j;
+                linkedListPushBack(f->itemList, amulet);
+            }
+        }
+    }
+    cJSON_free(lootTableJson);
 }
 
 void generateFloor(Floor* f){
@@ -1730,10 +1774,10 @@ void generateMap(){
         generateFloor(floors + i);
         placePillars(floors + i);
         placeTraps(floors + i);
-        placeMonsters(floors + i);
         fillCharTexture(floors[i].visited, '\0');
     }
 
+    placeMonsters();
     generateLoot();
 }
 
@@ -1795,6 +1839,7 @@ void updateWorld(int x, int y){
     Interaction* tmpInteracion;
     TextWidget* tmpInteractionText;
     static int moves = 0;
+    int moveValid = 1;
 
     for(void** i = playerActionList.data; i ;){
         tmpInteracion = i[1];
@@ -1803,29 +1848,33 @@ void updateWorld(int x, int y){
     }
     emptyLinkedList(&playerActionList);
 
-    player.x += x;
-    player.y += y;
-    int moveValid = 1;
+    if((x || y) && (x!= 100)){
+        player.x += x;
+        player.y += y;
 
 
-    if((floors[player.z].groundMesh->data[player.y][player.x] != '.')){
-        moveValid = 0;
-    }
+        if((floors[player.z].groundMesh->data[player.y][player.x] != '.')){
+            moveValid = 0;
+        }
 
-    for(void** i = floors[player.z].itemList->data; i; ){
-        tmpItemBase = i[1];
-        i = i[0];
+        for(void** i = floors[player.z].itemList->data; i && !gameEnded; ){
+            tmpItemBase = i[1];
+            i = i[0];
 
-        if((player.x == tmpItemBase->x) && (player.y == tmpItemBase->y)){
-            if(tmpItemBase->playerCollision) tmpItemBase->playerCollision(tmpItemBase);
-            if(tmpItemBase->collider){
-                moveValid = 0;
+            if((player.x == tmpItemBase->x) && (player.y == tmpItemBase->y)){
+                if(tmpItemBase->playerCollision) tmpItemBase->playerCollision(tmpItemBase);
+                if(tmpItemBase->collider){
+                    moveValid = 0;
+                }
             }
         }
+        moveValid = moveValid || gameSettings.noClip;
     }
-    moveValid = moveValid || gameSettings.noClip;
+    if(gameEnded){
+        return;
+    }
 
-    if(moveValid && (y || x)){
+    if((moveValid && (y || x)) || (x == 100)){
         moves++;
     }else{
         player.x -= x;
@@ -1840,11 +1889,7 @@ void updateWorld(int x, int y){
         deltaTime = 0;
     }
 
-    player.speedModifier = 1;
-    player.healthRegenModifier = 1;
-    player.healthModifier = 1;
-    player.strengthModifier = 1;
-    player.levitating = 0;
+    resetPlayerStats(&player);
 
     //drawCircleOnCharTexture(floors[player.z].visited, player.x, player.y, player.visionRadius, 1);
 
@@ -1870,11 +1915,15 @@ void updateWorld(int x, int y){
     }
 
     updatePlayerStats(&player);
+
+    if(player.health <= 0){
+        endGame(0, "hoho");
+    }
     if(deltaTime){
         player.hungerCounter++;
         if(player.hungerCounter >= player.hungerTime){
             if(player.fullness != 0){
-                if(player.fullness == 1) addFormattedMessage("You are %otoo%O hungry, you'll %olose%O health", 5, 1, 0, 5, 0, 0);
+                if(player.fullness == 1) addFormattedMessage("Starving, you'll %olose%O health", 5, 1, 0, 5, 0, 0);
                 player.fullness--;
             }
             player.hungerCounter = 0;
@@ -1886,25 +1935,31 @@ void updateWorld(int x, int y){
                 player.health = min(player.maxHealth * player.healthModifier, player.health);
             }else if(player.fullness == 0){
                 player.health -= 2;
+                if(player.health <= 0){
+                    endGame(0, writeLog("Died of starvation"));
+                    return;
+                }
             }
             player.healthRegenCounter = 0;
         }        
     }
 
+    addInteraction("search for hidden doors and traps", &searchForHidden, 'f', NULL);
+
     tmpPtr = floors[player.z].itemList->data;
-    while(tmpPtr){
+    while(tmpPtr && !gameEnded){
         tmpItemBase = tmpPtr[1];
         tmpPtr = *tmpPtr;
         if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
     }
     tmpPtr = player.items.data;
-    while(tmpPtr){
+    while(tmpPtr && !gameEnded){
         tmpItemBase = tmpPtr[1];
         tmpPtr = *tmpPtr;
         if(tmpItemBase->update)tmpItemBase->update(tmpItemBase);
     }
+    if(gameEnded) return;
 
-    addInteraction("search for hidden doors and traps", &searchForHidden, 'f', NULL);
 
     updateInteractionsWidget();
     checkEquiped();
@@ -1931,11 +1986,13 @@ void playerKeyPress(int ch){
             if(player.heldObject && player.heldObject->primaryUse){
                 player.heldObject->primaryUse(player.heldObject);
             }
+            updateWorld(100, 0);
             break;
         case 'q':
             if(player.heldObject && player.heldObject->primaryUse){
                 player.heldObject->secondaryUse(player.heldObject);
             }
+            updateWorld(100, 0);
             break;
         case 'u':
             if(player.z != 0){
@@ -2015,10 +2072,7 @@ void updateMainGame(){
     }
 }
 
-void renderMainGame(){
-    erase();
-    updateUi();
-    fillCharTexture(frameBuffer, ' ');
+void renderMainGameToFramebuffer(){
     fillCharTexture(visitedMaskBuffer, 0);
 
     mainCamera.x = player.x-mainCamera.w/2;
@@ -2040,7 +2094,9 @@ void renderMainGame(){
         }
     }
     tmpPtr = floors[player.z].itemList->data;
+    int i = 0;
     while(tmpPtr){
+        i++;
         tmp = tmpPtr[1];
         tmpPtr = tmpPtr[0];
         if((tmp->type) && !strcmp(tmp->type, "monster")){
@@ -2051,6 +2107,11 @@ void renderMainGame(){
     renderTexture(floors[player.z].visited, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 
+}
+void renderMainGameToTerminal(){
+    erase();
+    updateUi();
+
     renderFrameBuffer(frameBuffer);
 
     mvprintw(scrH/2, scrW/2, "@");
@@ -2058,6 +2119,25 @@ void renderMainGame(){
     renderUi();
 
     refresh();
+
+    fillCharTexture(frameBuffer, ' ');
+}
+void renderMainGame(){
+    erase();
+    updateUi();
+    
+    renderMainGameToFramebuffer();
+    
+
+    renderFrameBuffer(frameBuffer);
+
+    mvprintw(scrH/2, scrW/2, "@");
+
+    renderUi();
+
+    refresh();
+
+    fillCharTexture(frameBuffer, ' ');
 }
 
 

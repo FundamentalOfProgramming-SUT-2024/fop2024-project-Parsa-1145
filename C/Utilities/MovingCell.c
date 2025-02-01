@@ -76,12 +76,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
 
     if((cell->attr[6])){
         if(( cell->attr[2] > 2) && (randWithProb(cell->attr[2]) * 0.1)){
-            if(cell->attr[3] == 2){
-                cell->attr[3] = randWithProb(0.5);  
-            }else{
-                //if(randWithProb(0.3))cell->attr[3] = 2;
-                cell->attr[3] = !(cell->attr[3]);
-            }
+            cell->attr[3] = !(cell->attr[3]);
             cell->attr[2] = 0;
         }else{
             cell->attr[2]++;
@@ -107,7 +102,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
 
     
 
-    if((cell->attr[3] == 1) || (cell->attr[3] == 2)){
+    if((cell->attr[3] == 1)){
         if((pow(xdir * dist, 2) < 1)){
             cell->attr[3] = 0;
         }else{
@@ -127,7 +122,7 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
     if(f->groundMesh->data[cell->y][cell->x] == '\0'){
         f->groundMesh->data[cell->y][cell->x] = '.';
     }
-    if((cell->attr[3] == 0) || (cell->attr[3] == 2)){
+    if((cell->attr[3] == 0)){
         if((pow(ydir * dist, 2) < 1)){
             cell->attr[3] = 1;
         }else{

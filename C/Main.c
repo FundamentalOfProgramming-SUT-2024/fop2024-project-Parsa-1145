@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE_EXTENDED 1
 #include <stdio.h>
 #include <ncurses.h>
 #include <locale.h>
@@ -14,7 +15,6 @@
 #include "UiElements/PopUp.h"
 #include "GlobalDefines.h"
 #include "Globals.h"
-
 
 
 int main(){
@@ -38,6 +38,23 @@ int main(){
                 init_pair(k, k, 0);
                 rgb[i][j][t] = k;
                 k++;
+            }
+        }
+    }
+    FOR(i, 6){
+        FOR(j, 6){
+            FOR(t, 6){
+                FOR(x, 6){
+                    FOR(y, 6){
+                        FOR(l, 6){
+                            if((x || y) || l){
+                                init_pair(k, rgb[i][j][t], rgb[x][y][l]);
+                                bgRgb[rgb[i][j][t]][rgb[x][y][l]] = k;
+                                k++;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

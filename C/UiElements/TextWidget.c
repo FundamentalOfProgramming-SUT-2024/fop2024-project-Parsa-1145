@@ -72,6 +72,11 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
                         t->args[k].sw = va_arg(args, wchar_t);
                         k++;
                         break;
+                    case 'S':
+                        t->args[k].s = va_arg(args, char*);
+                        t->args[k].s = copyString(t->args[k].s);
+                        k++;
+                        break;
                     case 'f':
                         t->args[k].f = va_arg(args, float*);
                         k++;
@@ -160,6 +165,11 @@ void changeTextWidget(TextWidget* t, char* format, ...){
                         t->args[k].s = va_arg(args, char*);
                         k++;
                         break;
+                    case 'S':
+                        t->args[k].s = va_arg(args, char*);
+                        t->args[k].s = copyString(t->args[k].s);
+                        k++;
+                        break;
                     case 'd':
                         t->args[k].d = va_arg(args, int*);
                         k++;
@@ -217,6 +227,7 @@ void renderTextWidget(TextWidget* t){
                 break;
             case '%':
                 switch (t->format[i+1]){
+                    case 'S':
                     case 's':
                         printw("%s", t->args[argIter].s);
                         argIter++;
@@ -270,6 +281,35 @@ void updateTextWidget(TextWidget* t){
     updateWidgetTopLeft(t->widget);
 }
 void deleteTextWidget(TextWidget* t){
+    int k = 0;
+    FOR(i, t->strLength){
+        switch (t->format[i]){
+            case '\\':
+                if(t->format[i+1] == '%'){
+                    i++;
+                }
+                break;
+            case '%':
+                i++;
+                switch (t->format[i]){
+                    case 'S':
+                        free(t->args[k].s);
+                        k++;
+                        break;
+                    case 'o':
+                        k += 3;
+                        break;
+                    case 'O':
+                        break;
+                    default:
+                        k++;
+                }
+                
+                break;
+            default:
+                break;
+        }
+    }
     free(t->uiBase);
     free(t->widget);
     free(t->format);

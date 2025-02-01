@@ -17,6 +17,8 @@ extern int terminate;
 extern Account account;
 extern cJSON* itemsJson;
 extern short rgb[6][6][6];
+extern int bgRgb[256][256];
+
 
 extern char* playerDbAddress;
 

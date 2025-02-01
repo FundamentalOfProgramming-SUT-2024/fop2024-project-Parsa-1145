@@ -2,6 +2,7 @@
     {
         "name" : "Mace",
         "type" : "weapon",
+        "openProb" : 0.5,
         "subType" : "melee",
         "damage" : 4,
         "sprite" : 5875,
@@ -12,6 +13,7 @@
         "cb" : 4
     },{
         "name" : "Sword",
+        "openProb" : 0.6,
         "type" : "weapon",
         "subType" : "melee",
         "damage" : 2,
@@ -25,6 +27,7 @@
         "name" : "Dagger",
         "type" : "weapon",
         "subType" : "melee",
+        "openProb" : 0.4,
         "damage" : 1,
         "range" : 4,
         "sprite" : 11312,
@@ -57,6 +60,46 @@
         "cr" : 0,
         "cg" : 2,
         "cb" : 4
+    },{
+        "name" : "Frost spell",
+        "type" : "ammo",
+        "subType" : "apell",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 10230,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
+    },{
+        "name" : "Fire spell",
+        "type" : "ammo",
+        "subType" : "apell",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 10230,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
+    },{
+        "name" : "Poison spell",
+        "type" : "ammo",
+        "subType" : "apell",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 10230,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
+    },{
+        "name" : "Blindness spell",
+        "type" : "ammo",
+        "subType" : "apell",
+        "damage" : 2,
+        "range" : 8,
+        "sprite" : 10230,
+        "cr" : 3,
+        "cg" : 3,
+        "cb" : 3
     },{
         "name" : "Wooden arrow",
         "type" : "ammo",
@@ -209,6 +252,37 @@
         "cg" : 4,
         "cb" : 5
     },{
+        "name" : "Invisibility",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 11223,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "Invisibility",
+                "duration" : 20
+            }
+        ],
+        "cr" : 5,
+        "cg" : 5,
+        "cb" : 5
+    },{
+        "name" : "Luck Potion",
+        "type" : "consumable",
+        "subType" : "potion",
+        "sprite" : 11223,
+        "primaryUse" : "consume",
+        "effects": [
+            {
+                "type" : "Great Luck",
+                "duration" : 20,
+                "amount" : 3
+            }
+        ],
+        "cr" : 1,
+        "cg" : 5,
+        "cb" : 1
+    },{
         "name" : "Amulet of yendor",
         "type" : "endgame",
         "sprite" : 11097,
@@ -294,20 +368,71 @@
         "cg" : 0,
         "cb" : 0
     },{
-        "name" : "Door",
-        "type" : "intractable",
-        "sprite" : 98
+        "name" : "Daemon",
+        "type" : "monster",
+        "sprite" : 68,
+        "health" : 5,
+        "visionRadius" : 8,
+        "decayTime" : 10,
+        "damage" : 5,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" :  0.5
     },{
-        "name" : "Trap",
-        "type" : "intractable",
-        "sprite" : 98
+        "name" : "Fire breather",
+        "type" : "monster",
+        "sprite" : 70,
+        "health" : 10,
+        "visionRadius" : 5,
+        "decayTime" : 10,
+        "damage" : 10,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" : 0.4,
+        "effects" : [
+            {
+                "type" : "Burning",
+                "duration" : 10,
+                "amount" : 2
+            }
+        ]
     },{
-        "name" : "Password Generator",
-        "type" : "intractable",
-        "sprite" : 98
+        "name" : "Giant",
+        "type" : "monster",
+        "sprite" : 71,
+        "health" : 15,
+        "visionRadius" : 10,
+        "decayTime" : 10,
+        "damage" : 30,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" :  0.3
     },{
-        "name" : "Stair",
-        "type" : "intractable",
-        "sprite" : 98
+        "name" : "Snake",
+        "type" : "monster",
+        "sprite" : 83,
+        "health" : 20,
+        "visionRadius" : 8,
+        "decayTime" : -1,
+        "damage" : 5,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" :  0.8
+    },{
+        "name" : "Undead",
+        "type" : "monster",
+        "sprite" : 85,
+        "health" : 30,
+        "visionRadius" : 1,
+        "decayTime" : 5,
+        "damage" : 20,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" :  0.6
     }
 ]

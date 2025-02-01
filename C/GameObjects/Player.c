@@ -35,11 +35,21 @@ void checkEquiped(){
         }
     }
 }
+void resetPlayerStats(Player* p){
+    p->healthModifier = 1;
+    p->healthRegenModifier = 1;
+    p->speedModifier = 1;
+    p->luckModifier = 1;
+    p->strengthModifier = 1;
+    p->invisible = 0;
+    p->levitating = 0;
+}
 void updatePlayerStats(Player* player){
     player->healthRegenAmount = player->baseHealthRegenAmount * player->healthRegenModifier;
     player->speed = player->baseSpeed * player->speedModifier;
     player->strenght = player->baseStrength * player->strengthModifier;
     player->maxHealth = player->baseMaxHealth;
+    player->luck = player->baseLuck * player->luckModifier;
 }
 void addPlayerEffect(Effect* e){
     void** tmp = player.effects.data;

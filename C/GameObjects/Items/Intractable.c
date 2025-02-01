@@ -71,7 +71,6 @@ void stairUpdate(ItemBase* o){
     }
 }
 
-
 void passwordGeneratorPlayerCollision(ItemBase* o){
     
 }

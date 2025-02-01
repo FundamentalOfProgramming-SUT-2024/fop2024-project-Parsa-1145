@@ -2,6 +2,8 @@
 
 #include "Action.h"
 #include "../../ProgramStates/MainGame.h"
+#include "../Renderer.h"
+
 
 void(*getAction(char* name))(ItemBase*){
     if(!strcmp(name, "consume")) return &consume;
@@ -27,6 +29,9 @@ void(*getEffectFunc(char* name))(Effect*){
     else if (!strcmp(name, "Maxhealth increase")) return &effectMaxHealthIncrease;
     else if (!strcmp(name, "Poison")) return &effectPoison;
     else if (!strcmp(name, "Levitation")) return &effectLevitation;
+    else if (!strcmp(name, "Burning")) return &effectBurning;
+    else if (!strcmp(name, "Great Luck")) return &effectGreatLuck;
+    else if (!strcmp(name, "Invisibility")) return &effectInvisibility;
 
     else return NULL;
 }
@@ -71,13 +76,61 @@ int swingAttack(ItemBase* o){
         if((ptr->type) && !strcmp(ptr->type, "monster")){
             if(hypot(player.x - ptr->x, player.y - ptr->y) < 1.5){
                 ptr->health -= player.heldObject->damage;
-                addFormattedMessage("You dealth %o%D%O damage to %s", 1, 4, 1, player.heldObject->damage, ptr->name);
+
+                if(randWithProb(player.heldObject->openingProb * player.luck)){
+                    if(randWithProb(0.5)){
+                        addFormattedMessage("You dealt %o%D%O damage to %S", 1, 4, 1, player.heldObject->damage, ptr->name);
+                    }else{
+                        addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
+                    }
+                    if(ptr->health <= 0){
+                        addFormattedMessage("The %S %odied%O", ptr->name, 1, 4, 1);
+                        defaultItemDelete(ptr);
+                        removeItemFromLinkedList(floors[player.z].itemList, ptr);
+                    }
+                }else{
+                    if(randWithProb(0.5)){
+                        addFormattedMessage("You %omissed%O the %S", 4, 1, 1, ptr->name);
+                    }else{
+                        addFormattedMessage("%s %odoged%O your attack", ptr->name, 4, 1, 1);
+                    }
+                }
             }
         }
     }
 }
 int stab(ItemBase* o){
-    addMessage(writeLog("stab the shit out of it"));
+    void** tmp = floors[player.z].itemList->data;
+    ItemBase* ptr;
+    while(tmp){
+        ptr = tmp[1];
+        tmp = tmp[0];
+
+        if((ptr->type) && !strcmp(ptr->type, "monster")){
+            if(hypot(player.x - ptr->x, player.y - ptr->y) < 1.5){
+                ptr->health -= player.heldObject->damage;
+
+                if(randWithProb(player.heldObject->openingProb * player.luck)){
+                    if(randWithProb(0.5)){
+                        addFormattedMessage("You dealt %o%D%O damage to %S", 1, 4, 1, player.heldObject->damage, ptr->name);
+                    }else{
+                        addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
+                    }
+                    if(ptr->health <= 0){
+                        addFormattedMessage("The %S %odied%O", 1, 4, 1, ptr->name);
+                        defaultItemDelete(ptr);
+                        removeItemFromLinkedList(floors[player.z].itemList, ptr);
+                    }
+                }else{
+                    if(randWithProb(0.5)){
+                        addFormattedMessage("You %omissed%O the %S", 4, 1, 1, ptr->name);
+                    }else{
+                        addFormattedMessage("%s %odoged%O your attack", ptr->name, 4, 1, 1);
+                    }
+                }
+            }
+        }
+    }
 }
 int castSpell(ItemBase* o){
     addMessage(writeLog("HOHO cast spell"));
@@ -86,7 +139,46 @@ int kick(ItemBase* o){
     addMessage(writeLog("HOHO kick"));
 }
 int throwAttack(ItemBase* o){
-    addMessage(writeLog("HOHO thwrow that bitch"));
+    int ch;
+    int exit = 0;
+    while(!exit){
+        ch = getch();
+        switch(ch){
+            case KEY_RESIZE:
+                getmaxyx(stdscr, scrH, scrW);
+                clear();
+                refresh();
+
+                mainCamera.h = scrH;
+                mainCamera.w = scrW;
+
+                resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+                resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
+                break;
+            case KEY_MOUSE:
+                if(getmouse(&mEvent) == OK){
+                    switch(mEvent.bstate){
+                    case KEY_MOUSE_MOVE:
+                        break;
+                    default:
+                        if(mEvent.bstate & BUTTON3_PRESSED){
+                            exit = 1;
+                        }
+                        break;
+                    }
+                }
+                break;
+            default:
+                if(!uiKeyPress(ch)){
+                    playerKeyPress(ch);
+                }
+                break;
+                
+        }
+        renderMainGameToFramebuffer();
+        renderLine(0, bgRgb[rgb[1][1][1]][rgb[5][5][5]], -1, player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, &mainCamera, frameBuffer);
+        renderMainGameToTerminal();
+    }
 }
 int shootArrow(ItemBase* o){
     addMessage(writeLog("HOHO Shoot arrow"));
@@ -110,13 +202,17 @@ int trapFallToNextFloor(ItemBase* o){
     placeInRange(floors + player.z, 0, 0, floors[player.z].w, floors[player.z].h, &(player.x), &(player.y));
     addFormattedMessage("%oYou fell down from a hole%O", 5, 4, 3);
     player.health -= 20;
-    player.health = max(10, player.health);
+    if(player.health <= 0){
+        endGame(0, writeLog("You fell down, seems it was fatal."));
+    }
 }
 int trapTeleport(ItemBase* o){
     placeInRange(floors + player.z, 0, 0, floors[player.z].w, floors[player.z].h, &(player.x), &(player.y));
     addFormattedMessage("%oYou where teleported by a trap%O", 1, 3, 5);
-    player.health -= 10;
-    player.health = max(10, player.health);
+    player.health -= 15;
+    if(player.health <= 0){
+        endGame(0, writeLog("You couldnt bare the teleportation."));
+    }
 }
 int unlockDoor(ItemBase* o){
     ItemBase* itemPtr;
@@ -170,9 +266,26 @@ int effectSicken(Effect*){
 int effectMaxHealthIncrease(Effect* e){
     player.baseMaxHealth += e->amount;
 }
+int effectGreatLuck(Effect* e){
+    player.luckModifier *= e->amount;
+}
+int effectInvisibility(Effect* e){
+    player.invisible = 1;
+}
 int effectPoison(Effect* e){
     if(deltaTime){
         player.health -= e->amount;
+        if(player.health <= 0){
+            endGame(0, writeLog("A fatal poison killed you."));
+        }
+    }
+}
+int effectBurning(Effect* e){
+    if(deltaTime){
+        player.health -= e->amount;
+        if(player.health <= 0){
+            endGame(0, writeLog("You burned to death."));
+        }
     }
 }
 int effectLevitation(Effect*){

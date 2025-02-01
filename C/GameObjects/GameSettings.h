@@ -20,6 +20,7 @@ typedef struct{
     int baseHungerTime;
     int baseStrength;
     int baseSpeed;
+    int baseLuck;
     int maxFullness;
 
     int debugMode;

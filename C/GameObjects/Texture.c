@@ -15,15 +15,15 @@ CharTexture* createCharTexture(int w, int h){
     FOR(i, h){
         out->data[i] = calloc(w , sizeof(wchar_t));
     }
-    out->color = malloc(sizeof(unsigned char*) * h);
+    out->color = malloc(sizeof(int*) * h);
     FOR(i, h){
-        out->color[i] = calloc(w, sizeof(unsigned char*));
+        out->color[i] = calloc(w, sizeof(int));
     }
 
     return out;
     
 }
-void fillColorTexture(CharTexture* tex, unsigned char c){
+void fillColorTexture(CharTexture* tex, int c){
     FOR(i, tex->h){
         FOR(j, tex->w){
             tex->color[i][j] = c;
