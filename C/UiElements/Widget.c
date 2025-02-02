@@ -21,6 +21,9 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->alignment[0] = alignmentX;
     widget->alignment[1] = alignmentY;
 
+    widget->overflow[0] = 0;
+    widget->overflow[1] = 0;
+
     widget->parent = parent;
     updateWidgetSize(widget);
 
@@ -138,19 +141,32 @@ int updateWidgetSize(Widget* widget){
 
         switch(widget->sizeType[0]){
             case ABSOLUTE:
-                widget->wCopy = min(w, widget->w);
-                if(widget->x + widget->wCopy > w) widget->wCopy = w - widget->x;
+                if(widget->overflow[0]){
+                    widget->wCopy = widget->w;
+
+                }else{
+                    widget->wCopy = min(w, widget->w);
+                    if(widget->x + widget->wCopy > w) widget->wCopy = w - widget->x;
+                }
                 break;
             case RELATIVE:
                 widget->wCopy = ((w * widget->w ) / 100);
                 if(widget->alignment[0] == ALIGN_CENTER){
                     widget->wCopy -= 2 * widget->x;
                     widget->wCopy += (widget->wCopy^w)&1;
+                }else if(widget->alignment[0] != ABSOLUTE){
+                    if(widget->wCopy + widget->x > w){
+                        widget->wCopy = w - widget->x;
+                    }
                 }
                 break;
         }switch(widget->sizeType[1]){
             case ABSOLUTE:
-                widget->hCopy = min(h, widget->h);
+                if(widget->overflow[1]){
+                    widget->hCopy = widget->h;
+                }else{
+                    widget->hCopy = min(h, widget->h);
+                }
                 break;
             case RELATIVE:
                 widget->hCopy = round((h * widget->h) / 100);
@@ -338,6 +354,16 @@ int WKeyPressCb(Widget* w, int key){
 }
 void renderWidget(Widget* w){
     if(isWidgetVisible(w)){
+        if(w->colorPair){
+            attron(COLOR_PAIR(w->colorPair));
+            for(int i = w->topLeftY; i < w->topLeftY + w->hCopy ; i++){
+                move(i, w->topLeftX);
+                for(int j = w->topLeftX; j < w->topLeftX + w->wCopy; j++){
+                    addch(' ');
+                }
+            }
+            attroff(COLOR_PAIR(w->colorPair));
+        }
         if(w->bordered){
             move(w->topLeftY, w->topLeftX);
             add_wch(WACS_D_ULCORNER);
@@ -359,16 +385,7 @@ void renderWidget(Widget* w){
             }
         }
         
-        if(w->colorPair){
-            attron(COLOR_PAIR(w->colorPair));
-            for(int i = w->topLeftY + 1; i < w->topLeftY + w->hCopy-1; i++){
-                move(i, w->topLeftX+1);
-                for(int j = w->topLeftX + 1; j < w->topLeftX + w->wCopy - 1; j++){
-                    addch(' ');
-                }
-            }
-            attroff(COLOR_PAIR(w->colorPair));
-        }
+        
         if(w->scrollOn && (w->totalScrollArea > w->hCopy)){
             FOR(i, w->hCopy-2){
                 mvaddch(w->topLeftY + i + 1, w->topLeftX + w->wCopy - 1, ACS_VLINE);

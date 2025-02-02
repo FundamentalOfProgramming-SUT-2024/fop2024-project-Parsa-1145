@@ -7,6 +7,7 @@
 #include "Action.h"
 #include "../../ProgramStates/MainGame.h"
 #include "../Renderer.h"
+#include "Monster.h"
 
 
 void(*getAction(char* name))(ItemBase*){
@@ -23,6 +24,7 @@ void(*getAction(char* name))(ItemBase*){
     else if (!strcmp(name, "trapFallToNextFloor")) return &trapFallToNextFloor;
     else if (!strcmp(name, "trapTeleport")) return &trapTeleport;
     else if (!strcmp(name, "takeAim")) return &takeAim;
+    else if (!strcmp(name, "bowTakeAim")) return &bowTakeAim;
 
     else return NULL;
 }
@@ -52,7 +54,14 @@ void moveInStair(ItemBase* o){
 int takeAim(ItemBase* o){
     RayCollision collision;
     castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range, &collision);
-    renderLine(0, rgb[1][5][2], UINT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+    renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+}
+int bowTakeAim(ItemBase* o){
+    RayCollision collision;
+    if(player.equipedAmmo){
+        castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range + player.equipedAmmo->range, &collision);
+        renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+    }
 }
 
 int consume(ItemBase* o){
@@ -95,9 +104,7 @@ int swingAttack(ItemBase* o){
                         addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
                     }
                     if(ptr->health <= 0){
-                        addFormattedMessage("The %S %odied%O", ptr->name, 1, 4, 1);
-                        defaultItemDelete(ptr);
-                        removeItemFromLinkedList(floors[player.z].itemList, ptr);
+                        defaultMonsterDeath(ptr);
                     }
                 }else{
                     if(randWithProb(0.5)){
@@ -118,7 +125,13 @@ int stab(ItemBase* o){
         tmp = tmp[0];
 
         if((ptr->type) && !strcmp(ptr->type, "monster")){
-            if(hypot(player.x - ptr->x, player.y - ptr->y) < 1.5){
+            float xdir = mEvent.x + mainCamera.x - player.x, ydir = mEvent.y + mainCamera.y- player.y;
+            float dist = hypot(xdir, ydir);
+            xdir /= dist;
+            ydir /= dist;
+            xdir = round(player.x + xdir);
+            ydir = round(player.y + ydir);
+            if((fabs(xdir - ptr->x) < 0.01) && (fabs(ydir - ptr->y) < 0.01)){
                 ptr->health -= player.heldObject->damage;
 
                 if(randWithProb(player.heldObject->openingProb * player.luck)){
@@ -128,16 +141,15 @@ int stab(ItemBase* o){
                         addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
                     }
                     if(ptr->health <= 0){
-                        addFormattedMessage("The %S %odied%O", 1, 4, 1, ptr->name);
-                        defaultItemDelete(ptr);
-                        removeItemFromLinkedList(floors[player.z].itemList, ptr);
+                        defaultMonsterDeath(ptr);
                     }
                 }else{
                     if(randWithProb(0.5)){
                         addFormattedMessage("You %omissed%O the %S", 4, 1, 1, ptr->name);
                     }else{
-                        addFormattedMessage("%s %odoged%O your attack", ptr->name, 4, 1, 1);
+                        addFormattedMessage("%S %odoged%O your attack", ptr->name, 4, 1, 1);
                     }
+                break;
                 }
             }
         }
@@ -149,112 +161,149 @@ int castSpell(ItemBase* o){
 int kick(ItemBase* o){
     addMessage(writeLog("HOHO kick"));
 }
-int throwAttack(ItemBase* o){
-    int ch;
-    int exit = 0;
-    while(!exit){
-        ch = getch();
-        switch(ch){
-            case KEY_RESIZE:
-                getmaxyx(stdscr, scrH, scrW);
-                clear();
-                refresh();
 
-                mainCamera.h = scrH;
-                mainCamera.w = scrW;
+int shootProjectile(ItemBase* o, float range, RayCollision* c){
+    int collision = castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, range, c);
 
-                resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
-                resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
+    if(collision){
+        c->x = c->prevx;
+        c->y = c->prevy;
+    }
+
+    float xdir = c->x - player.x, ydir = c->y - player.y, curx = player.x, cury = player.y;
+
+    float dist = hypot(xdir, ydir);
+    xdir /= dist;
+    ydir /= dist;
+
+    if(dist > 1.5){
+        dist = 0;
+        while(1){
+            sleepMili(20000);
+            curx += xdir;
+            cury += ydir;
+            o->x = round(curx);
+            o->y = round(cury);
+            
+            dist++;
+
+            if(hypot(c->x - curx, c->y - cury) <= 0.5){
                 break;
-            case KEY_MOUSE:
-                if(getmouse(&mEvent) == OK){
-                    switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        break;
-                    default:
-                        if(mEvent.bstate & BUTTON3_PRESSED){
-                            exit = 1;
-                        }else if(mEvent.bstate & BUTTON1_PRESSED){
-                            if(o->quantity == 1){
-                                o->inInventory = 0;
-                                removeItemFromLinkedList(&(player.items), o);
-                                checkEquiped();
-                                updateInventoryTab();
-                            }else{
-                                o->quantity--;
-                                o = LoadItemWithName(o->name);
-                                o->quantity = 1;
-
-                                o->inInventory = 0;
-                                o->x = player.x;
-                                o->z = player.z;
-                                o->y = player.y;
-                            }
-
-                            linkedListPushBack(floors[player.z].itemList, o);
-
-                            RayCollision c;
-                            int collision = castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, o->range, &c);
-
-                            if(collision){
-                                c.x = c.prevx;
-                                c.y = c.prevy;
-                            }
-
-                            float xdir = c.x - player.x, ydir = c.y - player.y, curx = player.x, cury = player.y;
-
-                            float dist = hypot(xdir, ydir);
-                            xdir /= dist;
-                            ydir /= dist;
-
-                            if(dist > 1.5){
-                                dist = 0;
-                                while(1){
-                                    sleepMili(20000);
-                                    curx += xdir;
-                                    cury += ydir;
-                                    o->x = round(curx);
-                                    o->y = round(cury);
-                                    
-                                    dist++;
-
-                                    if(hypot(c.x - curx, c.y - cury) <= 0.5){
-                                        break;
-                                    }else if(dist > o->range){
-                                        break;
-                                    }else{
-                                        renderMainGame();
-                                    }
-                                }
-
-                            }
-
-                            return 0;
-                        }
-                        break;
-                    }
-                }
+            }else if(dist > range){
                 break;
-            default:
-                break;
-                
+            }else{
+                renderMainGame();
+            }
         }
-        renderMainGameToFramebuffer();
+    }
 
-        RayCollision collision;
-        //castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, 5, &coli);
-        castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range, &collision);
-        renderLine(0, rgb[1][5][2], -1, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+    return collision;
+}
 
-        renderMainGameToTerminal();
+int shootArrow(ItemBase* b){
+    if(player.equipedAmmo && !strcmp(player.equipedAmmo->subType, "arrow")){
+        ItemBase* o = player.equipedAmmo;
+        if(o->quantity == 1){
+            o->inInventory = 0;
+            removeItemFromLinkedList(&(player.items), o);
+            checkEquiped();
+            updateInventoryTab();
+        }else{
+            o->quantity--;
+            o = LoadItemWithName(o->name);
+            o->quantity = 1;
+
+            o->inInventory = 0;
+            o->x = player.x;
+            o->z = player.z;
+            o->y = player.y;
+        }
+
+        linkedListPushBack(floors[player.z].itemList, o);
+
+        RayCollision c;
+        int collision = shootProjectile(o, o->range + b->range, &c);
+
+        if(c.entity && c.entity->type && !strcmp(c.entity->type, "monster")){
+            if(randWithProb(player.luck * o->openingProb)){
+                addFormattedMessage("You %ohit%O the %S", 1, 5, 1, c.entity->name);
+                c.entity->health -= o->damage - 1;
+                if(c.entity->health <= 0){
+                    defaultMonsterDeath(c.entity);
+                }
+            }else{
+                addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
+            }
+            defaultItemDelete(o);
+            removeItemFromLinkedList(floors[player.z].itemList, o);
+        }else{
+            if(collision){
+                if(randWithProb(0.3)){
+                    addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
+                    defaultItemDelete(o);
+                    removeItemFromLinkedList(floors[player.z].itemList, o);
+                }
+            }
+        }
+
+        return 0;
+    }else{
+        addMessage(writeLog("Equip an arrow"));
     }
 }
-int shootArrow(ItemBase* o){
-    addMessage(writeLog("HOHO Shoot arrow"));
+int throwAttack(ItemBase* o){
+    if(o->quantity == 1){
+        o->inInventory = 0;
+        removeItemFromLinkedList(&(player.items), o);
+        checkEquiped();
+        updateInventoryTab();
+    }else{
+        o->quantity--;
+        o = LoadItemWithName(o->name);
+        o->quantity = 1;
+
+        o->inInventory = 0;
+        o->x = player.x;
+        o->z = player.z;
+        o->y = player.y;
+    }
+
+    linkedListPushBack(floors[player.z].itemList, o);
+
+    RayCollision c;
+    int collision = shootProjectile(o, o->range, &c);
+
+    if(c.entity && c.entity->type && !strcmp(c.entity->type, "monster")){
+        if(randWithProb(player.luck * o->openingProb)){
+            addFormattedMessage("You %ohit%O the %S", 1, 5, 1, c.entity->name);
+            c.entity->health -= o->damage - 1;
+            if(c.entity->health <= 0){
+                defaultMonsterDeath(c.entity);
+            }
+        }else{
+            addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
+        }
+        defaultItemDelete(o);
+        removeItemFromLinkedList(floors[player.z].itemList, o);
+    }else{
+        if(collision){
+            if(randWithProb(0.3)){
+                addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
+                defaultItemDelete(o);
+                removeItemFromLinkedList(floors[player.z].itemList, o);
+            }
+        }
+    }
+
+    return 0;
 }
+
 int trapSimpleDamage(ItemBase* o){
     player.health -= o->damage;
     addFormattedMessage("%oYou stepped on a spike%O", 5, 1, 1);
+    if(player.health <= 0){
+        endGame(0, writeLog("You were killed by the spike trap"));
+    }
 }
 int trapPoisonDamage(ItemBase* o){
     Effect* poison = malloc(sizeof(Effect));
@@ -345,7 +394,7 @@ int effectPoison(Effect* e){
     if(deltaTime){
         player.health -= e->amount;
         if(player.health <= 0){
-            endGame(0, writeLog("A fatal poison killed you."));
+            endGame(0, writeLog("A fatal poison killed you"));
         }
     }
 }
@@ -353,7 +402,7 @@ int effectBurning(Effect* e){
     if(deltaTime){
         player.health -= e->amount;
         if(player.health <= 0){
-            endGame(0, writeLog("You burned to death."));
+            endGame(0, writeLog("You burned to death"));
         }
     }
 }

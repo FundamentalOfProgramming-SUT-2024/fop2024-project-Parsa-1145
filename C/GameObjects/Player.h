@@ -8,6 +8,7 @@
 typedef struct{
     int x, y, z;
     int visionRadius;
+    int color[3];
 
     int health;
 
@@ -49,6 +50,7 @@ typedef struct{
     LinkedList items;
     LinkedList effects;
     ItemBase* heldObject;
+    ItemBase* equipedAmmo;
 } Player;
 
 int getPlayerSpeed(Player* player);

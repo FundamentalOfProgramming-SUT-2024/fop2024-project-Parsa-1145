@@ -99,7 +99,7 @@ void openWeaponInfo(ItemBase* o){
 
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%u)", o->name, &(o->sprite));
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
     createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", &(o->damage));
     createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
@@ -133,9 +133,9 @@ void openFoodInfo(ItemBase* o){
     emptyWidget(&mgItemWidget);
 
     if(!o->goodness){
-        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u) (rotten)", o->name, &(o->sprite));
+        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U) (rotten)", o->name, &(o->sprite));
     }else{
-        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
     }
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
     createTextWidget(goodness, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "goodness: %d", &(o->goodness));
@@ -164,7 +164,7 @@ void openKeyInfo(ItemBase* o){
 
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
     createTextWidget(openProb, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "opening chance: %f", &(o->openingProb));
     createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
@@ -192,9 +192,9 @@ void openPotionInfo(ItemBase* o){
 
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s", o->name);
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S", o->name);
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "Shape: %u", &(o->sprite));
+    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "Shape: %U", &(o->sprite));
     createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
     createButton    (consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
 
@@ -221,7 +221,7 @@ void openAmmoInfo(ItemBase* o){
 
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
     createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", &(o->damage));
     createTextWidget(range, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "range: %d", &(o->range));
@@ -231,8 +231,12 @@ void openAmmoInfo(ItemBase* o){
 
     drop->contextObject = o;
     drop->contextCallback = o->drop;
-    
 
+    if(!strcmp(o->subType, "arrow")){
+        equip->contextCallback = &equipArrow;
+        equip->contextObject = o;
+    }
+    
     linkedListPushBack(mgItemWidget.children, name->uiBase);
     linkedListPushBack(mgItemWidget.children, quantity->uiBase);
     linkedListPushBack(mgItemWidget.children, dmg->uiBase);
@@ -251,7 +255,7 @@ void openValueableInfo(ItemBase* o){
 
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %s(%u)", o->name, &(o->sprite));
+    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
     createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
     createTextWidget(value, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "value: %d", &(o->value));
 
@@ -314,4 +318,9 @@ void dropValueable(ItemBase* o){
 void pickupAmulet(ItemBase* o){
     addFormattedMessage("You found the %oamulet of yendor%O", 5, 5, 0);
     endGame(1, NULL);
+}
+
+void equipArrow(ItemBase* o){
+    player.equipedAmmo = o;
+    addFormattedMessage("You equiped %o%S%O", o->color[0], o->color[1], o->color[2], o->name);
 }

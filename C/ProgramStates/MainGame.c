@@ -21,8 +21,6 @@
 #include "../UiElements/TabWidget.h"
 #include "../UiElements/TextWidget.h"
 
-
-
 #include "../GameObjects/Player.h"
 #include "../GameObjects/Room.h"
 #include "../GameObjects/GameSettings.h"
@@ -128,7 +126,6 @@ void saveGame(){
         cJSON_AddNumberToObject(fJ, "height", f->h);
 
         cJSON_AddItemToObject(fJ, "ground mesh", saveCharTextureToJson(f->groundMesh));
-        cJSON_AddItemToObject(fJ, "ground color", saveColorTextureToJson(f->groundMesh));
         cJSON_AddItemToObject(fJ, "feature mesh", saveCharTextureToJson(f->featureMesh));
         cJSON_AddItemToObject(fJ, "visited", saveCharTextureToJson(f->visited));
 
@@ -226,7 +223,6 @@ void loadGame(const char* address){
         f->groundMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "ground mesh"));
         f->featureMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "feature mesh"));
         f->visited = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "visited"));
-        f->groundMesh = loadColorTextureFromJson(cJSON_GetObjectItem(fJ, "ground color"));
 
         f->itemList = malloc(sizeof(LinkedList));
         createLinkedList(f->itemList, sizeof(ItemBase*));
@@ -483,10 +479,10 @@ void debugRenderMesh(Floor* f){
         renderTexture(f->visited, 0, 0, &mainCamera, frameBuffer);
     }
     FOR(j, f->roomNum){
-        drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
+        drawCircleOnTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
         for(int k = j+1; k < f->roomNum; k++){
             if(f->adjMat[k][j]){
-                renderLine('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
+                renderLineToFrameBuffer('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
             }
         }
     }
@@ -665,7 +661,7 @@ void initMainGame(){
     linkedListPushBack(&mgUiList, mgPauseMenu.uiBase);
 
 
-    gameSettings.difficaulity = 0;
+    gameSettings.difficulty = 0;
     gameSettings.maxRoomNum = 7;
     gameSettings.minRoomNum = 5;
     gameSettings.maxFloorNum = 6;
@@ -687,6 +683,10 @@ void initMainGame(){
     gameSettings.baseStrength = 1;
     gameSettings.maxFullness = 20;
     gameSettings.baseLuck = 1;
+
+    gameSettings.rememberItems = 1;
+    gameSettings.visionRadius = PI / 3;
+
     gameSettings.debugMode = 1;
     gameSettings.debugShowPointCloud = 1;
     gameSettings.noClip = 1;
@@ -799,6 +799,10 @@ void enterMainGame(){
         saveAccount();
     }
 
+    ItemBase* startingMace = LoadItemWithName("Mace");
+    startingMace->quantity = 1;
+    linkedListPushBack(&(player.items), startingMace);
+    updateInventoryTab();
 
     timeout(100);
     nodelay(stdscr, FALSE);
@@ -1224,6 +1228,33 @@ void createAdjMat(Floor* f){
         }
     }
 }
+
+
+int traverseGraph(int** adj, int n, int i, int* visited){
+    for(int j = 0; j < n; j++){
+        if(!visited[j]){
+            if(adj[i][j]){
+                visited[j] = 1;
+                traverseGraph(adj, n, j, visited);
+            }
+        }
+    }
+}
+int isGraphConnected(int** adj, int n){
+    int* visited = calloc(1, sizeof(int) * n);
+
+    visited[0] = 1;
+    traverseGraph(adj, n, 0, visited);
+
+    FOR(i, n){
+        if(!visited[i]){
+            free(visited);
+            return 0;
+        }
+    }
+    free(visited);
+    return 1;
+}
 void placeRoomPointCloud(Floor* f){
     int roomsPlaced = 0;
     do{
@@ -1257,64 +1288,7 @@ void placeRoomPointCloud(Floor* f){
             Floor* prevF = floors + f->index -1;
             f->pointCloud[f->stairRooms[0]]->radius = prevF->pointCloud[prevF->stairRooms[1]]->radius;
         }
-        if(gameSettings.debugMapGenerationStepped){
-            timeout(1000);
-            int tmp = 1;
-            
-            FOR(i, 4000){
-                switch(getch()){
-                    case KEY_RESIZE:
-                        getmaxyx(stdscr, scrH, scrW);
-                        clear();
-                        refresh();
 
-                        mainCamera.h = scrH;
-                        mainCamera.w = scrW;
-
-                        resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
-                        resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
-                        break;
-                    case 'w':
-                        player.y--;
-                        break;
-                    case 'd':
-                        player.x++;
-                        break;
-                    case 's':
-                        player.y++;
-                        break;
-                    case 'a':
-                        player.x--;
-                        break;
-                    case 't':
-                        if(iteratePointCloud(f->pointCloud, f->adjMat, f->roomNum, gameSettings.roomSpread)){
-                            roomsPlaced++;
-                        }
-                        if(roomsPlaced > 200){
-                            tmp = 0;
-                        }
-                        break;
-                    case 'x':
-                        gameSettings.debugMapGenerationLayer++;
-                        gameSettings.debugMapGenerationLayer %= 3;
-                        break;
-                    case 'l':
-                        tmp = 0;
-                        break;
-                }
-                FOR(j, f->roomNum){
-                    drawCircleOnCharTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
-                    for(int k = j+1; k < f->roomNum; k++){
-                        if(f->adjMat[k][j]){
-                            renderLine('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
-                        }
-                    }
-                }
-                debugRenderFramebuffer(f);
-                if(!tmp) break;
-            }
-            timeout(100);
-        }
         FOR(i, 4000){
             if(iteratePointCloud(f->pointCloud, f->adjMat, f->roomNum, gameSettings.roomSpread)){
                 roomsPlaced++;
@@ -1323,7 +1297,93 @@ void placeRoomPointCloud(Floor* f){
                 break;
             }
         }
+        if(roomsPlaced > 200){
+            while(1){
+                FOR(j, f->roomNum){
+                    for(int k = j+1; k < f->roomNum; k++){
+                        if(f->adjMat[j][k]){
+                            FOR(z, f->roomNum){
+                                for(int t = z+1; t < f->roomNum; t++){
+                                    if((z != j) && (z != k) && (t != j) && (t != k)){
+                                        if(f->adjMat[z][t]){
+                                            if(doLinesIntersect(f->pointCloud[j]->x,f->pointCloud[j]->y, f->pointCloud[k]->x,f->pointCloud[k]->y,
+                                            f->pointCloud[z]->x,f->pointCloud[z]->y, f->pointCloud[t]->x,f->pointCloud[t]->y )){
+                                                roomsPlaced = 0;
+
+                                                f->adjMat[j][k] = 0;
+                                                f->adjMat[k][j] = 0;
+                                                f->adjMat[t][z] = 0;
+                                                f->adjMat[z][t] = 0;
+
+                                                f->adjMat[j][z] = 1;
+                                                f->adjMat[z][j] = 1;
+                                                f->adjMat[t][k] = 1;
+                                                f->adjMat[k][t] = 1;
+                                                if(!isGraphConnected(f->adjMat, f->roomNum)){
+                                                    f->adjMat[j][z] = 0;
+                                                    f->adjMat[z][j] = 0;
+                                                    f->adjMat[t][k] = 0;
+                                                    f->adjMat[k][t] = 0;
+
+                                                    f->adjMat[j][t] = 1;
+                                                    f->adjMat[t][j] = 1;
+                                                    f->adjMat[z][k] = 1;
+                                                    f->adjMat[k][z] = 1;
+                                                    // if(!isGraphConnected(f->adjMat, f->roomNum)){
+                                                    //     roomsPlaced = 0;
+                                                    // }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                if(!roomsPlaced) break;
+                            }
+                        }
+                        if(!roomsPlaced) break;
+                    }
+                    if(!roomsPlaced) break;
+                }
+                if(!roomsPlaced){
+                    roomsPlaced = 201;
+                }else break;
+            }
+        }
+
     }while(roomsPlaced < 200);
+
+    
+    // while(1){
+    //     int ch = getch();
+    //     if(ch == 'a') break;
+    //     else if(ch == KEY_RESIZE){
+    //         getmaxyx(stdscr, scrH, scrW);
+    //         clear();
+    //         refresh();
+
+    //         mainCamera.h = scrH;
+    //         mainCamera.w = scrW;
+    //         mainCamera.x = -scrW/2;
+    //         mainCamera.y = -scrH / 2;
+    //     }
+
+    //     erase();
+    //     // FOR(i, f->roomNum){
+    //     //     Point* p = f->pointCloud[i];
+    //     //     drawCircleOnTerminal(p->x, p->y, p->radius, '.');
+    //     // }
+    //     FOR(i, f->roomNum){
+    //         for(int j = i+1; j < f->roomNum; j++){
+    //             if(f->adjMat[i][j]){
+    //                 Point* p1 = f->pointCloud[i], *p2 = f->pointCloud[j];
+    //                 renderLineToTerminal('.', rgb[5][1][1], p1->x, p1->y, p2->x, p2->y, &mainCamera);
+    //             }
+    //         }
+    //     }
+    //     refresh();
+    // }
+    
     return;
 }
 void roomDimensions(Floor* f){
@@ -1909,17 +1969,16 @@ void generateMap(){
 }
 
 int rays = 800;
-double visionRadius = PI / 6;
 void updateVisionMesh(){
     Floor* f = floors + player.z;
     fillCharTexture(f->visionMesh, '\0');
 
     static RayCollision c;
-    float x2 = mainCamera.x + mEvent.x, y2 = mainCamera.y + mEvent.y;
+    double x2 = mainCamera.x + mEvent.x, y2 = mainCamera.y + mEvent.y;
 
     double a = atan2((y2 - player.y), (x2 - player.x));
-    a -= visionRadius;
-    double da = 2 * visionRadius / rays;
+    a -= gameSettings.visionRadius;
+    double da = 2 * gameSettings.visionRadius / rays;
     FOR(i, rays){
         castVisionRay(player.x, player.y, cos(a), sin(a), f, 5, f->visionMesh);
         a += da;
@@ -2176,6 +2235,8 @@ void updateMainGame(){
             break;
             
     }
+
+    if(player.heldObject && player.heldObject->inHandUpdate) player.heldObject->inHandUpdate(player.heldObject);
 }
 
 void renderMainGameToFramebuffer(){
@@ -2186,9 +2247,9 @@ void renderMainGameToFramebuffer(){
 
     updateVisionMesh();
     
-    renderTexture(floors[player.z].groundMesh, 0, 0, &mainCamera, frameBuffer);
+    renderDepthlessTexture(floors[player.z].groundMesh, 0, 0, 0, &mainCamera, frameBuffer);
     mixTextures(floors[player.z].visited, floors[player.z].visionMesh);
-    renderTexture(floors[player.z].visionMesh, 0, 0, &mainCamera, visitedMaskBuffer);
+    renderDepthlessTexture(floors[player.z].visionMesh, 0, 0, 0, &mainCamera, visitedMaskBuffer);
 
     void** tmpPtr = floors[player.z].itemList->data;
     ItemBase* tmp;
@@ -2210,7 +2271,7 @@ void renderMainGameToFramebuffer(){
         }
     }
     colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
-    renderTexture(floors[player.z].visited, 0, 0, &mainCamera, visitedMaskBuffer);
+    renderDepthlessTexture(floors[player.z].visited, 0, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 }
 void renderMainGameToTerminal(){
@@ -2232,7 +2293,6 @@ void renderMainGame(){
     updateUi();
     
     renderMainGameToFramebuffer();
-    
 
     renderFrameBuffer(frameBuffer);
 
@@ -2242,7 +2302,9 @@ void renderMainGame(){
 
     refresh();
 
-    fillCharTexture(frameBuffer, ' ');
+    fillCharTexture(frameBuffer, 0);
+    fillColorTexture(frameBuffer, 0);
+    fillDepthTexture(frameBuffer, 0);
 }
 
 

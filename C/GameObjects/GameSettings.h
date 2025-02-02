@@ -2,7 +2,7 @@
 #define GAMESETTINGS
 
 typedef struct{
-    int difficaulity;
+    int difficulty;
 
     int minRoomSize;
     int maxRoomSize;
@@ -13,6 +13,9 @@ typedef struct{
     int roomSpread;
     int roomThemeNum;
     float* roomThemeProb;
+
+    float visionRadius;
+    int rememberItems;
 
     int baseMaxHealth;
     int baseHealthRegenTime;

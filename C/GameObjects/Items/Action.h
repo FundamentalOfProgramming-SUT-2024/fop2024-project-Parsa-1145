@@ -29,6 +29,7 @@ int castSpell(ItemBase* o);
 int kick(ItemBase* o);
 int throwAttack(ItemBase* o);
 int takeAim(ItemBase* o);
+int bowTakeAim(ItemBase* o);
 int shootArrow(ItemBase* o);
 int unlockDoor(ItemBase* o);
 int trapSimpleDamage(ItemBase* o);

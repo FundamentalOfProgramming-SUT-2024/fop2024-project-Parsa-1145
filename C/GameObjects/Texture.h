@@ -6,6 +6,7 @@
 typedef struct{
     wchar_t** data;
     char** depth;
+    char** colorDepth;
     int** color;
 
     int hasDepth, hasColor;
@@ -22,7 +23,6 @@ void fillColorTexture(CharTexture* tex, int c);
 void fillDepthTexture(CharTexture* tex, char c);
 
 void mixTextures( CharTexture* t1, CharTexture* t2);
-void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, wchar_t c);
 
 cJSON* saveCharTextureToJson(CharTexture* t);
 CharTexture* loadCharTextureFromJson(cJSON* data);

@@ -40,6 +40,9 @@ ItemBase* loadItemFromJson(cJSON* data){
         }else if(!strcmp(object->string, "secondaryUse")){
             o->secondaryUse = getAction(object->valuestring);
             o->secondaryUseName = copyString(object->valuestring);
+        }else if(!strcmp(object->string, "inHandUpdate")){
+            o->inHandUpdate = getAction(object->valuestring);
+            o->inHandUpdateName = copyString(object->valuestring);
         }else if(!strcmp(object->string, "range")){
             o->range = object->valueint;
         }else if(!strcmp(object->string, "openProb")){
@@ -265,9 +268,13 @@ void defaultItemDelete(ItemBase* o){
 }
 void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, Camera* cam){
     if(((!o->hidden) || gameSettings.debugSeeAll) && isinRect(o->x, o->y, cam->x, cam->y, cam->w, cam->h)){
-        frameBuffer->data[o->y - cam->y][o->x - cam->x] = o->sprite;
-        if(o->color[0] != -1){
-            frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
+        if(frameBuffer->depth[o->y - cam->y][o->x - cam->x] <= 1){
+            frameBuffer->data[o->y - cam->y][o->x - cam->x] = o->sprite;
+        }
+        if(frameBuffer->colorDepth[o->y - cam->y][o->x - cam->x] <= 1){
+            if(o->color[0] != -1){
+                frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
+            }
         }
     }
 }

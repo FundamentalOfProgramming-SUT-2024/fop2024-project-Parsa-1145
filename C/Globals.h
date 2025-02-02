@@ -38,5 +38,6 @@ char* writeLog(const char* format, ...);
 int isVowel(char c);
 cJSON* openJsonFile(const char * const address);
 void sleepMili(unsigned int m);
+int doLinesIntersect(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 
 extern MEVENT mEvent;

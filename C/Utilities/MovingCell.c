@@ -22,8 +22,6 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
         return 0;
     }
     f->visited->data[cell->y][cell->x] = '.';
-    f->visited->color[cell->y][cell->x] = rgb[2][2][cell->attr[3] * 2];
-
     if((f->featureMesh->data[cell->y][cell->x] == cell->attr[5]) && (!cell->attr[6])){
         switch(cell->attr[7]){
             case 2:

@@ -34,6 +34,12 @@ void checkEquiped(){
             mgEquipedSecondaryextWidget.widget->isVisible = 0;
         }
     }
+
+    if(player.equipedAmmo && player.equipedAmmo->inInventory){
+
+    }else{
+        player.equipedAmmo = NULL;
+    }
 }
 void resetPlayerStats(Player* p){
     p->healthModifier = 1;

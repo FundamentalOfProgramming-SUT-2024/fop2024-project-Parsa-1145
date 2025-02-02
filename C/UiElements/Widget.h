@@ -27,6 +27,8 @@ typedef struct Widget{
     int scrollBarHeight;
     int scrollBarPos;
 
+    char overflow[2];
+
     LinkedList* children;
 
     int bColor;

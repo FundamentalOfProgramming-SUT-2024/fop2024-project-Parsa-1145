@@ -162,13 +162,12 @@ int defaultMonsterUpdate(ItemBase* m){
                 if(canSeePlayer(m)){
                     if(hypot(player.x - m->x, player.y - m->y) < 1.5){
                         m->primaryUse(m);
-                    }else{
-                        addFormattedMessage("%o%S saw you%O", 5, 1, 1, m->name);
-                        m->tarx = player.x;
-                        m->tary = player.y;
-                        m->goodness = 1;
-                        m->decayed = m->decayTime;
                     }
+                    addFormattedMessage("%o%S saw you%O", 5, 1, 1, m->name);
+                    m->tarx = player.x;
+                    m->tary = player.y;
+                    m->goodness = 1;
+                    m->decayed = m->decayTime;
                 }
                 break;
             case 1:
@@ -222,4 +221,14 @@ int defaultMonsterUpdate(ItemBase* m){
     }
 
     
+}
+
+void defaultMonsterDeath(ItemBase* m){
+    if(randWithProb(0.5)){
+        addFormattedMessage("%oThe %S died%O", 1, 4, 1, m->name);
+    }else{
+        addFormattedMessage("%oYou killed the %S%O", 1, 4, 1, m->name);
+    }
+    defaultItemDelete(m);
+    removeItemFromLinkedList(floors[player.z].itemList, m);
 }

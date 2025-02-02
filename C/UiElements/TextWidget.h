@@ -13,7 +13,9 @@ typedef union{
     float* f;
     int sd;
     float sf;
-    int color[3];
+    int sColor[3];
+    int* color[3];
+
 }Arg;
 typedef struct{
     Widget* widget;

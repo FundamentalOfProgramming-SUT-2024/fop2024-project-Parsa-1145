@@ -36,7 +36,7 @@ typedef struct ItemBase{
     wchar_t sprite;
     int id, relId;
     char primaryKey, secondaryKey;
-    char* primaryUseName, *secondaryUseName;
+    char* primaryUseName, *secondaryUseName, inHandUpdateName;
     char* name;
     char *type, *subType;
     int collider;

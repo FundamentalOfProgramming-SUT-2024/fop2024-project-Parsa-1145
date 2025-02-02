@@ -26,7 +26,11 @@ CharTexture* createCharTexture(int w, int h, int hasDepth, int hasColor){
     if(hasDepth){
         out->depth = malloc(sizeof(char*) * h);
         FOR(i, h){
-            out->data[i] = calloc(w, sizeof(char));
+            out->depth[i] = calloc(w, sizeof(char));
+        }
+        out->colorDepth = malloc(sizeof(char*) * h);
+        FOR(i, h){
+            out->colorDepth[i] = calloc(w, sizeof(char));
         }
     }
 
@@ -79,6 +83,11 @@ void fillDepthTexture(CharTexture* tex, char c){
                 tex->depth[i][j] = c;
             }
         }
+        FOR(i, tex->h){
+            FOR(j, tex->w){
+                tex->colorDepth[i][j] = c;
+            }
+        }
     }
 }
 void resizeCharTexture(CharTexture** tex, int w, int h){
@@ -95,21 +104,7 @@ void resizeCharTexture(CharTexture** tex, int w, int h){
         fillDepthTexture(tex[0], 0);
     }
 }
-void drawCircleOnCharTexture(CharTexture* tex,float x, float y, float radius, wchar_t c){
-    int tx, ty;
-    for(int i = -radius; i <= radius; i++){
-        for(int j = -radius; j <= radius; j++){
-            tx = x + j;
-            ty = y + i;
-            if((tx >= 0)&&(tx < tex->w) && (ty >=0) && (ty < tex->h)){
-                if(hypot(i, j) <= radius){
-                    tex->data[ty][tx] = c;
-                }
-            }
-            
-        }
-    }
-}
+
 void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, wchar_t c);
 
 cJSON* saveCharTextureToJson(CharTexture* t){
@@ -169,7 +164,7 @@ CharTexture* loadCharTextureFromJson(cJSON* json){
             t->data[j][k] = tmp2->valueint;
             tmp2 = tmp2->next;
         }
-        
+
         data = data->next;
     }
     
@@ -204,8 +199,6 @@ CharTexture* loadCharTextureFromJson(cJSON* json){
             depth = depth->next;
         }
     }
-
-    
 }
 
 void mixTextures( CharTexture* t1, CharTexture* t2){

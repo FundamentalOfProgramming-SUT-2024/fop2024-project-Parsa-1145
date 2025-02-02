@@ -7,6 +7,12 @@
 #include "../Utilities/PointCloud.h"
 #include "../Utilities/LinkedList.h"
 
+
+struct Door{
+    Room* r;
+    int x, y;
+    int adjs;
+};
 typedef struct{
     int w, h;
 
@@ -14,6 +20,8 @@ typedef struct{
     Room* rootRoom;
     Point** pointCloud;
     LinkedList* itemList;
+    LinkedList doors;
+    int** doorsAdjMat;
     int** adjMat;
     int roomNum;
     int index;
