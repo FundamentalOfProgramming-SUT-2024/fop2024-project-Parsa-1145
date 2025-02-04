@@ -10,7 +10,6 @@ typedef struct{
 
     int x, y;
     int w;
-    int isHovered;
 
     int alignment[2];
     int sizePolicy[2];
@@ -25,5 +24,6 @@ void CBMouseMoveCb(CheckBox* cb);
 void CBMouseClickCb(CheckBox* cb);
 void updateCheckBox(CheckBox* cb);
 void deleteCheckBox(CheckBox* cb);
+int isCheckboxHovered(UiBase* cb);
 
 #endif

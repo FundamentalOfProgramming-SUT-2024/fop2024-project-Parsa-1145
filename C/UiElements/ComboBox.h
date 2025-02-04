@@ -33,5 +33,6 @@ int comboBoxKeyPress(ComboBox* c, int ch);
 void comboBoxRender(ComboBox* c);
 void updateComboBox(ComboBox* c);
 void deleteComboBox(ComboBox* c);
+int isComboBoxHovered(UiBase* c);
 
 #endif

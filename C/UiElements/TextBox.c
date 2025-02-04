@@ -30,6 +30,8 @@ void createTextBox(TextBox* textBox,Widget* parent, char* label, char* str, int 
     textBox->uiBase->mouseMove = &TBMouseMoveCb;
     textBox->uiBase->update = &updateTextBox;
     textBox->uiBase->delete = &deleteTextBox;
+    textBox->uiBase->isHovered = &defaultIsHovered;
+    textBox->uiBase->z = &(textBox->widget->z);
 
 
     textBox->uiBase->object = textBox;
@@ -67,6 +69,8 @@ void createNumberInput(TextBox* textBox, Widget* parent, char* label, int* num, 
     textBox->uiBase->mouseMove = &TBMouseMoveCb;
     textBox->uiBase->update = &updateTextBox;
     textBox->uiBase->delete = &deleteTextBox;
+    textBox->uiBase->isHovered = &defaultIsHovered;
+    textBox->uiBase->z = &(textBox->widget->z);
 
 
     textBox->uiBase->object = textBox;
@@ -83,7 +87,7 @@ void renderTextBox(TextBox* textBox){
             printw("%s:", textBox->label);
         }
 
-        if(textBox->hovered && !textBox->focused)attron(A_DIM);
+        if((hoveredElement == textBox->uiBase) && !textBox->focused)attron(A_DIM);
         move(top++, textBox->widget->topLeftX);
         addch(ACS_ULCORNER);
         FOR(i, textBox->widget->wCopy-2){
@@ -120,25 +124,15 @@ void renderTextBox(TextBox* textBox){
         }
         addch(ACS_LRCORNER);
         attroff(COLOR_PAIR(textBox->bgColor));
-        if(textBox->hovered && !textBox->focused)attroff(A_DIM);
+        if((hoveredElement == textBox->uiBase) && !textBox->focused)attroff(A_DIM);
     }
 }
 int TBMouseMoveCb(TextBox* textBox){
-    if(isWidgetVisible(textBox->widget->parent)){
-        if(((mEvent.x >= textBox->widget->topLeftX) && (mEvent.x < textBox->widget->topLeftX + textBox->widget->wCopy)) && 
-        ((mEvent.y > textBox->widget->topLeftY) && (mEvent.y < textBox->widget->topLeftY + textBox->widget->hCopy))){
-            textBox->hovered = 1;
-            return 1;
-        }else{
-            textBox->hovered = 0;
-            return 0;
-        }
-    }
 }
 int TBMouseClickCb(TextBox* textBox){
     if(isWidgetVisible(textBox->widget->parent)){
         if(mEvent.bstate & BUTTON1_PRESSED){
-            if(textBox->hovered){
+            if((hoveredElement == textBox->uiBase)){
                 textBox->focused = 1;
                 return 1;
             }else{

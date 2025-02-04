@@ -16,6 +16,8 @@
 #include "../../UiElements/TabWidget.h"
 #include "../../UiElements/TextWidget.h"
 
+#include "../AudioManager.h"
+
 extern int globalItemIdCounter;
 
 typedef struct ItemBase{
@@ -47,6 +49,7 @@ typedef struct ItemBase{
     int damage, range;
 
     int health, visionRadius;
+    Audio* deathSound;
 
     LinkedList effects;
     int goodness, decayTime, cursed, decayed;

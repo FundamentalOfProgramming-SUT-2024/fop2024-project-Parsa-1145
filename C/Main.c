@@ -19,6 +19,10 @@
 
 int main(){
     setlocale(LC_ALL, "");
+
+    SDL_Init(SDL_INIT_AUDIO);
+    Mix_OpenAudio(88200, MIX_DEFAULT_FORMAT, 2, 1024);
+
     initscr();
     start_color();
     init_color(10, 150, 150, 150);
@@ -27,7 +31,6 @@ int main(){
     init_pair(C_BG_GRAY1, COLOR_WHITE, 12);
     init_pair(C_BG_BLACK, COLOR_WHITE, COLOR_BLACK);
     init_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
-
 
     int k = 20;
     float z = 1000 / 6;
@@ -56,6 +59,8 @@ int main(){
     fileToStr("../Data/Items.json", &tmp);
     itemsJson = cJSON_Parse(tmp);
 
+    gameSettings.difficultyName = NULL;
+    uiFrameBuffer = createCharTexture(scrW, scrH, 1, 1);
 
     engineState = &maineMenu;
 
@@ -67,6 +72,10 @@ int main(){
     }
 
     pthread_join(secondaryThread, NULL);
+    freeAudioManager();
 
+
+
+    refresh();
     endwin();
 }

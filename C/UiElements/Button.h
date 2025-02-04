@@ -20,7 +20,6 @@ typedef struct {
     void (*contextCallback)(void*);
     void* contextObject;
 
-    int hovered;
     int clicked;
 
     int bgColor;

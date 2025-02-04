@@ -27,6 +27,9 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
     checkBox->uiBase->mouseMove = &CBMouseMoveCb;
     checkBox->uiBase->update = &updateCheckBox;
     checkBox->uiBase->delete = &deleteCheckBox;
+    checkBox->uiBase->isHovered = &defaultIsHovered;
+    checkBox->uiBase->z = &(checkBox->widget->z);
+
     checkBox->uiBase->widget = checkBox->widget;
     checkBox->uiBase->object = checkBox;
     checkBox->uiBase->type = UI_TYPE_CHECKBOX;
@@ -40,7 +43,7 @@ void renderCheckBox(CheckBox* cb){
         
         move(cb->widget->topLeftY, cb->widget->topLeftX + cb->widget->wCopy - 1);
 
-        if(cb->isHovered){
+        if(hoveredElement == cb->uiBase){
             attron(A_DIM);
         }
         if(*(cb->value)){
@@ -48,7 +51,7 @@ void renderCheckBox(CheckBox* cb){
         }else{
             printw("0");
         }
-        if(cb->isHovered){
+        if(hoveredElement == cb->uiBase){
             attroff(A_DIM);
         }
         attroff(COLOR_PAIR(cb->colorPair));
@@ -56,20 +59,12 @@ void renderCheckBox(CheckBox* cb){
     }
 }
 void CBMouseMoveCb(CheckBox* cb){
-
-    if((mEvent.y == cb->widget->topLeftY) && (mEvent.x == cb->widget->topLeftX + cb->widget->wCopy - 1)){
-        cb->isHovered = 1;
-    }else{
-        cb->isHovered = 0;
-    }
 }
 void CBMouseClickCb(CheckBox* cb){
-    if(cb->isHovered){
+    if(hoveredElement == cb->uiBase){
         if(mEvent.bstate & BUTTON1_PRESSED){
             (*cb->value) = !(*cb->value);
         }
-    }else{
-        cb->isHovered = 0;
     }
 }
 void updateCheckBox(CheckBox* cb){
@@ -79,4 +74,16 @@ void deleteCheckBox(CheckBox* cb){
     free(cb->uiBase);
     free(cb->widget);
     free(cb);
+}
+int isCheckboxHovered(UiBase* o){
+    CheckBox* cb = o->object;
+    if((mEvent.y == cb->widget->topLeftY) && (mEvent.x == cb->widget->topLeftX + cb->widget->wCopy - 1)){
+        if(o->z >= hoveredZ){
+            hoveredZ = o->z;
+            hoveredElement = o;
+        }
+    }else if(hoveredElement == o){
+        hoveredElement = NULL;
+        hoveredZ = 0;
+    }
 }

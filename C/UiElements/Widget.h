@@ -11,7 +11,7 @@
 typedef struct Widget{
     struct Widget* parent;
     UiBase* uiBase;
-    int x, y;
+    int x, y, z;
     int sizeType[2];
     int w, h;
     int alignment[2];
@@ -61,15 +61,7 @@ int WMouseMoveCb(Widget* textBox);
 int WMouseClickCb(Widget* textBox);
 int WKeyPressCb(Widget* textBox, int key);
 void emptyWidget(Widget* w);
+void updateChildrenHovered(UiBase* o);
+int widgetHoveredUpdate(Widget* w);
 
-/*TODO
-    first implement vertical layout and scrolling. shouldnt be hard. check if the start of each widget is in the area. dont need to implement a text area for multiple lines
-
-    then add object pointer to buttons and an optional callback which has pointer arguments
-
-    then implement a tab widget. 
-    then implement a text area.
-
-    now each item has a respecting button.
-*/
 #endif

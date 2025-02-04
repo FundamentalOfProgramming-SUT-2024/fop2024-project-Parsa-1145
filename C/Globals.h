@@ -1,5 +1,4 @@
 #include <ncurses.h>
-
 //#include "Utilities/cJSON.h"
 #include "ProgramStates/EngineState.h"
 #include "GameObjects/GameSettings.h"

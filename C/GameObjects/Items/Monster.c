@@ -229,6 +229,28 @@ void defaultMonsterDeath(ItemBase* m){
     }else{
         addFormattedMessage("%oYou killed the %S%O", 1, 4, 1, m->name);
     }
+
+    if(m->deathSound){
+        playEffect(m->deathSound);
+    }
     defaultItemDelete(m);
     removeItemFromLinkedList(floors[player.z].itemList, m);
+}
+void defaultMonsterTakeDamage(ItemBase* m, ItemBase* o, int damage){
+    switch (randBetween(0, 2, 0)){
+    case 0:
+        playEffectByName("monsterHit2");
+        break;
+    case 1:
+        playEffectByName("monsterHit1");
+        break;
+    default:
+        break;
+    }
+
+    m->health -= damage;
+
+    if(m->health <= 0){
+        defaultMonsterDeath(m);
+    }
 }

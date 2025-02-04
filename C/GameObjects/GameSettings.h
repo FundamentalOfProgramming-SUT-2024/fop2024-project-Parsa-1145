@@ -3,6 +3,7 @@
 
 typedef struct{
     int difficulty;
+    char* difficultyName;
 
     int minRoomSize;
     int maxRoomSize;
@@ -15,6 +16,7 @@ typedef struct{
     float* roomThemeProb;
 
     float visionRadius;
+    int fullVision;
     int rememberItems;
 
     int baseMaxHealth;
@@ -34,7 +36,5 @@ typedef struct{
     int debugMapGenerationStepped;
     int debugMapGenerationLayer;
 } GameSettings;
-
-
 
 #endif

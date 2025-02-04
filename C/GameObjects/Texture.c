@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <wchar.h>
+#include <ncurses.h>
 
 
 #include "Texture.h"
@@ -209,4 +210,52 @@ void mixTextures( CharTexture* t1, CharTexture* t2){
             }
         }
     }
+}
+CharTexture* loadCharTextureFromTxt(const char * const address){
+    FILE* f = fopen(address, "rb");
+
+    CharTexture* new = calloc(1, sizeof(CharTexture));
+
+    int w = 0, h = 1, tmp = 0;
+
+    while(!feof(f)){
+        if(fgetwc(f) == '\n'){
+            h++;
+            if(tmp > w) w = tmp;
+            tmp = 0;
+        }else{
+            tmp++;
+        }
+    }
+    w++;
+
+    fseek(f, 0, SEEK_SET);
+
+    wchar_t **arr = calloc(h, sizeof(wchar_t*));
+    FOR(i, h){
+        arr[i] = calloc(w, sizeof(wchar_t));
+    }
+    fclose(f);
+    f = fopen(address, "r");
+    FOR(i, h){
+        FOR(j, w){
+            arr[i][j] = fgetwc(f);
+            if((arr[i][j] == '\n') || (arr[i][j] == EOF)){
+                arr[i][j] = 0;
+                break;
+            }else if(arr[i][j] == ' '){
+                arr[i][j] = 0;
+            }
+        }
+    }
+    fclose(f);
+
+    new = createCharTexture(w - 1, h, 1, 0);
+    FOR(i, h){
+        FOR(j, w-1){
+            new->data[i][j] = arr[i][j];
+        }
+    }
+
+    return new;
 }

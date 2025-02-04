@@ -32,6 +32,8 @@ void createTabWidget(TabWidget* t, Widget* parent, int sizePolicyX, int sizePoli
     t->uiBase->mouseClick = &tabWidgetMouseClick;
     t->uiBase->mouseMove = &tabWidgetMouseMove;
     t->uiBase->update = &updateTabWidget;
+    t->uiBase->isHovered = &isTabWidgetHovered;
+    t->uiBase->z = &(t->widget->z);
 
     t->uiBase->object = t;
     t->uiBase->widget = t->widget;
@@ -53,13 +55,7 @@ void tabWidgetAddTab(TabWidget* t, char* name, Widget* w, void(*callback)()){
     linkedListPushBack(t->tabButtons, btn->uiBase);
 }
 int tabWidgetMouseMove(TabWidget* t){
-    t->tmpIterPtr = t->tabButtons->data;
-    while(t->tmpIterPtr){
-        t->iterPtr = t->tmpIterPtr[1];
-        t->iterPtr->mouseMove(t->iterPtr->object);
-        t->tmpIterPtr = t->tmpIterPtr[0];
-    }
-    if(t->active) WMouseMoveCb(t->active);
+    
 }
 int tabWidgetMouseClick(TabWidget* t){
     t->tmpIterPtr = t->tabButtons->data;
@@ -132,4 +128,14 @@ void updateTabWidget(TabWidget* t){
         updateWidgetTopLeft(t->active);
         updateWidgetChildren(t->active);
     }
+}
+void isTabWidgetHovered(UiBase* o){
+    TabWidget* t = o->object;
+    t->tmpIterPtr = t->tabButtons->data;
+    while(t->tmpIterPtr){
+        t->iterPtr = t->tmpIterPtr[1];
+        t->iterPtr->isHovered(t->iterPtr);
+        t->tmpIterPtr = t->tmpIterPtr[0];
+    }
+    if(t->active) updateChildrenHovered(t->active->uiBase);
 }

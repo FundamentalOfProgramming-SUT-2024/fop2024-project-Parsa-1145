@@ -37,8 +37,6 @@ typedef struct{
     int colorPair;
 
     int focused;
-    int hovered;
-
 }TextBox;
 
 void createTextBox(TextBox* textBox, Widget* parent, char* label, char* str, int sizePolicyX, int sizePolicyY, int aliignmentX, int alignmentY, int x, int y, int w);

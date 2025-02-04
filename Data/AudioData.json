@@ -1,0 +1,83 @@
+[
+    {
+        "name" : "eerie",
+        "id" : 0,
+        "address" : "../Data/Music/eerie.wav"
+    },{
+        "name" : "underworld",
+        "id" : 1,
+        "address" : "../Data/Music/underworld.wav"
+    },{
+        "name" : "underground",
+        "id" : 2,
+        "address" : "../Data/Music/underground.wav"
+    },{
+        "name" : "run",
+        "id" : 3,
+        "address" : "../Data/Music/run.wav"
+    },{
+        "name" : "swing1",
+        "id" : 4,
+        "address" : "../Data/Music/swing1.wav"
+    },{
+        "name" : "swing2",
+        "id" : 5,
+        "address" : "../Data/Music/swing2.wav"
+    },{
+        "name" : "swing3",
+        "id" : 6,
+        "address" : "../Data/Music/swing3.wav"
+    },{
+        "name" : "click",
+        "id" : 7,
+        "address" : "../Data/Music/click.wav"
+    },{
+        "name" : "title",
+        "id" : 8,
+        "address" : "../Data/Music/title.wav"
+    },{
+        "name" : "monsterHit1",
+        "id" : 9,
+        "address" : "../Data/Music/monsterHit1.wav"
+    },{
+        "name" : "monsterHit2",
+        "id" : 10,
+        "address" : "../Data/Music/monsterHit2.wav"
+    },{
+        "name" : "snakeDeath1",
+        "id" : 11,
+        "address" : "../Data/Music/snakeDeath1.wav"
+    },{
+        "name" : "zombieDeath1",
+        "id" : 12,
+        "address" : "../Data/Music/zombieDeath1.wav"
+    },{
+        "name" : "zombieDeath2",
+        "id" : 12,
+        "address" : "../Data/Music/zombieDeath2.wav"
+    },{
+        "name" : "giantDeath",
+        "id" : 13,
+        "address" : "../Data/Music/giantDeath.wav"
+    },{
+        "name" : "daemonDeath1",
+        "id" : 14,
+        "address" : "../Data/Music/daemonDeath1.wav"
+    },{
+        "name" : "daemonDeath2",
+        "id" : 15,
+        "address" : "../Data/Music/daemonDeath2.wav"
+    },{
+        "name" : "bow1",
+        "id" : 16,
+        "address" : "../Data/Music/bow1.wav"
+    },{
+        "name" : "bow2",
+        "id" : 17,
+        "address" : "../Data/Music/bow2.wav"
+    },{
+        "name" : "projectileHit1",
+        "id" : 18,
+        "address" : "../Data/Music/projectileHit1.wav"
+    }
+]

@@ -527,7 +527,7 @@ void renderDepthlessTexture(CharTexture* tex, int x, int y, int depth, Camera* c
             for(y1; y1 <= y2; y1++, v++){
                 u = x1 - x;
                 for(int i = x1; i <= x2; i++, u++){
-                    if((tex->data[v][u] != '\0') || (!frameBuffer->data[y1][i]) && (frameBuffer->depth[y1][i] <= depth)){
+                    if((tex->data[v][u] != '\0') && ((!frameBuffer->data[y1][i]) || (frameBuffer->depth[y1][i] <= depth))){
                         frameBuffer->data[y1][i] = (tex->data[v][u]);
                         frameBuffer->depth[y1][i] = depth;
                     }
@@ -541,7 +541,7 @@ void renderDepthlessTexture(CharTexture* tex, int x, int y, int depth, Camera* c
             for(y1; y1 <= y2; y1++, v++){
                 u = x1 - x;
                 for(int i = x1; i <= x2; i++, u++){
-                    if((tex->data[v][u] != '\0') || (!frameBuffer->data[y1][i]) && (frameBuffer->depth[y1][i] <= depth)){
+                    if((tex->data[v][u] != '\0') && ((!frameBuffer->data[y1][i]) || (frameBuffer->depth[y1][i] <= depth))){
                         frameBuffer->data[y1][i] = (tex->data[v][u]);
                         frameBuffer->depth[y1][i] = depth;
                     }
@@ -571,7 +571,6 @@ void renderDepthlessTexture(CharTexture* tex, int x, int y, int depth, Camera* c
         }
     }
 }
-
 void renderFrameBuffer(CharTexture* frameBuffer){
     if(frameBuffer->hasColor){
         int prevColor = 0, lastColor = 0;

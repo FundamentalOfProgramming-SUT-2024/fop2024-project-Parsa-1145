@@ -382,6 +382,7 @@
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,
+        "deathSound" : "daemonDeath1",
         "openProb" :  0.5
     },{
         "name" : "Fire breather",
@@ -395,6 +396,7 @@
         "cg" : 1,
         "cb" : 5,
         "openProb" : 0.4,
+        "deathSound" : "daemonDeath2",
         "effects" : [
             {
                 "type" : "Burning",
@@ -413,7 +415,9 @@
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,
-        "openProb" :  0.3
+        "openProb" :  0.3,
+        "deathSound" : "giantDeath"
+
     },{
         "name" : "Snake",
         "type" : "monster",
@@ -425,7 +429,8 @@
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,
-        "openProb" :  0.8
+        "openProb" :  0.8,
+        "deathSound" : "snakeDeath1"
     },{
         "name" : "Undead",
         "type" : "monster",
@@ -437,6 +442,7 @@
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,
-        "openProb" :  0.6
+        "openProb" :  0.6,
+        "deathSound" : "zombieDeath2"
     }
 ]

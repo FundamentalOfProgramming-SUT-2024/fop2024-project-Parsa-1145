@@ -87,6 +87,7 @@ int consume(ItemBase* o){
     updateEffectsTab();
 }
 int swingAttack(ItemBase* o){
+    int hit = 0;
     void** tmp = floors[player.z].itemList->data;
     ItemBase* ptr;
     while(tmp){
@@ -95,7 +96,6 @@ int swingAttack(ItemBase* o){
 
         if((ptr->type) && !strcmp(ptr->type, "monster")){
             if(hypot(player.x - ptr->x, player.y - ptr->y) < 1.5){
-                ptr->health -= player.heldObject->damage;
 
                 if(randWithProb(player.heldObject->openingProb * player.luck)){
                     if(randWithProb(0.5)){
@@ -103,9 +103,9 @@ int swingAttack(ItemBase* o){
                     }else{
                         addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
                     }
-                    if(ptr->health <= 0){
-                        defaultMonsterDeath(ptr);
-                    }
+                    defaultMonsterTakeDamage(ptr, NULL, o->damage);
+                    
+                    hit = 1;
                 }else{
                     if(randWithProb(0.5)){
                         addFormattedMessage("You %omissed%O the %S", 4, 1, 1, ptr->name);
@@ -114,6 +114,21 @@ int swingAttack(ItemBase* o){
                     }
                 }
             }
+        }
+    }
+    if(!hit){
+        switch (randBetween(0, 3, 0)){
+        case 0:
+            playEffectByName("swing1");
+            break;
+        case 1:
+            playEffectByName("swing2");
+            break;
+        case 2:
+            playEffectByName("swing3");
+            break;
+        default:
+            break;
         }
     }
 }
@@ -221,16 +236,15 @@ int shootArrow(ItemBase* b){
 
         linkedListPushBack(floors[player.z].itemList, o);
 
+        playEffectByName("bow1");
+
         RayCollision c;
         int collision = shootProjectile(o, o->range + b->range, &c);
 
         if(c.entity && c.entity->type && !strcmp(c.entity->type, "monster")){
             if(randWithProb(player.luck * o->openingProb)){
                 addFormattedMessage("You %ohit%O the %S", 1, 5, 1, c.entity->name);
-                c.entity->health -= o->damage - 1;
-                if(c.entity->health <= 0){
-                    defaultMonsterDeath(c.entity);
-                }
+                defaultMonsterTakeDamage(c.entity, NULL, o->damage);
             }else{
                 addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
             }
@@ -238,11 +252,13 @@ int shootArrow(ItemBase* b){
             removeItemFromLinkedList(floors[player.z].itemList, o);
         }else{
             if(collision){
+                playEffectByName("projectileHit1");
                 if(randWithProb(0.3)){
                     addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
                     defaultItemDelete(o);
                     removeItemFromLinkedList(floors[player.z].itemList, o);
                 }
+                
             }
         }
 

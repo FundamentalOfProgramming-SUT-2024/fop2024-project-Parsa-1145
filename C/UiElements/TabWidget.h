@@ -40,5 +40,6 @@ int tabWidgetScroll(TabWidget* t);
 void tabWidgetRender(TabWidget* t);
 void tabWidgetSwitchTab(TabStruct* t);
 void updateTabWidget(TabWidget* t);
+void isTabWidgetHovered(UiBase* o);
 
 #endif

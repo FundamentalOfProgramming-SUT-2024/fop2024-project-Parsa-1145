@@ -80,6 +80,8 @@ ItemBase* loadItemFromJson(cJSON* data){
             }
         }else if(!strcmp(object->string, "value")){
             o->value = object->valueint;
+        }else if(!strcmp(object->string, "deathSound")){
+            o->deathSound = getAudioByName(object->valuestring);
         }else if(!strcmp(object->string, "collider")){
             o->collider = object->valueint;
         }else if(!strcmp(object->string, "id")){
@@ -159,6 +161,7 @@ cJSON* itemToJson(ItemBase* o){
     cJSON_AddNumberToObject(json, "quantity", o->quantity);
     cJSON_AddNumberToObject(json, "locked", o->locked);
     cJSON_AddNumberToObject(json, "hidden", o->hidden);
+    cJSON_AddStringToObject(json, "deathSound", o->deathSound->name);
     cJSON_AddNumberToObject(json, "visionRadius", o->visionRadius);
     cJSON_AddNumberToObject(json, "health", o->health);
     cJSON_AddNumberToObject(json, "value", o->value);
@@ -270,10 +273,12 @@ void defaultItemRender(ItemBase* o, CharTexture* frameBuffer, Camera* cam){
     if(((!o->hidden) || gameSettings.debugSeeAll) && isinRect(o->x, o->y, cam->x, cam->y, cam->w, cam->h)){
         if(frameBuffer->depth[o->y - cam->y][o->x - cam->x] <= 1){
             frameBuffer->data[o->y - cam->y][o->x - cam->x] = o->sprite;
+            frameBuffer->depth[o->y - cam->y][o->x - cam->x] = 3;
         }
         if(frameBuffer->colorDepth[o->y - cam->y][o->x - cam->x] <= 1){
             if(o->color[0] != -1){
                 frameBuffer->color[o->y - cam->y][o->x - cam->x] = rgb[o->color[0]][o->color[1]][o->color[2]];
+                frameBuffer->colorDepth[o->y - cam->y][o->x - cam->x] = 3;
             }
         }
     }

@@ -1,0 +1,36 @@
+[
+    {
+        "type" : "Regular",
+        "id" : 0,
+        "cr" : 3,
+        "cb" : 3,
+        "cg" : 3,
+        "mist" : 0,
+        "backgroundMusic" : "eerie"
+    },{
+        "type" : "Potion",
+        "id" : 1,
+        "cr" : 1,
+        "cb" : 2,
+        "cg" : 3,
+        "mist" : 0,
+        "backgroundMusic" : "underground"
+    },{
+        "type" : "Nightmare",
+        "id" : 2,
+        "cr" : 3,
+        "cb" : 2,
+        "cg" : 1,
+        "mist" : 2,
+        "backgroundMusic" : "underworld"
+
+    },{
+        "type" : "Tressure",
+        "id" : 3,
+        "cr" : 4,
+        "cb" : 4,
+        "cg" : 1,
+        "mist" : 0,
+        "backgroundMusic" : "eerie"
+    }
+]

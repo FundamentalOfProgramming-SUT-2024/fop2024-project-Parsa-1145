@@ -54,7 +54,6 @@ void deleteEffect(Effect* effect);
 cJSON* effectToJson(Effect* e);
 Effect* loadEffect(cJSON* data);
 
-
 void(*getAction(char* name))(ItemBase*);
 void(*getEffectFunc(char* name))(Effect*);
 

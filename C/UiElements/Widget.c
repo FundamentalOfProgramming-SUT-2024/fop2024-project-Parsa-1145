@@ -35,6 +35,7 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->layoutType = 0;
     widget->scrollOn = 0;
     widget->canScrollUp = 0;
+    widget->z = 1;
 
     widget->children = malloc(sizeof(LinkedList));
     createLinkedList(widget->children, sizeof(UiBase*));
@@ -50,6 +51,9 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->uiBase->mouseMove = &WMouseMoveCb;
     widget->uiBase->update = &updateWidgetChildren;
     widget->uiBase->delete = &deleteWidget;
+    widget->uiBase->isHovered = &updateChildrenHovered;
+    widget->uiBase->z = &(widget->z);
+
     widget->uiBase->object = widget;
     widget->uiBase->widget = widget;
     widget->uiBase->type = UI_TYPE_WIDGET;
@@ -190,11 +194,22 @@ int updateWidgetSize(Widget* widget){
         return 0;
     }
 }
-int widgetParentResized(Widget* widget){          /////////// right now it only accounts for window resize which is ok, but it would be neater to account for parent resize
+int widgetParentResized(Widget* widget){
     return 1;
 }
 int isWidgetHovered(Widget* widget, int x, int y){
-    return (((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
+    return (isWidgetVisible(widget) && ((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
+}
+int widgetHoveredUpdate(Widget* widget){
+    if(isWidgetHovered(widget, mEvent.x, mEvent.y)){
+        if(widget->z >= hoveredZ){
+            hoveredElement = widget->uiBase;
+            hoveredZ = widget->z;
+        }
+        return 1;
+    }else{
+        return 0;
+    }
 }
 
 void updateWidgetChildren(Widget* w){
@@ -288,6 +303,10 @@ void deleteWidget(Widget* w){
 }
 int WMouseMoveCb(Widget* w){
     if(isWidgetVisible(w)){
+        if(!w->parent){
+            updateChildrenHovered(w->uiBase);
+        }
+
         w->tmpIterPtr = w->children->data;
         int flag = 0;
         while(w->tmpIterPtr){
@@ -302,9 +321,12 @@ int WMouseMoveCb(Widget* w){
 }
 int WMouseClickCb(Widget* w){
     if(isWidgetVisible(w)){
+        updateChildrenHovered(w->uiBase);
+
         int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
         int flag = 0;
         w->tmpIterPtr = w->children->data;
+
         while(w->tmpIterPtr){
             w->iterPtr = w->tmpIterPtr[1];
             w->tmpIterPtr = w->tmpIterPtr[0];
@@ -414,5 +436,20 @@ void emptyWidget(Widget* w){
         w->iterPtr->delete(w->iterPtr->object);
     }
     emptyLinkedList(w->children);
+}
 
+void updateChildrenHovered(UiBase* o){
+    Widget* w = o->object;
+    widgetHoveredUpdate(w);
+    if(w->children->size){
+        void** tmp = w->children->data;
+        UiBase* ptr;
+
+        while(tmp){
+            ptr = tmp[1];
+            tmp = tmp[0];
+
+            ptr->isHovered(ptr);
+        }
+    }
 }

@@ -14,7 +14,7 @@
 #include "../UiElements/Widget.h"
 #include "../UiElements/UiBase.h"
 #include "../Utilities/LinkedList.h"
-
+#include "../GameObjects/Renderer.h"
 
 Button mmExitBtn;
 Button mmNewGameBtn;
@@ -29,6 +29,11 @@ Widget menu;
 LinkedList mmUiList;
 
 EngineState maineMenu = {&enterMainMenu, &updateMainMenu, &renderMainMenu, &exitMainMenu};
+
+CharTexture* mmBackGround;
+CharTexture* mmBackGround2;
+CharTexture* mmFrameBuffer;
+Camera mmCamera;
 
 void exitMainMenu(){
     terminate = 1;
@@ -51,9 +56,10 @@ void logOut(){
     mmLoginBtn.widget->isVisible = 1;
     mmLogOutBtn.widget->isVisible = 0;
 }
+int startW, startH;
 void initMainMenu(){
     createLinkedList(&mmUiList, sizeof(UiBase*));
-    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 15, NULL);
+    createWidget(&menu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 30, 15, C_BG_BLACK);
     menu.bordered = 1;
 
     createButton(&mmNewGameBtn, &menu, "New Game"   , RELATIVE, ALIGN_CENTER, ALIGN_TOP, 2, 2, 100);
@@ -86,6 +92,11 @@ void initMainMenu(){
     mmLoadGameBtn.contextObject = "outa.json";
     mmSocreboardBtn.callBack = &enterScoreBoard;
 
+    mmBackGround = loadCharTextureFromTxt("../Data/Ascii/mainMenu11.txt");
+    mmBackGround2 = loadCharTextureFromTxt("../Data/Ascii/mainMenu9.txt");
+    mmFrameBuffer = createCharTexture(10, 10, 1, 1);
+
+    getmaxyx(stdscr, startH, startW);
 
 }
 void enterMainMenu(){
@@ -97,6 +108,14 @@ void enterMainMenu(){
         mmLogOutBtn.widget->isVisible = 1;
     }
 
+    getmaxyx(stdscr, scrH, scrW);
+    resizeCharTexture(&mmFrameBuffer, scrW, scrH);
+
+    mmCamera.x = -scrW/2;
+    mmCamera.y = -scrH/2;
+    mmCamera.w = scrW;
+    mmCamera.h = scrH;
+
     curs_set(0);
     keypad(stdscr, TRUE);       
     noecho();
@@ -106,13 +125,19 @@ void enterMainMenu(){
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     timeout(100);
     printf("\033[?1003h\n");
-    
+    changeAudio(getAudioByName("title"), 2000);
 }
 void updateMainMenu(){
     int ch = getch();
     switch(ch){
         case KEY_RESIZE:
             getmaxyx(stdscr, scrH, scrW);
+            resizeCharTexture(&mmFrameBuffer, scrW, scrH);
+    
+            mmCamera.x = -scrW/2;
+            mmCamera.y = -scrH/2;
+            mmCamera.w = scrW;
+            mmCamera.h = scrH;
             clear();
             refresh();
             break;
@@ -149,7 +174,12 @@ void updateMainMenu(){
 void renderMainMenu(){
     erase();
     updateWidgetChildren(&menu);
+    fillCharTexture(mmFrameBuffer, ' ');
 
+    renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 20 + min(50, (scrW - startW)) + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
+    renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - min(15, ((scrH - startH) * 2)) , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
+
+    renderFrameBuffer(mmFrameBuffer);
 
     void** tmp = mmUiList.data;
     FOR(i, mmUiList.size){

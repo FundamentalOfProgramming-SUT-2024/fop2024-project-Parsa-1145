@@ -118,6 +118,9 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
     t->uiBase->mouseMove = &defaultMouseMoveCb;
     t->uiBase->update = &updateTextWidget;
     t->uiBase->delete = &deleteTextWidget;
+    t->uiBase->isHovered = &defaultIsHovered;
+    t->uiBase->z = &(t->widget->z);
+
 
     t->uiBase->object = t;
     t->uiBase->widget = t->widget;

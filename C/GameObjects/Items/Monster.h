@@ -8,5 +8,6 @@ int defaultMonsterUpdate(ItemBase* m);
 int defaultMonsterRender(ItemBase* m, CharTexture* frameBuffer, Camera* cam);
 void defaultMonsterAttack(ItemBase* m);
 void defaultMonsterDeath(ItemBase* m);
+void defaultMonsterTakeDamage(ItemBase* m, ItemBase* o, int damage);
 
 #endif

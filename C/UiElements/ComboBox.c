@@ -17,6 +17,8 @@ void createComboBox(ComboBox* c, Widget* parent, int sizePolicyX, int sizePolicy
     c->options = calloc(1, sizeof(LinkedList));
     createLinkedList(c->options, sizeof(char**));
 
+    c->widget->z = 1;
+
     c->bgColor = bgColor;
 
     c->selected = 0;
@@ -28,6 +30,9 @@ void createComboBox(ComboBox* c, Widget* parent, int sizePolicyX, int sizePolicy
     c->uiBase->mouseMove = &comboBoxMouseMove;
     c->uiBase->update = &updateComboBox;
     c->uiBase->delete = &deleteComboBox;
+    c->uiBase->isHovered = &isComboBoxHovered;
+    c->uiBase->z = &(c->widget->z);
+
 
     c->uiBase->object = c;
     c->uiBase->widget = c->widget;
@@ -118,4 +123,28 @@ void updateComboBox(ComboBox* c){
 }
 void deleteComboBox(ComboBox* c){
 
+}
+int isComboBoxHovered(UiBase* o){
+    ComboBox* c = o->object;
+    if(c->optionAreaOpen){
+        if(isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
+            if(hoveredZ <= 3){
+                hoveredZ = 3;
+                hoveredElement = o;
+            } 
+        }else if(hoveredElement == o){
+            hoveredElement = NULL;
+            hoveredZ = 0;
+        }
+    }else{
+        if(isWidgetHovered(c->widget, mEvent.x, mEvent.y)){
+            if(hoveredZ <= c->widget->z){
+                hoveredZ = c->widget->z;
+                hoveredElement = o;
+            } 
+        }else if(hoveredElement == o){
+            hoveredElement = NULL;
+            hoveredZ = 0;
+        }
+    }
 }

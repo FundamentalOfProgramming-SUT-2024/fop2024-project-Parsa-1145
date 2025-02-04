@@ -34,10 +34,41 @@ EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGame
 
 void** ngmTmpIterPtr;
 UiBase* ngmIterPtr;
+
+void loadDifficulty(){
+
+}
+
+void startNewGame(){
+    int difIndex = ngmDifficultyCombo.selected;
+
+    cJSON* json = openJsonFile("../Data/Difficulty.json");
+    cJSON* dif = cJSON_GetArrayItem(json, difIndex);
+
+    gameSettings.difficultyName = copyString(cJSON_GetObjectItem(dif, "name")->valuestring);
+    gameSettings.rememberItems = cJSON_GetObjectItem(dif, "rememberItems")->valueint;
+    gameSettings.visionRadius = cJSON_GetObjectItem(dif, "visionRadius")->valuedouble;
+    gameSettings.baseMaxHealth = cJSON_GetObjectItem(dif, "baseMaximumHealth")->valueint;
+    gameSettings.baseHealthRegenAmount = cJSON_GetObjectItem(dif, "healthRegenAmount")->valueint;
+    gameSettings.baseLuck = cJSON_GetObjectItem(dif, "baseLuck")->valuedouble;
+    gameSettings.baseSpeed = cJSON_GetObjectItem(dif, "baseSpeed")->valueint;
+
+    if(fabs(gameSettings.visionRadius - PI) < 0.01){
+        gameSettings.fullVision = 1;
+    }else{
+        gameSettings.fullVision = 0;
+    }
+
+    cJSON_free(json);
+
+    enterMainGame();
+}
+
+
 void initNewGameMenu(){
     createLinkedList(&ngmUiList, sizeof(UiBase*));
 
-    createWidget(&ngmSideBar, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 40, 100, C_BG_BLACK);
+    createWidget(&ngmSideBar, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 31, 100, C_BG_BLACK);
     ngmSideBar.layoutType = VERTICAL_LAYOUT;
     ngmSideBar.bordered = 1;
 
@@ -51,9 +82,9 @@ void initNewGameMenu(){
         createWidget(&ngmPlayerColorWidget, &ngmSideBar, RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 1, 0, 100, 6, NULL);
         ngmPlayerColorWidget.bordered = 0;
         {
-            createNumberInput(&ngmPlayerCrTextBox, &ngmPlayerColorWidget, "Red", player.color, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 1, 0, 12);
-            createNumberInput(&ngmPlayerCgTextBox, &ngmPlayerColorWidget, "Green", player.color+1, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 13, 0, 12);
-            createNumberInput(&ngmPlayerCbTextBox, &ngmPlayerColorWidget, "Blue", player.color+2, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 25, 0, 12);
+            createNumberInput(&ngmPlayerCrTextBox, &ngmPlayerColorWidget, "Red", player.color, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 1, 0, 9);
+            createNumberInput(&ngmPlayerCgTextBox, &ngmPlayerColorWidget, "Green", player.color+1, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 10, 0, 9);
+            createNumberInput(&ngmPlayerCbTextBox, &ngmPlayerColorWidget, "Blue", player.color+2, 5, 0, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 19, 0, 9);
             
             linkedListPushBack(ngmPlayerColorWidget.children, ngmPlayerCrTextBox.uiBase);
             linkedListPushBack(ngmPlayerColorWidget.children, ngmPlayerCgTextBox.uiBase);
@@ -77,22 +108,18 @@ void initNewGameMenu(){
 
         linkedListPushBack(ngmSideBar.children, ngmUserTextWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmPlayerColorTextWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmDifficultyWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmPlayerColorWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmGameSettingsLabel.uiBase);
-        linkedListPushBack(ngmSideBar.children, ngmDifficultyWidget.uiBase);
     }
-
-
 
     linkedListPushBack(ngmSideBar.children, ngmStart.uiBase);
     linkedListPushBack(ngmSideBar.children, ngmBackBtn.uiBase);
 
     linkedListPushBack(&ngmUiList, ngmSideBar.uiBase);
 
-
-    
     ngmBackBtn.callBack = maineMenu.enter;
-    ngmStart.callBack = mainGame.enter;
+    ngmStart.callBack = &startNewGame;
 }
 
 void enterNewGameMenu(){
@@ -111,7 +138,6 @@ void enterNewGameMenu(){
     }else{
         changeTextWidget(&ngmUserTextWidget, "Playing as: Guest");
     }
-    
 
     ngmTmpIterPtr = ngmUiList.data;
     while(ngmTmpIterPtr){
@@ -119,11 +145,11 @@ void enterNewGameMenu(){
         ngmIterPtr->update(ngmIterPtr->object);
         ngmTmpIterPtr = ngmTmpIterPtr[0];
     }
+
+
 }
 void updateNewGameMenu(){
     int ch = getch();
-    
-
     switch(ch){
         case KEY_RESIZE:
             getmaxyx(stdscr, scrH, scrW);
