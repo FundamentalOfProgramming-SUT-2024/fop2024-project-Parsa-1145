@@ -4,6 +4,7 @@
 #include "MainMenu.h"
 #include "MainGame.h"
 #include "NewGameMenu.h"
+#include "LoadNewGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
 #include "../UiElements/Widget.h"
@@ -26,10 +27,16 @@ TextWidget ngmGameSettingsLabel;
 Widget ngmDifficultyWidget;
 TextWidget ngmDifficaultyLabel;
 ComboBox ngmDifficultyCombo;
+Widget ngmMapSizeWidget;
+TextWidget ngmMapSizeLabel;
+ComboBox ngmMapSizeCombo;
+Widget ngmLootWidget;
+TextWidget ngmLootLabel;
+ComboBox ngmLootCombo;
 
 LinkedList ngmUiList;
 
-EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGameMenu, &exitNewGameMenu};
+EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGameMenu, &exitNewGameMenu, &ngmUiList};
 
 
 void** ngmTmpIterPtr;
@@ -39,19 +46,32 @@ void loadDifficulty(){
 
 }
 
-void startNewGame(){
+void ngmStartGame(){
     int difIndex = ngmDifficultyCombo.selected;
 
-    cJSON* json = openJsonFile("../Data/Difficulty.json");
-    cJSON* dif = cJSON_GetArrayItem(json, difIndex);
+    
+    cJSON* difficulties = openJsonFile("../Data/Difficulty.json");
+    cJSON* lootProfiles = openJsonFile("../Data/LootProfiles.json");
+    cJSON* mapSizeProfiles = openJsonFile("../Data/MapSizeProfiles.json");
 
-    gameSettings.difficultyName = copyString(cJSON_GetObjectItem(dif, "name")->valuestring);
-    gameSettings.rememberItems = cJSON_GetObjectItem(dif, "rememberItems")->valueint;
-    gameSettings.visionRadius = cJSON_GetObjectItem(dif, "visionRadius")->valuedouble;
-    gameSettings.baseMaxHealth = cJSON_GetObjectItem(dif, "baseMaximumHealth")->valueint;
-    gameSettings.baseHealthRegenAmount = cJSON_GetObjectItem(dif, "healthRegenAmount")->valueint;
-    gameSettings.baseLuck = cJSON_GetObjectItem(dif, "baseLuck")->valuedouble;
-    gameSettings.baseSpeed = cJSON_GetObjectItem(dif, "baseSpeed")->valueint;
+    cJSON* difficulty = cJSON_GetArrayItem(difficulties, ngmDifficultyCombo.selected);
+    cJSON* lootProfile = cJSON_GetArrayItem(lootProfiles, ngmLootCombo.selected);
+    cJSON* mapSizeProfile = cJSON_GetArrayItem(mapSizeProfiles, ngmMapSizeCombo.selected);
+
+    gameSettings.difficultyName = copyString(cJSON_GetObjectItem(difficulty, "name")->valuestring);
+    gameSettings.rememberItems = cJSON_GetObjectItem(difficulty, "rememberItems")->valueint;
+    gameSettings.visionRadius = cJSON_GetObjectItem(difficulty, "visionRadius")->valuedouble;
+    gameSettings.baseMaxHealth = cJSON_GetObjectItem(difficulty, "baseMaximumHealth")->valueint;
+    gameSettings.baseHealthRegenAmount = cJSON_GetObjectItem(difficulty, "healthRegenAmount")->valueint;
+    gameSettings.baseLuck = cJSON_GetObjectItem(difficulty, "baseLuck")->valuedouble;
+    gameSettings.baseSpeed = cJSON_GetObjectItem(difficulty, "baseSpeed")->valueint;
+
+    gameSettings.minRoomNum = cJSON_GetObjectItem(mapSizeProfile, "minRoomNum")->valueint;
+    gameSettings.maxRoomNum = cJSON_GetObjectItem(mapSizeProfile, "maxRoomNum")->valueint;
+    gameSettings.minFloorNum = cJSON_GetObjectItem(mapSizeProfile, "minRoomNum")->valueint;
+    gameSettings.maxFloorNum = cJSON_GetObjectItem(mapSizeProfile, "minRoomNum")->valueint;
+
+    gameSettings.lootRarityMultiplier = cJSON_GetObjectItem(lootProfile, "multiplier")->valuedouble;
 
     if(fabs(gameSettings.visionRadius - PI) < 0.01){
         gameSettings.fullVision = 1;
@@ -59,9 +79,14 @@ void startNewGame(){
         gameSettings.fullVision = 0;
     }
 
-    cJSON_free(json);
 
-    enterMainGame();
+
+    cJSON_free(difficulties);
+    cJSON_free(lootProfiles);
+    cJSON_free(mapSizeProfiles);
+
+    changeAudio(getAudioByName("otherworldNight"), 100);
+    enterNewGameLoading();
 }
 
 
@@ -77,7 +102,7 @@ void initNewGameMenu(){
 
     {
         createTextWidget(&ngmUserTextWidget, &ngmSideBar, ALIGN_LEFT, WITH_PARENT, 1, 3, "Playing as:");
-        createTextWidget(&ngmPlayerColorTextWidget, &ngmSideBar, ALIGN_LEFT, WITH_PARENT, 1, 3, "Charachter color:");
+        createTextWidget(&ngmPlayerColorTextWidget, &ngmSideBar, ALIGN_LEFT, WITH_PARENT, 1, 1, "Charachter color:");
 
         createWidget(&ngmPlayerColorWidget, &ngmSideBar, RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 1, 0, 100, 6, NULL);
         ngmPlayerColorWidget.bordered = 0;
@@ -97,20 +122,59 @@ void initNewGameMenu(){
             createTextWidget(&ngmDifficaultyLabel, &ngmDifficultyWidget, ABSOLUTE, ABSOLUTE, 0, 0, "Difficulty");
             createComboBox(&ngmDifficultyCombo, &ngmDifficultyWidget, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 11, 0, 15, 1, C_BG_GRAY0);
             {
-                comboBoxAddOption(&ngmDifficultyCombo, "Easy");
-                comboBoxAddOption(&ngmDifficultyCombo, "Nurmal");
-                comboBoxAddOption(&ngmDifficultyCombo, "Hard");
-                comboBoxAddOption(&ngmDifficultyCombo, "Nightmare");
+                cJSON* difficulties = openJsonFile("../Data/Difficulty.json");
+                cJSON* tmp = difficulties->child;
+                while(tmp){
+                    comboBoxAddOption(&ngmDifficultyCombo, cJSON_GetObjectItem(tmp, "name")->valuestring);
+                    tmp = tmp->next;
+                }
+                cJSON_free(difficulties);
             }
             linkedListPushBack(ngmDifficultyWidget.children, ngmDifficaultyLabel.uiBase);
             linkedListPushBack(ngmDifficultyWidget.children, ngmDifficultyCombo.uiBase);
         }
 
+        createWidget(&ngmMapSizeWidget, &ngmSideBar, RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 2, 0, 100, 1, NULL);
+        {
+            createTextWidget(&ngmMapSizeLabel, &ngmMapSizeWidget, ABSOLUTE, ABSOLUTE, 0, 0, "Map size");
+            createComboBox(&ngmMapSizeCombo, &ngmMapSizeWidget, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 11, 0, 15, 1, C_BG_GRAY0);
+            {   
+                cJSON* mapSizeProfiles = openJsonFile("../Data/MapSizeProfiles.json");
+                cJSON* tmp = mapSizeProfiles->child;
+                while(tmp){
+                    comboBoxAddOption(&ngmMapSizeCombo, cJSON_GetObjectItem(tmp, "name")->valuestring);
+                    tmp = tmp->next;
+                }
+                cJSON_free(mapSizeProfiles);
+            }
+            linkedListPushBack(ngmMapSizeWidget.children, ngmMapSizeLabel.uiBase);
+            linkedListPushBack(ngmMapSizeWidget.children, ngmMapSizeCombo.uiBase);
+        }
+
+        createWidget(&ngmLootWidget, &ngmSideBar, RELATIVE, ABSOLUTE, ALIGN_CENTER, WITH_PARENT, 2, 0, 100, 1, NULL);
+        {
+            createTextWidget(&ngmLootLabel, &ngmLootWidget, ABSOLUTE, ABSOLUTE, 0, 0, "Loot rarity");
+            createComboBox(&ngmLootCombo, &ngmLootWidget, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 11, 0, 15, 1, C_BG_GRAY0);
+            {
+                cJSON* lootProfiles = openJsonFile("../Data/LootProfiles.json");
+                cJSON* tmp = lootProfiles->child;
+                while(tmp){
+                    comboBoxAddOption(&ngmLootCombo, cJSON_GetObjectItem(tmp, "name")->valuestring);
+                    tmp = tmp->next;
+                }
+                cJSON_free(lootProfiles);
+            }
+            linkedListPushBack(ngmLootWidget.children, ngmLootLabel.uiBase);
+            linkedListPushBack(ngmLootWidget.children, ngmLootCombo.uiBase);
+        }
+        
         linkedListPushBack(ngmSideBar.children, ngmUserTextWidget.uiBase);
-        linkedListPushBack(ngmSideBar.children, ngmPlayerColorTextWidget.uiBase);
-        linkedListPushBack(ngmSideBar.children, ngmDifficultyWidget.uiBase);
-        linkedListPushBack(ngmSideBar.children, ngmPlayerColorWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmGameSettingsLabel.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmDifficultyWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmMapSizeWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmLootWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmPlayerColorTextWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmPlayerColorWidget.uiBase);
     }
 
     linkedListPushBack(ngmSideBar.children, ngmStart.uiBase);
@@ -119,7 +183,7 @@ void initNewGameMenu(){
     linkedListPushBack(&ngmUiList, ngmSideBar.uiBase);
 
     ngmBackBtn.callBack = maineMenu.enter;
-    ngmStart.callBack = &startNewGame;
+    ngmStart.callBack = &ngmStartGame;
 }
 
 void enterNewGameMenu(){
@@ -148,49 +212,12 @@ void enterNewGameMenu(){
 
 
 }
-void updateNewGameMenu(){
-    int ch = getch();
-    switch(ch){
-        case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            clear();
-            refresh();
-            break;
-        case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        ngmTmpIterPtr = ngmUiList.data;
-                        while(ngmTmpIterPtr){
-                            ngmIterPtr = ngmTmpIterPtr[1];
-                            ngmIterPtr->mouseMove(ngmIterPtr->object);
-                            ngmTmpIterPtr = ngmTmpIterPtr[0];
-                        }
-                        break;
-                    default:
-                        ngmTmpIterPtr = ngmUiList.data;
-                        while(ngmTmpIterPtr){
-                            ngmIterPtr = ngmTmpIterPtr[1];
-                            ngmIterPtr->mouseClick(ngmIterPtr->object);
-                            ngmTmpIterPtr = ngmTmpIterPtr[0];
-                        }
-                        break;
-                }
-            }
-            break;
-        case ERR:
-            break;
-        default:
-            ngmTmpIterPtr = ngmUiList.data;
-            while(ngmTmpIterPtr){
-                ngmIterPtr = ngmTmpIterPtr[1];
-                ngmIterPtr->keyPress(ngmIterPtr->object, ch);
-                ngmTmpIterPtr = ngmTmpIterPtr[0];
-            }
-            break;
-    }
+void updateNewGameMenu(int ch){
 }
 void renderNewGameMenu(){
+    erase();
+    emptyFrameBuffer(uiFrameBuffer);
+
     ngmTmpIterPtr = ngmUiList.data;
     while(ngmTmpIterPtr){
         ngmIterPtr = ngmTmpIterPtr[1];
@@ -204,6 +231,7 @@ void renderNewGameMenu(){
         ngmIterPtr->render(ngmIterPtr->object);
         ngmTmpIterPtr = ngmTmpIterPtr[0];
     }
+    renderFrameBuffer(uiFrameBuffer);
 
     refresh();
 }

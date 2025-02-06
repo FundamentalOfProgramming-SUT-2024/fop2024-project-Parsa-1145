@@ -47,6 +47,8 @@ typedef struct{
     int levitating;
     int invisible;
 
+    int timeSinceInEnhancedRoom;
+
     LinkedList items;
     LinkedList effects;
     ItemBase* heldObject;
@@ -60,5 +62,6 @@ void updatePlayerStats(Player* player);
 void checkEquiped();
 void addPlayerEffect(Effect* e);
 void resetPlayerStats(Player* player);
-void renderPlayer(CharTexture* frameBuffer, Camera* cam);
+cJSON* savePlayerToJson(Player* p);
+Player* loadPlayerFromJson(cJSON* data);
 #endif

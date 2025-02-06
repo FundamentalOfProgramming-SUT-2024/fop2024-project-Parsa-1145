@@ -1,5 +1,6 @@
 #ifndef GAMESETTINGS
 #define GAMESETTINGS
+#include "../Utilities/cJSON.h"
 
 typedef struct{
     int difficulty;
@@ -19,6 +20,8 @@ typedef struct{
     int fullVision;
     int rememberItems;
 
+    float lootRarityMultiplier;
+
     int baseMaxHealth;
     int baseHealthRegenTime;
     int baseHealthRegenAmount;
@@ -36,5 +39,8 @@ typedef struct{
     int debugMapGenerationStepped;
     int debugMapGenerationLayer;
 } GameSettings;
+
+cJSON* saveGameSettingsToJson(GameSettings* g);
+GameSettings* loadGameSettingsFromJson(cJSON* data);
 
 #endif

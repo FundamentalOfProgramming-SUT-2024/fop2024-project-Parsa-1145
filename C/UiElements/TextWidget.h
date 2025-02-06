@@ -22,11 +22,13 @@ typedef struct{
     UiBase* uiBase;
     int x, y;
     char* format;
+
+    int wrap;
+
     int strLength;
     int alignmentX, alignmentY;
 
     int bgColor;
-    int colorPair;
 
     Arg* args;
 
@@ -37,5 +39,6 @@ void changeTextWidget(TextWidget* t, char* format, ...);
 void renderTextWidget(TextWidget* t);
 void updateTextWidget(TextWidget* t);
 void deleteTextWidget(TextWidget* t);
+int textWidgetGetStrLength(TextWidget* t);
 
 #endif

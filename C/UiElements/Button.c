@@ -16,9 +16,9 @@ void renderButton(Button* btn){
         }else if(btn->uiBase == hoveredElement){
             attron(A_BOLD);
         }
-        move(btn->widget->topLeftY, btn->widget->topLeftX);
+        moveInFrameBuffer(uiFrameBuffer, btn->widget->topLeftY, btn->widget->topLeftX);
         for(int i = 0; i < btn->widget->wCopy; i++){
-            addch(' ');
+            addWchToFrameBuffer(uiFrameBuffer, ' ', btn->widget->z, 0, 0);
         }
         switch (btn->textAlign){
             case ALIGN_CENTER:
@@ -30,7 +30,7 @@ void renderButton(Button* btn){
             default:
                 break;
         }
-        mvprintw(btn->widget->topLeftY, btn->widget->topLeftX + btn->margin,"%s", btn->str);
+        mvFramBufferPrintW(uiFrameBuffer ,btn->widget->topLeftY, btn->widget->topLeftX + btn->margin, btn->widget->z,"%s", btn->str);
         if(btn->clicked){
             attroff(A_REVERSE);
         }else if(btn->uiBase == hoveredElement){
@@ -88,7 +88,7 @@ int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clic
                 playEffectByName("click");
                 if(btn->contextCallback){
                     btn->contextCallback(btn->contextObject);
-                }else if(btn->callBack){
+                }if(((char*)btn)[1] && btn->callBack){
                     btn->callBack();
                 }
                 btn->clicked = 0;
@@ -104,9 +104,9 @@ int buttonMouseClickEvent(Button* btn){  //// button is still hovered after clic
 
 void deleteButton(Button* btn){
     deleteWidget(btn->widget);
-    free(btn->uiBase);
+    deleteUiBase(btn->uiBase);
     free(btn->str);
-    free(btn);
+    memFree(btn, sizeof(Button));
 }
 void updateButton(Button* btn){
     updateWidgetTopLeft(btn->widget);

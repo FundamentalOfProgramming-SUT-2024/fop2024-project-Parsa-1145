@@ -1,7 +1,5 @@
 #ifndef TEXTBOX
 #define TEXTBOX
-#include <ncurses.h>
-
 #include "Widget.h"
 #include "../GlobalDefines.h"
 

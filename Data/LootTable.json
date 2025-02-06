@@ -1,14 +1,14 @@
 [{
     "type" : 0,
-    "minRolls" : 5,
-    "maxRolls" : 10,
+    "minDensity" : 0.1,
+    "maxDensity" : 0.2,
     "enteries":[
         {
             "name" : "Sword",
             "weight" : 15
         },{
             "name" : "Dagger",
-            "weight" : 100
+            "weight" : 5
         },{
             "name" : "Bow",
             "weight" : 5
@@ -29,17 +29,17 @@
             "name" : "Ancient key",
             "weight" : 5
         },{
-            "name" : "Thiefs key",
-            "weight" : 5
+            "name" : "Makeshift key",
+            "weight" : 100
         },{
             "name" : "Broken key",
-            "weight" : 5
+            "weight" : 100
         },{
             "name" : "Maggot",
             "weight" : 5
         },{
             "name" : "Dead rat",
-            "weight" : 5
+            "weight" : 100
         },{
             "name" : "Wierd soup",
             "weight" : 5
@@ -84,8 +84,8 @@
     ]
 },{
     "type" : 1,
-    "minRolls" : 5,
-    "maxRolls" : 10,
+    "minDensity" : 0.2,
+    "maxDensity" : 0.3,
     "enteries":[
         {
             "name" : "Health regen",
@@ -106,8 +106,8 @@
     ]
 },{
     "type" : 2,
-    "minRolls" : 5,
-    "maxRolls" : 10,
+    "minDensity" : 0.1,
+    "maxDensity" : 0.2,
     "enteries":[
         {
             "name" : "Sword",
@@ -135,7 +135,7 @@
             "name" : "Ancient key",
             "weight" : 5
         },{
-            "name" : "Thiefs key",
+            "name" : "Makeshift key",
             "weight" : 5
         },{
             "name" : "Broken key",
@@ -172,8 +172,8 @@
     ]
 },{
     "type" : 3,
-    "minRolls" : 15,
-    "maxRolls" : 20,
+    "minDensity" : 0.4,
+    "maxDensity" : 0.6,
     "enteries":[
         {
             "name" : "Golden coin",

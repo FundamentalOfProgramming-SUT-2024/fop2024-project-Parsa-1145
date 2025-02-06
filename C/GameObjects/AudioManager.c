@@ -28,14 +28,15 @@ void initAudioManager(){
 
 void changeAudio(Audio* target, unsigned int ms){
     if(!audioManager.current){
-        target->data->volume = 32;
+        target->data->volume = (((float)settings.musicVolume )/ 100) * 127;
         target->channel = Mix_FadeInChannel(-1, target->data, -1, ms);
         audioManager.current = target;
     }else if(target != audioManager.current){
+        Mix_Volume(audioManager.current->channel, (((float)settings.musicVolume )/ 100) * 127);
+        target->data->volume = (((float)settings.musicVolume )/ 100) * 127;
+        audioManager.current->data->volume = (((float)settings.musicVolume )/ 100) * 127;
         Mix_FadeOutChannel(audioManager.current->channel, ms);
-        target->data->volume = 32;
         target->channel = Mix_FadeInChannel(-1, target->data, -1, ms);
-
         audioManager.current = target;
     }
 }
@@ -57,10 +58,30 @@ void freeAudioManager(){
 }
 void playEffectByName(const char * const name){
     Audio* a = getAudioByName(name);
-    a->data->volume = 64;
+    a->data->volume = (((float)settings.effectsVolume) / 100) * 127;
     Mix_PlayChannel(-1, a->data, 0);
 }
 void playEffect(Audio* a){
-    a->data->volume = 64;
+    a->data->volume = (((float)settings.effectsVolume) / 100) * 127;
     Mix_PlayChannel(-1, a->data, 0);
+}
+
+void stopCurrentMuisc(unsigned int ms);
+void resumeCurrentMusic(unsigned int ms);
+void lowerCurrentMusic(unsigned int ms){
+    if(audioManager.current){
+        Mix_Volume(audioManager.current->channel, audioManager.current->data->volume / 4);
+    }
+}
+void resetCurrentMusicVolume(unsigned int ms){
+    if(audioManager.current){
+        audioManager.current->data->volume = (((float)settings.musicVolume )/ 100) * 127;
+        Mix_Volume(audioManager.current->channel, audioManager.current->data->volume);
+    }
+}
+void setMusicVolume(){
+    if(audioManager.current){
+        audioManager.current->data->volume = (((float)settings.musicVolume )/ 100) * 127;
+        Mix_Volume(audioManager.current->channel, audioManager.current->data->volume);
+    }
 }

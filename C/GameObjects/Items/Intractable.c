@@ -80,9 +80,15 @@ void generatePassword(ItemBase* o){
     if(!door->passwordValid){
         addMessage(writeLog("Generated password"));
         door->passwordValid = 1;
-        door->password = rand() % 10000;
+        while(door->password < 1000) door->password = rand() % 10000;
+
+        if(randWithProb(0.3)){
+            door->cursed = 1;
+        }else{
+            door->cursed = 0;
+        }
         addMessage(writeLog("The password is %d", door->password));
-        addTimed1ObjCallbackCallback(&invalidatePassword, door, 10);
+        addTimed1ObjCallbackCallback(&invalidatePassword, door, 10000);
     }else{
         addMessage(writeLog("Cannot generate more right now"));
     }
@@ -102,7 +108,24 @@ void enterPassword(ItemBase* o){
                 if(input == 0){
                     break;
                 }else if(o->passwordValid){
-                        if(o->password == input){
+                    int correct = 0;
+                    if(!o->cursed){
+                        if(o->password == input) correct = 1;
+                    }else{
+                        char* tmp1 = writeLog("%d", o->password);
+                        char* tmp2 = writeLog("%d", input);
+
+                        correct = 1;
+                        FOR(i, 4){
+                            if(tmp1[i] != tmp2[3-i]){
+                                correct = 0;
+                            }
+                        }
+
+                        free(tmp1);
+                        free(tmp2);
+                    }
+                    if(correct){
                         o->collider = 0;
                         o->locked = 0;
                         o->sprite = '$';

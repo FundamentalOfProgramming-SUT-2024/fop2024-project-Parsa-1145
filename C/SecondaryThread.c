@@ -1,4 +1,4 @@
-#include<time.h>
+#include <SDL2/SDL.h>
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -14,7 +14,7 @@ unsigned long long curTime;
 
 void addTimedVoidCallback(void (*voidcb)(void*), int duration){
     TimedCallback* new = calloc(1, sizeof(TimedCallback));
-    new->start = time(NULL);
+    new->start = SDL_GetTicks();
     new->duration = duration;
     new->voidCb = voidcb;
 
@@ -25,7 +25,7 @@ void addTimedVoidCallback(void (*voidcb)(void*), int duration){
 }
 void addTimed1ObjCallbackCallback(void (*obj1Cb)(void*), void* obj1, int duration){
     TimedCallback* new = calloc(1, sizeof(TimedCallback));
-    new->start = time(NULL);
+    new->start = SDL_GetTicks();
     new->duration = duration;
     new->obj1Cb = obj1Cb;
     new->obj1 = obj1;
@@ -36,7 +36,7 @@ void addTimed1ObjCallbackCallback(void (*obj1Cb)(void*), void* obj1, int duratio
 }
 void addTimed2ObjCallbackCallback(void (*obj2Cb)(void*, void*), void* obj1, void* obj2, int duration){
     TimedCallback* new = calloc(1, sizeof(TimedCallback));
-    new->start = time(NULL);
+    new->start = SDL_GetTicks();
     new->duration = duration;
     new->obj2Cb = obj2Cb;
     new->obj1 = obj1;
@@ -47,7 +47,6 @@ void addTimed2ObjCallbackCallback(void (*obj2Cb)(void*, void*), void* obj1, void
     linkedListPushBack(&callbacks, new);
     pthread_mutex_unlock(&callbackMutex);
 }
-
 void initSecondaryThread(){
     createLinkedList(&callbacks, sizeof(TimedCallback*));
     pthread_create(&secondaryThread, NULL, &updateSecondaryThread, NULL);
@@ -60,7 +59,7 @@ void* updateSecondaryThread(){
             TimedCallback* ptr;
 
             //timespec_get(&curTime, TIME_UTC);
-            curTime = time(NULL);
+            curTime = SDL_GetTicks();
             while(tmpPtr){
                 ptr = tmpPtr[1];
                 tmpPtr = tmpPtr[0];
@@ -68,6 +67,7 @@ void* updateSecondaryThread(){
                     if(ptr->voidCb) ptr->voidCb();
                     else if(ptr->obj1Cb) ptr->obj1Cb(ptr->obj1);
                     else if(ptr->obj2Cb) ptr->obj2Cb(ptr->obj1, ptr->obj2);
+
                     free(ptr);
                     removeItemFromLinkedList(&callbacks, ptr);
                 }

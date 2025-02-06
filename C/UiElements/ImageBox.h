@@ -16,7 +16,7 @@ typedef struct {
 }ImageBox;
 
 void renderImageBox(ImageBox* iB);
-void createImageBox(ImageBox* iB, Widget* parent, CharTexture* t, int alignmentX, int alignmentY, int x, int y);
+void createImageBox(ImageBox* iB, Widget* parent, CharTexture* t, int color, int alignmentX, int alignmentY, int x, int y);
 void deleteImageBox(ImageBox* iB);
 void updateImageBox(ImageBox* iB);
 

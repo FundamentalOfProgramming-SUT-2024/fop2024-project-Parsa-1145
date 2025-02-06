@@ -6,6 +6,7 @@
 
 #include "MainGame.h"
 #include "MainMenu.h"
+#include "SettingsMenu.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
 #include "../GameObjects/Items/ItemTypes.h"
@@ -41,8 +42,8 @@
 
 
 void generateMap();
-
-EngineState mainGame = {&enterMainGame, &updateMainGame, &renderMainGame, &exitMainGame};
+LinkedList mgUiList;
+EngineState mainGame = {&enterMainGame, &updateMainGame, &renderMainGame, &exitMainGame, &mgUiList};
 
 Player player;
 LinkedList playerActionList;
@@ -64,7 +65,6 @@ Button mgOptionsBtn;
 Button mgSaveBtn;
 Button mgExitBtn;
 Button mgResumeButton;
-
 
 Widget mgDebugMenu;
 Button mgCloseDebugBtn;
@@ -109,13 +109,20 @@ TextWidget mgEquipedPrimaryTextWidget;
 TextWidget mgEquipedSecondaryextWidget;
 Widget mgInteractionsWidget;
 
-LinkedList mgUiList;
-
 Button* mgButtonList[1] = {&mgCloseDebugBtn};
 CheckBox* mgCheckBoxList[2] = {&mgShowPointCloudCb, &mgNoClipCb};
 
 char mgTerminalInput[50];
 LinkedList messages;
+
+typedef enum GameState{
+    inDungeon,
+    inEntrance,
+    inTressureRoom,
+    inFightRoom
+}GameState;
+
+GameState gameState;
 
 void updateMusic();
 
@@ -128,84 +135,18 @@ void saveGame(){
     cJSON* floorsJ = cJSON_CreateArray();
     FOR(i, floorNum){
         Floor* f = floors + i;
-        cJSON* fJ = cJSON_CreateObject();
-        cJSON_AddNumberToObject(fJ, "width", f->w);
-        cJSON_AddNumberToObject(fJ, "height", f->h);
-
-        cJSON_AddItemToObject(fJ, "ground mesh", saveCharTextureToJson(f->groundMesh));
-        cJSON_AddItemToObject(fJ, "feature mesh", saveCharTextureToJson(f->featureMesh));
-        cJSON_AddItemToObject(fJ, "visited", saveCharTextureToJson(f->visited));
-
-        cJSON* itemsJ = cJSON_CreateArray();
-        {
-            void** tmpPtr = f->itemList->data;
-            ItemBase* ptr;
-
-            while(tmpPtr){
-                ptr = tmpPtr[1];
-                tmpPtr = tmpPtr[0];
-
-                cJSON_AddItemToArray(itemsJ, itemToJson(ptr));
-            }
-        }
-        cJSON_AddItemToObject(fJ, "items", itemsJ);
-
-        cJSON_AddItemToArray(floorsJ, fJ);
+        cJSON_AddItemToArray(floorsJ, saveFloorToJson(f));
     }
+
     cJSON_AddItemToObject(json, "floors", floorsJ);
 
-    cJSON* playerJ = cJSON_CreateObject();
-    cJSON* inventoryJ = cJSON_CreateArray();
-    {
-        void** tmpPtr = player.items.data;
-        ItemBase* ptr;
+    cJSON_AddItemToObject(json, "player", savePlayerToJson(&player));
 
-        while(tmpPtr){
-            ptr = tmpPtr[1];
-            tmpPtr = tmpPtr[0];
-
-            cJSON_AddItemToArray(inventoryJ, itemToJson(ptr));
-        }
-    }
-
-    cJSON_AddItemToObject(playerJ, "inventory", inventoryJ);
-    cJSON_AddNumberToObject(playerJ, "x", player.x);
-    cJSON_AddNumberToObject(playerJ, "y", player.y);
-    cJSON_AddNumberToObject(playerJ, "z", player.z);
-    cJSON_AddNumberToObject(playerJ, "total golds", player.totalGold);
-    cJSON_AddNumberToObject(playerJ, "health", player.health);
-    cJSON_AddNumberToObject(playerJ, "fullness", player.fullness);
-    cJSON_AddNumberToObject(playerJ, "base max health", player.baseMaxHealth);
-    cJSON_AddNumberToObject(playerJ, "base speed", player.baseSpeed);
-    cJSON_AddNumberToObject(playerJ, "base strength", player.baseStrength);
-    cJSON_AddNumberToObject(playerJ, "base fullness", player.baseFullness);
-    cJSON_AddNumberToObject(playerJ, "base strength", player.baseStrength);
-    cJSON_AddNumberToObject(playerJ, "vision radius", player.visionRadius);
-    if(player.heldObject){
-        cJSON_AddNumberToObject(playerJ, "held object", player.heldObject->id);
-    }
-    cJSON_AddNumberToObject(playerJ, "hunger time", player.hungerTime);
-    cJSON_AddNumberToObject(playerJ, "health regen time", player.healthRegenTime);
-    cJSON_AddNumberToObject(playerJ, "health regen amount", player.baseHealthRegenAmount);
-    {
-        cJSON* effectsJ = cJSON_CreateArray();
-        
-        void** tmp = player.effects.data;
-        Effect* e;
-        while(tmp){
-            e = tmp[1];
-            tmp = tmp[0];
-            cJSON* eJ = effectToJson(e);
-            cJSON_AddItemToArray(effectsJ, eJ);
-        }
-        cJSON_AddItemToObject(playerJ, "effects", effectsJ);
-    }
-
-    cJSON_AddItemToObject(json, "player", playerJ);
+    cJSON_AddItemToObject(json, "gameSettings", saveGameSettingsToJson(&gameSettings));
 
 
     saveJsonToFile("outa.json", json);
-    cJSON_Delete(json);
+    cJSON_free(json);
 }
 void loadGame(const char* address){
     resetGame();
@@ -215,81 +156,36 @@ void loadGame(const char* address){
     floorNum = cJSON_GetObjectItem(json, "floor num")->valueint;
     globalTime = cJSON_GetObjectItem(json, "global time")->valueint;
 
-    cJSON* floorsJ = cJSON_GetObjectItem(json, "floors");
-
-    floors = malloc(sizeof(Floor) * floorNum);
-    FOR(i, floorNum){
-        cJSON* fJ = cJSON_GetArrayItem(floorsJ, i);
-        Floor* f = floors + i;
-        f->index = i;
-        f->roomNum = 0;
-
-        f->w = cJSON_GetObjectItem(fJ, "width")->valueint;
-        f->h = cJSON_GetObjectItem(fJ, "height")->valueint;
-
-        f->groundMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "ground mesh"));
-        f->featureMesh = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "feature mesh"));
-        f->visited = loadCharTextureFromJson(cJSON_GetObjectItem(fJ, "visited"));
-
-        f->itemList = malloc(sizeof(LinkedList));
-        createLinkedList(f->itemList, sizeof(ItemBase*));
-
-        cJSON* tmp = cJSON_GetObjectItem(fJ, "items")->child;
-        while(tmp){
-            linkedListPushBack(f->itemList, loadItemFromJson(tmp));
+    floors = calloc(floorNum, sizeof(Floor));
+    {
+        cJSON* tmp = cJSON_GetObjectItem(json, "floors")->child;
+        for(int i = 0; tmp; i++){
+            loadFloorFromJson(tmp, floors + i);
             tmp = tmp->next;
         }
     }
 
-    cJSON* playerJ = cJSON_GetObjectItem(json, "player");
-    {
-        cJSON* tmp = cJSON_GetObjectItem(playerJ, "inventory")->child;
-        while(tmp){
-            linkedListPushBack(&(player.items), loadItemFromJson(tmp));
-            tmp = tmp->next;
-        }
-        updateInventoryTab();
-    }
-    player.x = cJSON_GetObjectItem(playerJ, "x")->valueint;
-    player.y = cJSON_GetObjectItem(playerJ, "y")->valueint;
-    player.z = cJSON_GetObjectItem(playerJ, "z")->valueint;
-    player.totalGold = cJSON_GetObjectItem(playerJ, "total golds")->valueint;
-    player.health = cJSON_GetObjectItem(playerJ, "health")->valueint;
-    player.fullness = cJSON_GetObjectItem(playerJ, "fullness")->valueint;
-    player.baseMaxHealth = cJSON_GetObjectItem(playerJ, "base max health")->valueint;
-    player.baseSpeed = cJSON_GetObjectItem(playerJ, "base speed")->valueint;
-    player.baseStrength = cJSON_GetObjectItem(playerJ, "base strength")->valueint;
-    player.baseFullness = cJSON_GetObjectItem(playerJ, "base fullness")->valueint;
-    player.baseStrength = cJSON_GetObjectItem(playerJ, "base strength")->valueint;
-    player.visionRadius = cJSON_GetObjectItem(playerJ, "vision radius")->valueint;
-    if(cJSON_GetObjectItem(playerJ, "held object")){
-        player.heldObject = findItemById(cJSON_GetObjectItem(playerJ, "held object")->valueint);
-    }
-    {
-        cJSON* effectsJ = cJSON_GetObjectItem(playerJ, "effects");
-        
-        cJSON* e = effectsJ->child;
-        while(e){
-            linkedListPushBack(&(player.effects), loadEffect(e));
-            e = e->next;
-        }
-    }
-    player.hungerTime = cJSON_GetObjectItem(playerJ, "hunger time")->valueint;
-    player.healthRegenTime = cJSON_GetObjectItem(playerJ, "health regen time")->valueint;
-    player.baseHealthRegenAmount = cJSON_GetObjectItem(playerJ, "health regen amount")->valueint;
-    
-    
-    cJSON_Delete(json);
+    loadPlayerFromJson(cJSON_GetObjectItem(json, "player"));
 
+    loadGameSettingsFromJson(cJSON_GetObjectItem(json, "gameSettings"));
+    
+    cJSON_free(json);
 
     mainCamera.h = scrH;
     mainCamera.w = scrW;
-    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h, 1, 1);
-    visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h, 0, 0);
+
+    resizeFrameBuffer(&frameBuffer, scrW, scrH);
+    resizeFrameBuffer(&visitedMaskBuffer, scrW, scrH);
+
     updateWorld(0, 0);
     updateEffectsTab();
+    updateInventoryTab();
+
+    emptyWidget(&mgMessagesArea);
+    emptyWidget(&mgItemWidget);
 
     engineState = &mainGame;
+
     timeout(100);
     nodelay(stdscr, FALSE);
 }
@@ -299,11 +195,11 @@ void mgToggleStatMenu(){
 
     renderMainGame();
 }
-void openItemInfo(ItemBase* o){
+void openItemInfoWrapper(ItemBase* o){
     if(gameSettings.debugItemInfo){
         debugItemInfo(o);
     }else{
-        o->openItemInfo(o);
+        openItemInfo(o);
     }
 }
 void updateEffectsTab(){
@@ -350,33 +246,112 @@ void updateInteractionsWidget(){
                 createTextWidget(tmpText, &mgInteractionsWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "press %u to %s", &(tmpInteraction->key), tmpInteraction->name);
                 break;
         }
+        tmpText->widget->overflow[0] = 1;
         linkedListPushBack(mgInteractionsWidget.children, tmpText->uiBase);
     }
 }
 void updateInventoryTab(){
     emptyWidget(&mgInventoryTab);
 
+    char* type, subType;
+
+    cJSON* typeJ = itemTypes->child;
+    cJSON* subTypeJ = NULL;
+
     ItemBase* iterPtr;
     void** tmpIterPtr = player.items.data;
-    while(tmpIterPtr){
-        iterPtr = tmpIterPtr[1];
-        tmpIterPtr = tmpIterPtr[0];
-        if(1){
-            Widget* tmpWidget = malloc(sizeof(Widget));
-            TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
-            Button* tmpButton = malloc(sizeof(Button));
 
-            createWidget(tmpWidget, &mgInventoryTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
-            createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%s(%o%u%O) x%d", (iterPtr->name), iterPtr->color[0], iterPtr->color[1], iterPtr->color[2], &(iterPtr->sprite), &(iterPtr->quantity));
-            createButton(tmpButton, tmpWidget, "...", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 3);
-            tmpButton->contextObject = iterPtr;
-            tmpButton->contextCallback = &openItemInfo;
-            linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
-            linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
-            linkedListPushBack(mgInventoryTab.children, tmpWidget->uiBase);
+    while(typeJ){
+        type = cJSON_GetObjectItem(typeJ, "type")->valuestring;
+        subTypeJ = cJSON_GetObjectItem(typeJ, "subType")->child;
+
+        int totalSubtypesFound = 0, subtypesTillNow = 0;
+
+        while(subTypeJ){
+            tmpIterPtr = player.items.data;
+            while(tmpIterPtr){
+                iterPtr = tmpIterPtr[1];
+                tmpIterPtr = tmpIterPtr[0];
+                if((!strcmp(type, iterPtr->type)) && (!strcmp(subTypeJ->valuestring, iterPtr->subType))){
+                    totalSubtypesFound++;
+                    break;
+                }
+            }
+            subTypeJ = subTypeJ->next;
         }
+
+        if(totalSubtypesFound){
+            TextWidget* typeTextWidget = calloc(1, sizeof(TextWidget));
+            createTextWidget(typeTextWidget, &mgInventoryTab, ALIGN_LEFT, WITH_PARENT, 1, 0, "%o%S:%O", 2 ,2 ,2 , type);
+            linkedListPushBack(mgInventoryTab.children, typeTextWidget->uiBase);
+
+            subTypeJ = cJSON_GetObjectItem(typeJ, "subType")->child;
+
+
+            while(subTypeJ){
+                int totalItemsFound = 0, itemsFoundTillNow = 0;
+                tmpIterPtr = player.items.data;
+                while(tmpIterPtr){
+                    iterPtr = tmpIterPtr[1];
+                    tmpIterPtr = tmpIterPtr[0];
+                    if((!strcmp(type, iterPtr->type)) && (!strcmp(subTypeJ->valuestring, iterPtr->subType))){
+                        totalItemsFound++;
+                    }
+                }
+
+                if(totalItemsFound){
+                    subtypesTillNow++;
+                    TextWidget* subTypeTextWidget = calloc(1, sizeof(TextWidget));
+                    if(totalSubtypesFound == subtypesTillNow){
+                        createTextWidget(subTypeTextWidget, &mgInventoryTab, ALIGN_LEFT, WITH_PARENT, 1, 0, "%o%U%O%o%S:%O", 2, 2, 2, 9492, 3, 3, 3, subTypeJ->valuestring);
+                    }else{
+                        createTextWidget(subTypeTextWidget, &mgInventoryTab, ALIGN_LEFT, WITH_PARENT, 1, 0, "%o%U%O%o%S:%O", 2, 2, 2, 9500, 3, 3, 3, subTypeJ->valuestring);
+                    }
+                    linkedListPushBack(mgInventoryTab.children, subTypeTextWidget->uiBase);
+
+                    tmpIterPtr = player.items.data;
+                    while(tmpIterPtr){
+                        iterPtr = tmpIterPtr[1];
+                        tmpIterPtr = tmpIterPtr[0];
+                        if((!strcmp(type, iterPtr->type)) && (!strcmp(subTypeJ->valuestring, iterPtr->subType))){
+                            itemsFoundTillNow++;
+                            Widget* tmpWidget = malloc(sizeof(Widget));
+                            TextWidget* tmpTextWidget = malloc(sizeof(TextWidget));
+                            Button* tmpButton = malloc(sizeof(Button));
+                            createWidget(tmpWidget, &mgInventoryTab, RELATIVE, ABSOLUTE, ABSOLUTE, WITH_PARENT, 1, 0, 90, 1, C_BG_BLACK);
+                            if(totalItemsFound == itemsFoundTillNow){
+                                if(totalSubtypesFound == subtypesTillNow){
+                                    createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, " %o%U%O%s(%o%u%O)x%d", 3, 3, 3, 9492, (iterPtr->name), iterPtr->color[0], iterPtr->color[1], iterPtr->color[2], &(iterPtr->sprite), &(iterPtr->quantity));
+                                }else{
+                                    createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%o%U%O%o%U%O%s(%o%u%O)x%d",2, 2, 2, 9474, 3, 3, 3, 9492, (iterPtr->name), iterPtr->color[0], iterPtr->color[1], iterPtr->color[2], &(iterPtr->sprite), &(iterPtr->quantity));
+                                }
+                            }else{
+                                if(totalSubtypesFound == subtypesTillNow){
+                                    createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, " %o%U%O%s(%o%u%O)x%d", 3, 3, 3, 9500, (iterPtr->name), iterPtr->color[0], iterPtr->color[1], iterPtr->color[2], &(iterPtr->sprite), &(iterPtr->quantity));
+                                }else{
+                                    createTextWidget(tmpTextWidget, tmpWidget, ALIGN_LEFT, ABSOLUTE, 0, 0, "%o%U%O%o%U%O%s(%o%u%O)x%d",2, 2, 2, 9474, 3, 3, 3, 9500, (iterPtr->name), iterPtr->color[0], iterPtr->color[1], iterPtr->color[2], &(iterPtr->sprite), &(iterPtr->quantity));
+                                }
+                            }
+                            createButton(tmpButton, tmpWidget, "...", ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 0, 0, 3);
+                            tmpButton->contextObject = iterPtr;
+                            tmpButton->contextCallback = &openItemInfoWrapper;
+                            linkedListPushBack(tmpWidget->children, tmpTextWidget->uiBase);
+                            linkedListPushBack(tmpWidget->children, tmpButton->uiBase);
+                            linkedListPushBack(mgInventoryTab.children, tmpWidget->uiBase);
+                        }
+                    }
+                }
+                subTypeJ = subTypeJ->next;
+            }
+
+        }
+
+
+        typeJ = typeJ->next;
     }
-    mgInventoryTab.tmpIterPtr = NULL; //this is here to freez up the uibase iterator of the widget.
+    
+
+    mgInventoryTab.tmpIterPtr = NULL; //this is here to freeze up the uibase iterator of the widget.
 }
 void mgToggleExitMenu(){
     mgPauseMenu.isVisible = !mgPauseMenu.isVisible;
@@ -441,7 +416,6 @@ void updateUi(){
         tmp1 = tmp1[0];
     }
 }
-
 TextWidget* addMessage(char* message){
     TextWidget* tmp = calloc(1, sizeof(TextWidget));
     createTextWidget(tmp, &mgMessagesArea, ALIGN_LEFT, WITH_PARENT, 0, 0, message);
@@ -453,49 +427,6 @@ TextWidget* addMessage(char* message){
     }
     free(message);
     return tmp;
-}
-
-void debugRenderFramebuffer(Floor* f){
-    erase();
-
-    mainCamera.h = scrH;
-    mainCamera.w = scrW;
-    mainCamera.x = player.x;
-    mainCamera.y = player.y;
-
-    renderFrameBuffer(frameBuffer);
-    
-    fillCharTexture(frameBuffer, ' ');
-
-    refresh();
-}
-void debugRenderMesh(Floor* f){
-    erase();
-    fillCharTexture(frameBuffer, ' ');
-
-    mainCamera.h = scrH;
-    mainCamera.w = scrW;
-    mainCamera.x = player.x;
-    mainCamera.y = player.y;
-    
-    if(gameSettings.debugMapGenerationLayer == 0){
-        renderTexture(f->groundMesh, 0, 0, &mainCamera, frameBuffer);
-    }else if (gameSettings.debugMapGenerationLayer==1){
-        renderTexture(f->featureMesh, 0, 0, &mainCamera, frameBuffer);
-    }else{
-        renderTexture(f->visited, 0, 0, &mainCamera, frameBuffer);
-    }
-    FOR(j, f->roomNum){
-        drawCircleOnTexture(frameBuffer, f->pointCloud[j]->x - mainCamera.x, f->pointCloud[j]->y - mainCamera.y, f->pointCloud[j]->radius, '.');
-        for(int k = j+1; k < f->roomNum; k++){
-            if(f->adjMat[k][j]){
-                renderLineToFrameBuffer('#', -1, -1, f->pointCloud[j]->x, f->pointCloud[j]->y, f->pointCloud[k]->x, f->pointCloud[k]->y, &mainCamera, frameBuffer);
-            }
-        }
-    }
-    renderFrameBuffer(frameBuffer);
-
-    refresh();
 }
 
 void initMainGame(){
@@ -571,6 +502,7 @@ void initMainGame(){
         mgResumeButton.callBack = &mgToggleExitMenu;
         mgSaveBtn.callBack = &saveGame;
         mgExitBtn.callBack = &enterMainMenu;
+        mgOptionsBtn.callBack = &enterSettingsMenu;
     }
 
 
@@ -654,6 +586,11 @@ void initMainGame(){
         createTextWidget(&mgEquipedNameTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 1, "Nothing is equiped");
         createTextWidget(&mgEquipedPrimaryTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
         createTextWidget(&mgEquipedSecondaryextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
+
+        mgEquipedNameTextWidget.widget->overflow[0] = 1;
+        mgEquipedPrimaryTextWidget.widget->overflow[0] = 1;
+        mgEquipedSecondaryextWidget.widget->overflow[0] = 1;
+
         createWidget(&mgInteractionsWidget, &mgEquipedWidget, RELATIVE, ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 2, 100, 10, NULL);
         mgInteractionsWidget.layoutType = VERTICAL_LAYOUT;
         mgInteractionsWidget.scrollOn = 1;
@@ -719,10 +656,16 @@ void initMainGame(){
     createLinkedList(&(playerActionList), sizeof(Interaction*));
 
     initAudioManager();
+    initTextureManager();
+
+    visitedMaskBuffer = createFrameBuffer(scrW, scrH);
+    frameBuffer = createFrameBuffer(scrW, scrH);
 
     initThemes();
 }
 void resetGame(){
+    gameEnded = 0;
+    resetRgbColors();
     FOR(i, floorNum){
         deleteFloor(floors + i);
     }
@@ -791,21 +734,24 @@ void resetGame(){
     mgPauseMenu.isVisible = 0;
     mgDebugMenu.isVisible = 0;
 }
-void enterMainGame(){
+void startNewGame(){
     clear();
     refresh();
     resetGame();
-        
+    
     getmaxyx(stdscr, scrH, scrW);
     mainCamera.h = scrH;
     mainCamera.w = scrW;
-    frameBuffer = createCharTexture(mainCamera.w, mainCamera.h, 1, 1);
+
+    if(frameBuffer) deleteCharTexture(frameBuffer);
+    frameBuffer = createFrameBuffer(mainCamera.w, mainCamera.h);
     visitedMaskBuffer = createCharTexture(mainCamera.w, mainCamera.h, 0, 0);
     generateMap();
 
     player.z = 0;
-    player.x = floors[0].roomList[0]->x+2;
-    player.y = floors[0].roomList[0]->y+2;
+    player.x = floors->roomList[0]->x + floors->roomList[0]->w / 2;
+    player.y = floors->roomList[0]->y + floors->roomList[0]->h / 2;
+
 
     engineState = &mainGame;
 
@@ -817,11 +763,9 @@ void enterMainGame(){
         saveAccount();
     }
 
-    
-
     ItemBase* startingMace = LoadItemWithName("Mace");
     startingMace->quantity = 1;
-    linkedListPushBack(&(player.items), startingMace);
+    addItemToInventory(startingMace);
     updateInventoryTab();
     updateMusic();
 
@@ -856,6 +800,10 @@ void endGame(int won, char * message){
 
 
     mgEndGameMenu.isVisible = 1;
+}
+void enterMainGame(){
+    renderFrameBuffer(uiFrameBuffer);
+    resetCurrentMusicVolume(1000);
 }
 
 int validForItemPosition(int x, int y, int z){
@@ -1093,10 +1041,10 @@ int castVisionRay(int x1, int y1, double x, double y, Floor* f, long double leng
         curxd = round(curx);
         curyd = round(cury);
 
-        if(!f->featureMesh->data[curyd][curxd]){
+        if(f->featureMesh->data[curyd][curxd] == -1){
             traversed += 1;
         }else{
-            traversed+=f->roomList[f->featureMesh->data[curyd][curxd]-1]->theme->mist;
+            traversed += themes[f->featureMesh->data[curyd][curxd]].mist;
         }
 
         tex->data[curyd][curxd] = 1;
@@ -1483,6 +1431,7 @@ void firstGroundmeshPass(Floor* f){
     }
 }
 void secondGroundMeshPass(Floor* f){
+    fillCharTexture(f->featureMesh, -1);
     FOR(i, f->roomNum){
         Room* r = f->roomList[i];
         for(int j = r->x - 1; j <= r->x + r->w ; j++){
@@ -1493,6 +1442,17 @@ void secondGroundMeshPass(Floor* f){
         for(int j = r->x; j < r->x + r->w; j++){
             for(int z = r->y; z < r->y + r->h; z++){
                 f->groundMesh->color[z][j] = rgb[r->theme->color[0]][r->theme->color[1]][r->theme->color[2]];
+            }
+        }
+    }
+}
+void thirdGroundMeshPass(Floor* f){
+    fillCharTexture(f->featureMesh, -1);
+    FOR(i, f->roomNum){
+        Room* r = f->roomList[i];
+        for(int j = r->x - 1; j <= r->x + r->w ; j++){
+            for(int z = r->y - 1; z <= r->y + r->h; z++){
+               f->featureMesh->data[z][j] = r->theme->id;
             }
         }
     }
@@ -1778,7 +1738,8 @@ void generateLoot(){
         }
         FOR(i, f->roomNum){
             Room* r = f->roomList[i];
-            int num = randBetween(cJSON_GetObjectItem(roomLootTable[r->theme->id], "minRolls")->valueint, cJSON_GetObjectItem(roomLootTable[r->theme->id], "maxRolls")->valueint + 1, i + j);
+            int num = fRandBetween(cJSON_GetObjectItem(roomLootTable[r->theme->id], "minDensity")->valuedouble,
+             cJSON_GetObjectItem(roomLootTable[r->theme->id], "maxDensity")->valuedouble + 1, 0) * (r->w-1) * (r->h-1);
             num = min(num, (r->w-1) * (r->h-1) / 2);
 
             cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme->id], "enteries");
@@ -1844,6 +1805,8 @@ void generateFloor(Floor* f){
     f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
     f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
     f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0 ,0);
+
+
     fillCharTexture(f->visited, 0);
     
     MovingCell* cell;
@@ -1881,7 +1844,7 @@ void generateFloor(Floor* f){
                     cell->attr[7] = 1;
                     f->roomList[j]->hidden = 1;
                 }else if(f->roomList[i]->neighbours == 2){
-                    if(randWithProb(0.6)){
+                    if(randWithProb(1)){
                         cell->attr[7] = 2;
                     }else{
                         cell->attr[7] = 0;
@@ -1919,13 +1882,14 @@ void generateFloor(Floor* f){
 
     secondGroundMeshPass(f);
     postProccessFloor(f);
+    thirdGroundMeshPass(f);
 }
 
 void generateMap(){
     floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
-    floors = malloc(floorNum * sizeof(Floor));
+    floors = malloc((floorNum)* sizeof(Floor));
     
-    FOR(i, floorNum){
+    for(int i = 0; i < floorNum; i++){
         floors[i].index = i;
         generateFloor(floors + i);
         placePillars(floors + i);
@@ -1977,14 +1941,14 @@ void searchForHidden(ItemBase* o){
             floors[player.z].groundMesh->data[tmpItemBase->y][tmpItemBase->x] = '.';
         }
     }
-    updateWorld(0, 0);
 }
 void updateMusic(){
-    if(floors[player.z].featureMesh->data[player.y][player.x]){
-        changeAudio(floors[player.z].roomList[floors[player.z].featureMesh->data[player.y][player.x]-1]->theme->music, 3000);
+    if(floors[player.z].featureMesh->data[player.y][player.x] != -1){
+        changeAudio(themes[floors[player.z].featureMesh->data[player.y][player.x]].music, 3000);
     }else{
         changeAudio(audioManager.audioList, 3000);
     }
+ 
 }
 void updateWorld(int x, int y){
     void** tmpPtr;
@@ -2080,6 +2044,23 @@ void updateWorld(int x, int y){
             }
             player.hungerCounter = 0;
         }
+        if(floors[player.z].featureMesh->data[player.y][player.x] == 1){
+            player.timeSinceInEnhancedRoom++;
+            if(player.timeSinceInEnhancedRoom == 10){
+                addFormattedMessage("%oYou feel a strange tingling sensation in the air...%O", 1, 1, 5);
+            }else if(player.timeSinceInEnhancedRoom == 20){
+                addFormattedMessage("%oThe magic in this room grows unstable. It might be dangerous to linger...%O", 3, 1, 2);
+            }else if(player.timeSinceInEnhancedRoom == 30){
+                addFormattedMessage("%oThe arcane forces surge wildly! Stay any longer, and you will face their wrath!%O", 5, 1, 1);
+            }
+
+            if(player.timeSinceInEnhancedRoom >= 30){
+                player.health -= 3;
+                if(player.health <= 0){
+                    endGame(0, writeLog("You couldnt bare the arcane"));
+                }
+            }
+        }
         player.healthRegenCounter++;
         if(player.healthRegenCounter >= player.healthRegenTime){
             if(player.fullness / (float)player.baseFullness > 0.7){
@@ -2134,6 +2115,18 @@ void playerKeyPress(int ch){
         case 's':
             updateWorld(0, 1);
             break;
+        case KEY_HOME:
+            updateWorld(-1, -1);
+            break;
+        case KEY_NPAGE:
+            updateWorld(1, 1);
+            break;
+        case KEY_END:
+            updateWorld(-1, 1);
+            break;
+        case KEY_PPAGE:
+            updateWorld(1, -1);
+            break;
         case 'e':
             if(player.heldObject && player.heldObject->primaryUse){
                 player.heldObject->primaryUse(player.heldObject);
@@ -2180,32 +2173,16 @@ void playerKeyPress(int ch){
     if(update) updateWorld(0, 0);
 }
 
-void updateMainGame(){
-    int ch = getch();
-    
+void updateMainGame(int ch){
     switch(ch){
         case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            clear();
-            refresh();
-
             mainCamera.h = scrH;
             mainCamera.w = scrW;
 
-            resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+            resizeFrameBuffer(&frameBuffer, mainCamera.w, mainCamera.h);
             resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
             break;
         case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                switch(mEvent.bstate){
-                case KEY_MOUSE_MOVE:
-                    uiMouseMove();
-                    break;
-                default:
-                    uiMouseClick();
-                    break;
-                }
-            }
             break;
         case 'k':
             rays += 100;
@@ -2216,9 +2193,7 @@ void updateMainGame(){
         case ERR:
             break;
         default:
-            if(!uiKeyPress(ch)){
-                playerKeyPress(ch);
-            }
+            playerKeyPress(ch);
             break;
             
     }
@@ -2267,7 +2242,6 @@ void renderMainGameToFramebuffer(){
 }
 void renderMainGameToTerminal(){
     erase();
-    updateUi();
 
     renderFrameBuffer(frameBuffer);
 
@@ -2277,32 +2251,19 @@ void renderMainGameToTerminal(){
 
     refresh();
 
-    fillCharTexture(frameBuffer, ' ');
+    emptyFrameBuffer(frameBuffer);
 }
 void renderMainGame(){
+    erase();
     switch (mgDebugRenderLayer.selected){
     case 0:
-        erase();
-        updateUi();
-        
         renderMainGameToFramebuffer();
 
         renderFrameBuffer(frameBuffer);
 
         mvprintw(scrH/2, scrW/2, "@");
-
-        renderUi();
-
-        refresh();
-
-        fillCharTexture(frameBuffer, 0);
-        fillColorTexture(frameBuffer, 0);
-        fillDepthTexture(frameBuffer, 0);
         break;
     case 1:
-        erase();
-        updateUi();
-        
         mainCamera.x = player.x-mainCamera.w/2;
         mainCamera.y = player.y-mainCamera.h/2;
 
@@ -2317,21 +2278,10 @@ void renderMainGame(){
         }
 
         renderFrameBuffer(frameBuffer);
-
         mvprintw(scrH/2, scrW/2, "@");
 
-        renderUi();
-
-        refresh();
-
-        fillCharTexture(frameBuffer, 0);
-        fillColorTexture(frameBuffer, 0);
-        fillDepthTexture(frameBuffer, 0);
         break;
     case 2:
-        erase();
-        updateUi();
-        
         mainCamera.x = player.x-mainCamera.w/2;
         mainCamera.y = player.y-mainCamera.h/2;
 
@@ -2341,22 +2291,19 @@ void renderMainGame(){
 
         mvprintw(scrH/2, scrW/2, "@");
 
-        renderUi();
-
-        refresh();
-
-        fillCharTexture(frameBuffer, 0);
-        fillColorTexture(frameBuffer, 0);
-        fillDepthTexture(frameBuffer, 0);
         break;
     default:
         break;
     }
+    renderUi();
+    renderFrameBuffer(uiFrameBuffer);
+    emptyFrameBuffer(uiFrameBuffer);
+    emptyFrameBuffer(frameBuffer);
+    refresh();
     
 }
-
-
 void exitMainGame(){
+    lowerCurrentMusic(1000);
 }
 int terminalGetInt(){
     mgTerminalTextBox.focused = 1;
@@ -2373,7 +2320,7 @@ int terminalGetInt(){
             mainCamera.h = scrH;
             mainCamera.w = scrW;
 
-            resizeCharTexture(&frameBuffer, mainCamera.w, mainCamera.h);
+            resizeFrameBuffer(&frameBuffer, mainCamera.w, mainCamera.h);
             resizeCharTexture(&visitedMaskBuffer, mainCamera.w, mainCamera.h);
         }else if(key == '\n'){
             if(sscanf(mgTerminalInput ,"%d", &key) == 1){
@@ -2385,7 +2332,6 @@ int terminalGetInt(){
                 mgTerminalTextBox.focused = 0;
                 return 0;
             }
-            
         }else{
             TBKeyPressCb(&mgTerminalTextBox, key);
         }

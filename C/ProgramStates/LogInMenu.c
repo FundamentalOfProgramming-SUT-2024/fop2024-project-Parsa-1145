@@ -24,24 +24,12 @@ Button limLoginBtn, limBackBtn;
 LinkedList liUiList;
 LinkedList liTextBoxList;
 Widget formWidget;
-PopUp* liInvalidPopup;
 
 
-EngineState logInMenu = {&enterLogInMenu, &updateLogInMenu, &renderLogInMenu, &exitLogInMenu};
+EngineState logInMenu = {&enterLogInMenu, &updateLogInMenu, &renderLogInMenu, &exitLogInMenu, &liUiList};
 
 void** liTmpIterPtr;
 UiBase* liIterPtr;
-
-void liCloseInvalidPopup(){
-    deletePopUp(liInvalidPopup);
-    liInvalidPopup = NULL;
-}
-void liReturnToMainMenu(){
-    deletePopUp(liInvalidPopup);
-    liInvalidPopup = NULL;
-
-    enterMainMenu();
-}
 
 void logIn(){
     if(liEnteredUsername[0]){
@@ -61,7 +49,7 @@ void logIn(){
                                 found = 1;
                                 loadAccount(user, &account);
 
-                                liInvalidPopup = createPopUp("Logged in!", NULL, 20, 20, &liReturnToMainMenu);
+                                createPopUp("Logged in!", NULL, 20, 20, maineMenu.enter, &liUiList);
                         
                                 break;
                             }
@@ -71,18 +59,18 @@ void logIn(){
                 }
             }
             if(!found){
-                liInvalidPopup = createPopUp("Username password pair not found.", NULL, 20, 20, &liCloseInvalidPopup);
+                createPopUp("Username password pair not found.", NULL, 20, 20, NULL, &liUiList);
         
             }
             cJSON_Delete(json);
         }else{
-            liInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &liCloseInvalidPopup);
+            createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, NULL, &liUiList);
     
             return;
         }
         
     }else{
-        liInvalidPopup = createPopUp("Please enter a username", NULL, 20, 20, &liCloseInvalidPopup);
+        createPopUp("Please enter a username", NULL, 20, 20, NULL, &liUiList);
 
         return;
     }
@@ -134,70 +122,27 @@ void enterLogInMenu(){
 
 }
 
-void updateLogInMenu(){
-    int ch = getch();
-
-    switch(ch){
-        case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            clear();
-            refresh();
-            break;
-        case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        if(liInvalidPopup){
-                            popupMouseMove(liInvalidPopup);
-                        }else{
-                            liTmpIterPtr = liUiList.data;
-                            FOR(i, liUiList.size){
-                                liIterPtr = liTmpIterPtr[1];
-                                liIterPtr->mouseMove(liIterPtr->object);
-                                liTmpIterPtr = liTmpIterPtr[0];
-                            }
-                        }
-                        break;
-                    default:
-                        if(liInvalidPopup){
-                            popupMouseClick(liInvalidPopup);
-                        }else{
-                            liTmpIterPtr = liUiList.data;
-                            FOR(i, liUiList.size){
-                                liIterPtr = liTmpIterPtr[1];
-                                liIterPtr->mouseClick(liIterPtr->object);
-                                liTmpIterPtr = liTmpIterPtr[0];
-                            }
-                        }
-                        break;
-                }
-            }
-            break;
-        case ERR:
-            break;
-        default:
-            if(!liInvalidPopup){
-                liTmpIterPtr = liUiList.data;
-                FOR(i, liUiList.size){
-                    liIterPtr = liTmpIterPtr[1];
-                    liIterPtr->keyPress(liIterPtr->object, ch);
-                    liTmpIterPtr = liTmpIterPtr[0];
-                }
-            }
-            break;
-    }
+void updateLogInMenu(int ch){
 }
 
 void renderLogInMenu(){
     erase();
-    updateWidgetChildren(&formWidget);
+    emptyFrameBuffer(uiFrameBuffer);
+    
+    liTmpIterPtr = liUiList.data;
+    FOR(i, liUiList.size){
+        liIterPtr = liTmpIterPtr[1];
+        liIterPtr->update(liIterPtr->object);
+        liTmpIterPtr = liTmpIterPtr[0];
+    }
+
     liTmpIterPtr = liUiList.data;
     FOR(i, liUiList.size){
         liIterPtr = liTmpIterPtr[1];
         liIterPtr->render(liIterPtr->object);
         liTmpIterPtr = liTmpIterPtr[0];
     }
-    if(liInvalidPopup) renderPopup(liInvalidPopup);
+    renderFrameBuffer(uiFrameBuffer);
     refresh();
 }
 void exitLogInMenu(){

@@ -51,6 +51,8 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->decayTime = object->valueint;
         }else if(!strcmp(object->string, "goodness")){
             o->goodness = object->valueint;
+        }else if(!strcmp(object->string, "description")){
+            o->description = copyString(object->valuestring);
         }else if(!strcmp(object->string, "cursedProb")){
             o->cursed = randWithProb(object->valuedouble);
         }else if(!strcmp(object->string, "cursed")){
@@ -61,6 +63,8 @@ ItemBase* loadItemFromJson(cJSON* data){
             o->color[1] = object->valueint;
         }else if(!strcmp(object->string, "cb")){
             o->color[2] = object->valueint;
+        }else if(!strcmp(object->string, "asciiArt")){
+            o->asciiArt = getTextureByName(object->valuestring);
         }else if(!strcmp(object->string, "visionRadius")){
             o->visionRadius = object->valueint;
         }else if(!strcmp(object->string, "health")){
@@ -115,11 +119,11 @@ ItemBase* loadItemFromJson(cJSON* data){
         }else if(!strcmp(o->type, "useable")){
             if(!strcmp(o->subType, "key")){
                 initKey(o);
+            }else if(!strcmp(o->subType, "valueable")){
+                initValueable(o);
             }
         }else if(!strcmp(o->type, "ammo")){
             initAmmo(o);
-        }else if(!strcmp(o->type, "valueable")){
-            initValueable(o);
         }else if(!strcmp(o->type, "endgame")){
             initAmulet(o);
         }else{
@@ -161,7 +165,13 @@ cJSON* itemToJson(ItemBase* o){
     cJSON_AddNumberToObject(json, "quantity", o->quantity);
     cJSON_AddNumberToObject(json, "locked", o->locked);
     cJSON_AddNumberToObject(json, "hidden", o->hidden);
-    cJSON_AddStringToObject(json, "deathSound", o->deathSound->name);
+    if(o->deathSound){
+        cJSON_AddStringToObject(json, "deathSound", o->deathSound->name);
+    }if(o->description){
+        cJSON_AddStringToObject(json, "description", o->description);
+    }if(o->asciiArt){
+        cJSON_AddStringToObject(json, "asciiArt", o->asciiArt->name);
+    }
     cJSON_AddNumberToObject(json, "visionRadius", o->visionRadius);
     cJSON_AddNumberToObject(json, "health", o->health);
     cJSON_AddNumberToObject(json, "value", o->value);
@@ -204,21 +214,61 @@ ItemBase* LoadItemWithName(const char* name){
     return NULL;
 }
 void defaultItemPickup(ItemBase* o){
-    removeItemFromLinkedList(floors[player.z].itemList, o);
-    if(!o->fake){
-        if(o->quantity == 1){
-            if(isVowel(o->name[0])){
-                addMessage(writeLog("You picked up an %s", o->name));
-            }else{
-                addMessage(writeLog("You picked up a %s", o->name));
+    int valid = 1;
+    if((o->type) && !strcmp(o->type, "consumable") && (o->subType) && (!strcmp(o->subType, "food"))){
+        void** tmp = player.items.data;
+        ItemBase* ptr;
+        int n = 0;
+
+        while(tmp){
+            ptr = tmp[1];
+            tmp = tmp[0];
+            if((o->type) && !strcmp(o->type, "consumable") && (o->subType) && (!strcmp(o->subType, "food"))){
+                n+= o->quantity;
             }
-        }else{
-            addMessage(writeLog("You picked up %d %ss", o->quantity, o->name));
         }
-        addItemToInventory(o);
-    }else{
-        addMessage(writeLog("You are hallucinating", o->quantity, o->name));
-        defaultItemDelete(o);
+
+        if(n >= 5){
+            addMessage(writeLog("You cannot pickup more than 5 food"));
+            valid = 0;
+        }
+
+    }else if((o->type) && !strcmp(o->type, "weapon") && (strcmp(o->name, "dagger"))){
+        void** tmp = player.items.data;
+        ItemBase* ptr;
+        int n = 0;
+
+        while(tmp){
+            ptr = tmp[1];
+            tmp = tmp[0];
+            if(!strcmp(ptr->name, o->name)){
+                valid = 0;
+                break;
+            }
+        }
+
+        if(valid == 0){
+            addMessage(writeLog("You cannot pickup more of that weapon"));
+            valid = 0;
+        }
+    }
+    if(valid){
+        removeItemFromLinkedList(floors[player.z].itemList, o);
+        if(!o->fake){
+            if(o->quantity == 1){
+                if(isVowel(o->name[0])){
+                    addMessage(writeLog("You picked up an %s", o->name));
+                }else{
+                    addMessage(writeLog("You picked up a %s", o->name));
+                }
+            }else{
+                addMessage(writeLog("You picked up %d %ss", o->quantity, o->name));
+            }
+            addItemToInventory(o);
+        }else{
+            addMessage(writeLog("You are hallucinating", o->quantity, o->name));
+            defaultItemDelete(o);
+        }
     }
 
 }

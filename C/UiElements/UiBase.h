@@ -1,7 +1,8 @@
 #ifndef UIELEMENT
 #define UIELEMENT
 #include "UiType.h"
-#include "../GameObjects/Texture.h"
+#include "../GameObjects/Renderer.h"
+
 
 struct Widget;
 
@@ -29,6 +30,7 @@ int defaultMouseMoveCb(void*);
 int defaultKeyPressCb(void*);
 void defaultRender(void*);
 int defaultIsHovered(UiBase*);
+void deleteUiBase(UiBase* o);
 
 extern UiBase* hoveredElement;
 extern int hoveredZ;

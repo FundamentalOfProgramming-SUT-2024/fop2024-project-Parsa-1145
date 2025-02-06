@@ -10,7 +10,9 @@
         "secondaryUse" : "Swing attack",
         "cr" : 4,
         "cg" : 4,
-        "cb" : 4
+        "cb" : 4,
+        "asciiArt" : "mace",
+        "description" : "Worn, rusted, but familiar in your grip. It has seen countless battles. now, it’s your only ally."
     },{
         "name" : "Sword",
         "openProb" : 0.6,
@@ -22,7 +24,9 @@
         "secondaryUse" : "Swing attack",
         "cr" : 4,
         "cg" : 4,
-        "cb" : 4
+        "cb" : 4,
+        "asciiArt" : "sword",
+        "description" : "Weathered and forgotten, yet still sharp."
     },{
         "name" : "Dagger",
         "inHandUpdate" : "takeAim",
@@ -36,7 +40,9 @@
         "secondaryUse" : "Throw",
         "cr" : 4,
         "cg" : 4,
-        "cb" : 4
+        "cb" : 4,
+        "asciiArt" : "dagger",
+        "description" : "Balanced for a perfect throw, yet always seeming to find its way back to blood."
     },{
         "name" : "Bow",
         "type" : "weapon",
@@ -49,7 +55,10 @@
         "secondaryUse" : "Kick",
         "cr" : 2,
         "cg" : 1,
-        "cb" : 0
+        "cb" : 0,
+        "asciiArt" : "bow",
+        "description" : "Rough and unmarked, shaped by time and fate. Was it lost, or left behind?"
+
     },{
         "name" : "Magic Wand",
         "type" : "weapon",
@@ -61,11 +70,13 @@
         "secondaryUse" : "Kick",
         "cr" : 0,
         "cg" : 2,
-        "cb" : 4
+        "cb" : 4,
+        "asciiArt" : "wand",
+        "description" : "Humming with latent energy, it twists the air around it, eager to unleash its power."
     },{
         "name" : "Frost spell",
         "type" : "ammo",
-        "subType" : "apell",
+        "subType" : "spell",
         "damage" : 2,
         "range" : 8,
         "sprite" : 10230,
@@ -75,7 +86,7 @@
     },{
         "name" : "Fire spell",
         "type" : "ammo",
-        "subType" : "apell",
+        "subType" : "spell",
         "damage" : 2,
         "range" : 8,
         "sprite" : 10230,
@@ -85,7 +96,7 @@
     },{
         "name" : "Poison spell",
         "type" : "ammo",
-        "subType" : "apell",
+        "subType" : "spell",
         "damage" : 2,
         "range" : 8,
         "sprite" : 10230,
@@ -95,7 +106,7 @@
     },{
         "name" : "Blindness spell",
         "type" : "ammo",
-        "subType" : "apell",
+        "subType" : "spell",
         "damage" : 2,
         "range" : 8,
         "sprite" : 10230,
@@ -135,7 +146,7 @@
         "cg" : 3,
         "cb" : 0
     },{
-        "name" : "Thiefs key",
+        "name" : "Makeshift key",
         "type" : "useable",
         "subType" : "key",
         "openProb" : 0.4,
@@ -198,7 +209,8 @@
         ],
         "cr" : 1,
         "cg" : 2,
-        "cb" : 0
+        "cb" : 0,
+        "asciiArt" : "deadRat"
     },{
         "name" : "Wierd soup",
         "type" : "consumable",
@@ -239,7 +251,8 @@
         ],
         "cr" : 4,
         "cg" : 1,
-        "cb" : 0
+        "cb" : 0,
+        "asciiArt" : "potion"
     },{
         "name" : "Levitation",
         "type" : "consumable",
@@ -254,7 +267,8 @@
         ],
         "cr" : 4,
         "cg" : 4,
-        "cb" : 5
+        "cb" : 5,
+        "asciiArt" : "potion"
     },{
         "name" : "Invisibility",
         "type" : "consumable",
@@ -269,7 +283,8 @@
         ],
         "cr" : 5,
         "cg" : 5,
-        "cb" : 5
+        "cb" : 5,
+        "asciiArt" : "potion"
     },{
         "name" : "Luck Potion",
         "type" : "consumable",
@@ -285,7 +300,8 @@
         ],
         "cr" : 1,
         "cg" : 5,
-        "cb" : 1
+        "cb" : 1,
+        "asciiArt" : "potion"
     },{
         "name" : "Amulet of yendor",
         "type" : "endgame",
@@ -307,7 +323,8 @@
         ],
         "cr" : 4,
         "cg" : 0,
-        "cb" : 1
+        "cb" : 1,
+        "asciiArt" : "potion"
     },{
         "name" : "Heart crystal",
         "type" : "consumable",
@@ -338,7 +355,8 @@
         ],
         "cr" : 0,
         "cg" : 4,
-        "cb" : 2
+        "cb" : 2,
+        "asciiArt" : "potion"
     },{
         "name" : "Strength potion",
         "type" : "consumable",
@@ -354,10 +372,12 @@
         ],
         "cr" : 0,
         "cg" : 3,
-        "cb" : 4
+        "cb" : 4,
+        "asciiArt" : "potion"
     },{
         "name" : "Golden coin",
-        "type" : "valueable",
+        "type" : "useable",
+        "subType" : "valueable",
         "sprite" : 11096,
         "value" : 1,
         "cr" : 4,
@@ -365,7 +385,8 @@
         "cb" : 0
     },{
         "name" : "Ruby",
-        "type" : "valueable",
+        "type" : "useable",
+        "subType" : "valueable",
         "sprite" : 9670,
         "value" : 10,
         "cr" : 5,
@@ -417,7 +438,6 @@
         "cb" : 5,
         "openProb" :  0.3,
         "deathSound" : "giantDeath"
-
     },{
         "name" : "Snake",
         "type" : "monster",
@@ -439,6 +459,19 @@
         "visionRadius" : 1,
         "decayTime" : 5,
         "damage" : 20,
+        "cr" : 3,
+        "cg" : 1,
+        "cb" : 5,
+        "openProb" :  0.6,
+        "deathSound" : "zombieDeath2"
+    },{
+        "name" : "King Eldarion",
+        "type" : "monster",
+        "sprite" : 85,
+        "health" : 300,
+        "visionRadius" : -1,
+        "decayTime" : -1,
+        "damage" : 5,
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,

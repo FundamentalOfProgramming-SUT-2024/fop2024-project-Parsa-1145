@@ -34,5 +34,7 @@ typedef struct{
     CharTexture* pathFindMesh;
 }Floor;
 void deleteFloor(Floor* f);
+cJSON* saveFloorToJson(Floor* f);
+void loadFloorFromJson(cJSON* data, Floor* f);
 
 #endif

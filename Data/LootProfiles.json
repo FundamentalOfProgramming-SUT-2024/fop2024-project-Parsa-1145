@@ -1,0 +1,15 @@
+[
+    {
+        "name" : "Scarce",
+        "multiplier" : 0.4
+    },{
+        "name" : "Balanced",
+        "multiplier" : 0.4
+    },{
+        "name" : "Generous",
+        "multiplier" : 0.4
+    },{
+        "name" : "Abundant",
+        "multiplier" : 0.4
+    }
+]

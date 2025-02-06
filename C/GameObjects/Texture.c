@@ -7,8 +7,10 @@
 #include "Texture.h"
 #include "../Globals.h"
 
+CharTexture* globalFrameBuffer;
+
 CharTexture* createCharTexture(int w, int h, int hasDepth, int hasColor){
-    CharTexture* out = malloc(sizeof(CharTexture));
+    CharTexture* out = calloc(1, sizeof(CharTexture));
     out->w = w;
     out->h = h;
 
@@ -37,9 +39,23 @@ CharTexture* createCharTexture(int w, int h, int hasDepth, int hasColor){
 
     out->hasColor = hasColor;
     out->hasDepth = hasDepth;
+    out->hasAttr = 0;
+
+    out->cx = 0;
+    out->cy = 0;
+    out->x = 0;
+    out->y = 0;
 
     return out;
-    
+}
+CharTexture* createFrameBuffer(int w, int h){
+    CharTexture* out = createCharTexture(w, h, 1, 1);
+    out->attr = malloc(sizeof(unsigned int*) * h);
+    FOR(i, h){
+        out->attr[i] = calloc(w, sizeof(unsigned int));
+    }
+    out->hasAttr = 1;
+    return out;
 }
 void fillColorTexture(CharTexture* tex, int c){
     if(tex->hasColor){
@@ -75,6 +91,12 @@ void deleteCharTexture(CharTexture* tex){
             }
             free(tex->depth);
         }
+        if(tex->attr){
+            FOR(i, tex->h){
+                free(tex->attr[i]);
+            }
+            free(tex->attr);
+        }
     }
 }
 void fillDepthTexture(CharTexture* tex, char c){
@@ -88,6 +110,13 @@ void fillDepthTexture(CharTexture* tex, char c){
             FOR(j, tex->w){
                 tex->colorDepth[i][j] = c;
             }
+        }
+    }
+}
+void fillAttrTexture(CharTexture* tex, unsigned int a){
+    FOR(i, tex->h){
+        FOR(j, tex->w){
+            tex->attr[i][j] = a;
         }
     }
 }
@@ -105,7 +134,16 @@ void resizeCharTexture(CharTexture** tex, int w, int h){
         fillDepthTexture(tex[0], 0);
     }
 }
-
+void resizeFrameBuffer(CharTexture** tex, int w, int h){
+    deleteCharTexture(*tex);
+    free(tex[0]);
+    tex[0] = createFrameBuffer(scrW, scrH);
+    
+    fillCharTexture(tex[0], 0);
+    fillColorTexture(tex[0], 0);
+    fillDepthTexture(tex[0], 0);
+    fillAttrTexture(tex[0], 0);
+}
 void drawRectangleOnCharTexture(CharTexture* tex, float x, float y, float w, float h, wchar_t c);
 
 cJSON* saveCharTextureToJson(CharTexture* t){
@@ -152,12 +190,13 @@ cJSON* saveCharTextureToJson(CharTexture* t){
     return json;
 }
 CharTexture* loadCharTextureFromJson(cJSON* json){
-    CharTexture* t = calloc(1, sizeof(CharTexture));
-
-    t->w = cJSON_GetObjectItem(json, "width")->valueint;
-    t->h = cJSON_GetObjectItem(json, "height")->valueint;
-
     cJSON* data = cJSON_GetArrayItem(cJSON_GetObjectItem(json, "data"), 0);
+    cJSON* color = color = cJSON_GetObjectItem(json, "color");
+    cJSON* depth = depth = cJSON_GetObjectItem(json, "depth");
+
+    CharTexture* t = createCharTexture(cJSON_GetObjectItem(json, "width")->valueint, cJSON_GetObjectItem(json, "height")->valueint,
+        depth, color);
+
     FOR(j, t->h){
         cJSON* tmp2 = cJSON_GetArrayItem(data, 0);
 
@@ -168,9 +207,8 @@ CharTexture* loadCharTextureFromJson(cJSON* json){
 
         data = data->next;
     }
-    
-    cJSON* color;
-    if(color = cJSON_GetObjectItem(json, "color")){
+
+    if(color){
         t->hasColor = 1;
         color = color->child;
         FOR(j, t->h){
@@ -185,8 +223,7 @@ CharTexture* loadCharTextureFromJson(cJSON* json){
         }
     }
 
-    cJSON* depth;
-    if(depth = cJSON_GetObjectItem(json, "depth")){
+    if(depth){
         t->hasDepth = 1;
         depth = depth->child;
         FOR(j, t->h){
@@ -200,6 +237,8 @@ CharTexture* loadCharTextureFromJson(cJSON* json){
             depth = depth->next;
         }
     }
+
+    return t;
 }
 
 void mixTextures( CharTexture* t1, CharTexture* t2){
@@ -218,8 +257,10 @@ CharTexture* loadCharTextureFromTxt(const char * const address){
 
     int w = 0, h = 1, tmp = 0;
 
+    int ch;
     while(!feof(f)){
-        if(fgetwc(f) == '\n'){
+        ch = fgetwc(f);
+        if((ch == '\n') || (ch == '\0')){
             h++;
             if(tmp > w) w = tmp;
             tmp = 0;
@@ -250,7 +291,7 @@ CharTexture* loadCharTextureFromTxt(const char * const address){
     }
     fclose(f);
 
-    new = createCharTexture(w - 1, h, 1, 0);
+    new = createCharTexture(w - 1, h, 0, 1);
     FOR(i, h){
         FOR(j, w-1){
             new->data[i][j] = arr[i][j];
@@ -258,4 +299,16 @@ CharTexture* loadCharTextureFromTxt(const char * const address){
     }
 
     return new;
+}
+
+void emptyFrameBuffer(CharTexture* f){
+    FOR(i, f->h){
+        FOR(j, f->w){
+            f->data[i][j] = 0;
+            f->color[i][j] = 0;
+            f->colorDepth[i][j] = 0;
+            f->depth[i][j] = 0;
+            f->attr[i][j] = 0;
+        }
+    }
 }

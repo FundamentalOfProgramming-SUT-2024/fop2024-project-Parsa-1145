@@ -1,0 +1,31 @@
+[
+    {
+        "name" : "sword",
+        "id" : 0,
+        "address" : "../Data/Ascii/Items/sword.txt"
+    },{
+        "name" : "bow",
+        "id" : 1,
+        "address" : "../Data/Ascii/Items/bow.txt"
+    },{
+        "name" : "wand",
+        "id" : 2,
+        "address" : "../Data/Ascii/Items/wand.txt"
+    },{
+        "name" : "dagger",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/dagger.txt"
+    },{
+        "name" : "deadRat",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/deadRat.txt"
+    },{
+        "name" : "potion",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/potion.txt"
+    },{
+        "name" : "mace",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/mace.txt"
+    }
+]

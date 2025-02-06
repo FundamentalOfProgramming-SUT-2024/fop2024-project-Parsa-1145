@@ -4,7 +4,7 @@
 
 void initSignUpMenu();
 void enterSignUpMenu();
-void updateSignUpMenu();
+void updateSignUpMenu(int key);
 void renderSignUpMenu();
 void exitSignUpMenu();
 

@@ -18,11 +18,13 @@ int isFoodEqual(ItemBase* o1, ItemBase* o2);
 int isWeaponEqual(ItemBase* w1, ItemBase* w2);
 
 void openKeyInfo(ItemBase* o);
+void openBrokenKeyINfo(ItemBase* o);
 void openPotionInfo(ItemBase* o);
 void openFoodInfo(ItemBase* o);
 void openAmmoInfo(ItemBase* o);
 void openWeaponInfo(ItemBase* o);
 void openValueableInfo(ItemBase* o);
+void openItemInfo(ItemBase* o);
 
 void pickupValuable(ItemBase* o);
 void dropValueable(ItemBase* o);

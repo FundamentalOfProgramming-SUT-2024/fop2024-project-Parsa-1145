@@ -17,8 +17,16 @@
 #include "../../UiElements/TextWidget.h"
 
 #include "../AudioManager.h"
+#include "../TextureManager.h"
+
 
 extern int globalItemIdCounter;
+
+typedef struct LootDrop{
+    char* name;
+    uint8_t min, max;
+    float chance;
+}LootDrop;
 
 typedef struct ItemBase{
     void (*update)(struct ItemBase*);
@@ -41,8 +49,10 @@ typedef struct ItemBase{
     char* primaryUseName, *secondaryUseName, inHandUpdateName;
     char* name;
     char *type, *subType;
+    char *description;
     int collider;
     short color[3];
+    AsciiTexture* asciiArt;
 
     int quantity;
 
@@ -51,7 +61,7 @@ typedef struct ItemBase{
     int health, visionRadius;
     Audio* deathSound;
 
-    LinkedList effects;
+    LinkedList effects, lootDrop;
     int goodness, decayTime, cursed, decayed;
 
     float openingProb;
@@ -65,6 +75,7 @@ typedef struct ItemBase{
     int hidden;
     int inInventory;
 }ItemBase;
+
 
 ItemBase* loadItemFromJson(cJSON* data);
 ItemBase* LoadItemWithName(const char* name);

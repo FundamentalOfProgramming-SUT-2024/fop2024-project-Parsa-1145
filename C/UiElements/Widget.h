@@ -31,14 +31,12 @@ typedef struct Widget{
 
     LinkedList* children;
 
-    int bColor;
     int bgColor;
 
     int scrWCopy, scrHCopy;
     int topLeftX, topLeftY;
     int wCopy, hCopy;
 
-    int colorPair;
     int borderColor;
     int bordered;
 
@@ -62,6 +60,7 @@ int WMouseClickCb(Widget* textBox);
 int WKeyPressCb(Widget* textBox, int key);
 void emptyWidget(Widget* w);
 void updateChildrenHovered(UiBase* o);
-int widgetHoveredUpdate(Widget* w);
+int widgetHoveredUpdate(UiBase* o);
+int getTopColor(Widget* w);
 
 #endif

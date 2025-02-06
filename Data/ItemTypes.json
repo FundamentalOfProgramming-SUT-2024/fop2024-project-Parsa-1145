@@ -1,0 +1,31 @@
+[
+    {
+        "type" : "weapon",
+        "subType" : [
+            "melee",
+            "ranged"
+        ]
+    },{
+        "type" : "consumable",
+        "subType" : [
+            "food",
+            "potion"
+        ]
+    },{
+        "type" : "ammo",
+        "subType" : [
+            "arrow",
+            "spell"
+        ]
+    },{
+        "type" : "useable",
+        "subType" : [
+            "key"
+        ]
+    },{
+        "type" : "valueable",
+        "subType" : [
+            "key"
+        ]
+    }
+]

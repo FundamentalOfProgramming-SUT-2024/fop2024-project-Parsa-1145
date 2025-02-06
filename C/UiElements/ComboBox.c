@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "../Globals.h"
+#include "../GameObjects/AudioManager.h"
 
 
 void createComboBox(ComboBox* c, Widget* parent, int sizePolicyX, int sizePolicyY, int alignmentX, int alignmentY, int x, int y, int w, int h, int bgColor){
@@ -11,11 +12,12 @@ void createComboBox(ComboBox* c, Widget* parent, int sizePolicyX, int sizePolicy
     c->optionsArea = calloc(1, sizeof(Widget));
 
     createWidget(c->widget, parent, sizePolicyX, ABSOLUTE, alignmentX, alignmentY, x, y, w, 1, COLOR_BLACK);
-    createWidget(c->optionsArea, c->widget, RELATIVE, ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 1, 0, 100, 0, C_BG_GRAY0);
+    createWidget(c->optionsArea, c->widget, RELATIVE, ABSOLUTE, ALIGN_RIGHT, ABSOLUTE, 1, 0, 100, 1, C_BG_GRAY1);
     c->optionsArea->overflow[1] = 1;
     
     c->options = calloc(1, sizeof(LinkedList));
     createLinkedList(c->options, sizeof(char**));
+    c->optionsArea->z = 3;
 
     c->widget->z = 1;
 
@@ -33,7 +35,6 @@ void createComboBox(ComboBox* c, Widget* parent, int sizePolicyX, int sizePolicy
     c->uiBase->isHovered = &isComboBoxHovered;
     c->uiBase->z = &(c->widget->z);
 
-
     c->uiBase->object = c;
     c->uiBase->widget = c->widget;
     c->uiBase->type = UI_TYPE_COMBOBOX;
@@ -44,19 +45,21 @@ void comboBoxAddOption(ComboBox* c, char* name){
     c->optionsArea->h += 1;
 }
 int comboBoxMouseMove(ComboBox* c){
-    if(c->optionAreaOpen){
-        if(isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
-            c->hoveredOption = mEvent.y - c->optionsArea->topLeftY;
-            return 1;
+    if(hoveredElement == c->uiBase){
+        if(c->optionAreaOpen){
+            if(isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
+                c->hoveredOption = mEvent.y - c->optionsArea->topLeftY;
+                return 1;
+            }else{
+                c->hoveredOption = -1;
+            }
         }else{
-            c->hoveredOption = -1;
-        }
-    }else{
-        if((mEvent.y == c->widget->topLeftY) && (mEvent.x == c->widget->topLeftX + c->widget->wCopy - 1)){
-            c->btnHovered = 1;
-            return 1;
-        }else{
-            c->btnHovered = 0;
+            if((mEvent.y == c->widget->topLeftY) && (mEvent.x == c->widget->topLeftX + c->widget->wCopy - 1)){
+                c->btnHovered = 1;
+                return 1;
+            }else{
+                c->btnHovered = 0;
+            }
         }
     }
 }
@@ -66,13 +69,17 @@ int comboBoxMouseClick(ComboBox* c){
             if((mEvent.y == c->widget->topLeftY) && (mEvent.x == c->widget->topLeftX + c->widget->wCopy - 1)){
                 c->btnHovered = 1;
                 c->optionAreaOpen = !c->optionAreaOpen;
-            }else if(isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
+                playEffectByName("click");
+            }else if(c->optionAreaOpen && isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
                 c->selected = mEvent.y - c->optionsArea->topLeftY;
                 c->optionAreaOpen = 0;
                 c->btnHovered = 0;
                 c->hoveredOption = -1;
+                playEffectByName("click");
             }else{
                 c->optionAreaOpen = 0;
+                c->btnHovered = 0;
+                c->hoveredOption = -1;
             }
         }
     }
@@ -82,19 +89,19 @@ int comboBoxKeyPress(ComboBox* c, int ch){
 }
 void comboBoxRender(ComboBox* c){
     attr_set(0, c->bgColor, NULL);
-    move(c->widget->topLeftY, c->widget->topLeftX);
+    moveInFrameBuffer(uiFrameBuffer, c->widget->topLeftY, c->widget->topLeftX);
     FOR(i, c->widget->wCopy - 1){
-        addch(' ');
+        addWchToFrameBuffer(uiFrameBuffer, ' ', c->widget->z, c->bgColor, 0);
     }
     if(c->selected != -1){
-        mvprintw(c->widget->topLeftY, c->widget->topLeftX + 1, "%s", linkedListGetElement(c->options, c->selected));
+        mvFramBufferPrintW(uiFrameBuffer, c->widget->topLeftY, c->widget->topLeftX + 1, c->widget->z, "%s", linkedListGetElement(c->options, c->selected));
     }
 
     attr_set(0, 0, NULL);
     if(c->btnHovered){
         attr_set(WA_REVERSE, c->bgColor, NULL);
     }
-    mvprintw(c->widget->topLeftY, c->widget->topLeftX + c->widget->wCopy - 1, "%lc", 9661);
+    mvAddWchToFrameBuffer(uiFrameBuffer, c->widget->topLeftY, c->widget->topLeftX + c->widget->wCopy - 1, 9662, c->widget->z, 0, 0);
     if(c->btnHovered){
         attr_set(0, c->bgColor, NULL);
     }
@@ -109,7 +116,7 @@ void comboBoxRender(ComboBox* c){
             if((i == c->hoveredOption) || (i == c->selected)){
                 attr_on(WA_REVERSE, NULL);
             }
-            mvprintw(c->optionsArea->topLeftY + i, c->optionsArea->topLeftX, "%s", ptr);
+            mvFramBufferPrintW(uiFrameBuffer, c->optionsArea->topLeftY + i, c->optionsArea->topLeftX + 1, c->widget->z + 3, "%s", ptr);
             if((i == c->hoveredOption) || (i == c->selected)){
                 attr_off(WA_REVERSE, NULL);
             }

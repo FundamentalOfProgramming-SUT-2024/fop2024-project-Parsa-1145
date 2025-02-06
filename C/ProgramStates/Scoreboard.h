@@ -5,7 +5,7 @@
 
 void initScoreBoard();
 void enterScoreBoard();
-void updateScoreBoard();
+void updateScoreBoard(int key);
 void renderScoreBoard();
 void exitScoreBoard();
 

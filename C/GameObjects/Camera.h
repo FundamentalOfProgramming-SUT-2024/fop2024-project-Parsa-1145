@@ -6,4 +6,5 @@ typedef struct{
     int w, h;
 }Camera;
 
+extern Camera globalCamera;
 #endif

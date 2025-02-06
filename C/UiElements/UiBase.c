@@ -19,6 +19,13 @@ int defaultIsHovered(UiBase* o){
         }
     }
 }
-
+void deleteUiBase(UiBase* o){
+    if(hoveredElement == o){
+        hoveredElement = NULL;
+        hoveredZ = 0;
+    }
+    free(o);
+}
 UiBase* hoveredElement = NULL;
 int hoveredZ = -1;
+CharTexture* uiFrameBuffer = NULL;

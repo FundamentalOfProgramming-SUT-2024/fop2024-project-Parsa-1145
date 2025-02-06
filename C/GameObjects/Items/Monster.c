@@ -101,7 +101,6 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f, int o){
             found = 1;
             break;
         }
-        if(curPoint->depth > 20)return NULL;
         
         iterPtr = iterPtr[0];
     }
@@ -253,4 +252,33 @@ void defaultMonsterTakeDamage(ItemBase* m, ItemBase* o, int damage){
     if(m->health <= 0){
         defaultMonsterDeath(m);
     }
+}
+
+void eldarionUpdate(ItemBase* m){
+    if(deltaTime){
+        if(m->z == player.z){
+            PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 1);
+            if(!tmpPoint) tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 0);
+            if(tmpPoint){
+                if(hypot(player.x - m->x, player.y - m->y) > 1.5){
+                    if (validForMove(tmpPoint[1].x, tmpPoint[1].y, floors + player.z)){
+                        m->x = tmpPoint[1].x;
+                        m->y = tmpPoint[1].y;
+                    }
+                }else{
+                    m->primaryUse(m);
+                }
+                free(tmpPoint);
+            }
+        }
+    }
+}
+void eldarionRender(ItemBase* m, CharTexture* frameBuffer, Camera* cam){
+
+}
+void eldarionAttack(ItemBase* m){
+
+}
+void eldarionDeath(ItemBase* m){
+
 }

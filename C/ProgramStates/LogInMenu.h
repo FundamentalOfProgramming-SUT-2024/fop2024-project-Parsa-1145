@@ -5,7 +5,7 @@
 
 void initLogInMenu();
 void enterLogInMenu();
-void updateLogInMenu();
+void updateLogInMenu(int key);
 void renderLogInMenu();
 void exitLogInMenu();
 

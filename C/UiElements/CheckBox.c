@@ -38,24 +38,23 @@ void createCheckBox(CheckBox* checkBox, Widget* parent, char* label, int* value,
 void renderCheckBox(CheckBox* cb){
     if(isWidgetVisible(cb->widget)){
         attron(COLOR_PAIR(cb->colorPair));
-        move(cb->widget->topLeftY, cb->widget->topLeftX);
-        printw("%s", cb->label);
+        moveInFrameBuffer(uiFrameBuffer ,cb->widget->topLeftY, cb->widget->topLeftX);
+        framBufferPrintW(uiFrameBuffer, cb->widget->z,"%s", cb->label);
         
-        move(cb->widget->topLeftY, cb->widget->topLeftX + cb->widget->wCopy - 1);
+        moveInFrameBuffer(uiFrameBuffer ,cb->widget->topLeftY, cb->widget->topLeftX + cb->widget->wCopy - 1);
 
         if(hoveredElement == cb->uiBase){
             attron(A_DIM);
         }
         if(*(cb->value)){
-            printw("1");
+            addWchToFrameBuffer(uiFrameBuffer, '1', cb->widget->z, cb->widget->bgColor, 0);
         }else{
-            printw("0");
+            addWchToFrameBuffer(uiFrameBuffer, '0', cb->widget->z, cb->widget->bgColor, 0);
         }
         if(hoveredElement == cb->uiBase){
             attroff(A_DIM);
         }
         attroff(COLOR_PAIR(cb->colorPair));
-
     }
 }
 void CBMouseMoveCb(CheckBox* cb){
@@ -71,7 +70,7 @@ void updateCheckBox(CheckBox* cb){
     updateWidgetTopLeft(cb->widget);
 }
 void deleteCheckBox(CheckBox* cb){
-    free(cb->uiBase);
+    deleteUiBase(cb->uiBase);
     free(cb->widget);
     free(cb);
 }

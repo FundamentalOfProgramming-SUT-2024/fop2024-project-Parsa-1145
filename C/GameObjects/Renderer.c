@@ -1,11 +1,16 @@
-#include <ncurses.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include "../Globals.h"
 #include "../GlobalDefines.h"
+#include "../UiElements/Widget.h"
 
-#include "Renderer.h"
+
+struct{
+    int x1, y1, x2, y2;
+    int cut;
+    int wrap;
+}RenderBound;
 
 
 void renderLineToFrameBuffer(wchar_t c, int color, int depth, double x1, double y1, double x2, double y2, Camera* cam, CharTexture* frameBuffer){
@@ -456,7 +461,7 @@ void renderTexture(CharTexture* tex, int x, int y, Camera* cam, CharTexture* fra
             for(y1; y1 <= y2; y1++, v++){
                 u = x1 - x;
                 for(int i = x1; i <= x2; i++, u++){
-                    if((tex->data[v][u] != '\0') || (!frameBuffer->data[y1][i]) && (frameBuffer->depth[y1][i] <= tex->depth[v][u])){
+                    if((tex->data[v][u] != '\0') && ((!frameBuffer->data[y1][i]) || (frameBuffer->depth[y1][i] <= tex->depth[v][u]))){
                         frameBuffer->data[y1][i] = (tex->data[v][u]);
                         frameBuffer->depth[y1][i] = tex->depth[v][u];
                     }
@@ -470,7 +475,7 @@ void renderTexture(CharTexture* tex, int x, int y, Camera* cam, CharTexture* fra
             for(y1; y1 <= y2; y1++, v++){
                 u = x1 - x;
                 for(int i = x1; i <= x2; i++, u++){
-                    if((tex->data[v][u] != '\0') || (!frameBuffer->data[y1][i]) && (frameBuffer->depth[y1][i] <= tex->depth[v][u])){
+                    if((tex->data[v][u] != '\0') && ((!frameBuffer->data[y1][i]) || (frameBuffer->depth[y1][i] <= tex->depth[v][u]))){
                         frameBuffer->data[y1][i] = (tex->data[v][u]);
                         frameBuffer->depth[y1][i] = tex->depth[v][u];
                     }
@@ -573,42 +578,22 @@ void renderDepthlessTexture(CharTexture* tex, int x, int y, int depth, Camera* c
 }
 void renderFrameBuffer(CharTexture* frameBuffer){
     if(frameBuffer->hasColor){
-        int prevColor = 0, lastColor = 0;
         FOR(i, frameBuffer->h){
             move(i, 0);
             FOR(j, frameBuffer->w){
                 if(frameBuffer->data[i][j]){
-                    if(frameBuffer->color[i][j] != prevColor){
-                        attroff(COLOR_PAIR(prevColor));
-                        attron(COLOR_PAIR(frameBuffer->color[i][j]));
-                        lastColor = frameBuffer->color[i][j];
-                        prevColor = lastColor;
-                    }
+                    attr_set(frameBuffer->attr[i][j], frameBuffer->color[i][j], NULL);
                     printw("%lc", frameBuffer->data[i][j]);
                 }else{
-                    addch(' ');
+                    move(i, j+1);
                 }
             }
         }
-        if(lastColor != 0){
-            attroff(COLOR_PAIR(lastColor));
-        }
-    }else{
-        FOR(i, frameBuffer->h){
-            move(i, 0);
-            FOR(j, frameBuffer->w){
-                if(frameBuffer->data[i][j]){
-                    printw("%lc", frameBuffer->data[i][j]);
-                }else{
-                    addch(' ');
-                }
-            }
-        }
+        attr_set(0, 0, NULL);
     }
 }
 void maskFrameBuffer(CharTexture* frameBuffer, CharTexture* mask){
     if(mask->h > frameBuffer->h || mask->w > frameBuffer->w) return;
-
     if(frameBuffer->hasColor){
         if(frameBuffer->hasDepth){
             FOR(i, mask->h){
@@ -662,4 +647,117 @@ void colorMaskFrameBuffer(CharTexture* frb,CharTexture* mask){
             }
         }
     }
+}
+
+void addWchToFrameBuffer(CharTexture* frameBuffer , wchar_t c, int depth, int color, int attr){
+    if(c){
+        if(RenderBound.cut){
+            if(RenderBound.wrap && (frameBuffer->cx >= RenderBound.x2)){
+                frameBuffer->cx = RenderBound.x1;
+                frameBuffer->cy++;
+            }
+            if((frameBuffer->cx >= 0) && (frameBuffer->cy >= 0) && (frameBuffer->cx < frameBuffer->w) && (frameBuffer->cy < frameBuffer->h) &&
+                (frameBuffer->cx >= RenderBound.x1) && (frameBuffer->cy >= RenderBound.y1) && (frameBuffer->cx <= RenderBound.x2) && 
+                (frameBuffer->cy <= RenderBound.y2)){
+                if(depth >= frameBuffer->depth[frameBuffer->cy][frameBuffer->cx]){
+                    frameBuffer->data[frameBuffer->cy][frameBuffer->cx] = c;
+                    frameBuffer->depth[frameBuffer->cy][frameBuffer->cx] = depth;
+                    attr_get(frameBuffer->attr[frameBuffer->cy] + frameBuffer->cx, frameBuffer->color[frameBuffer->cy] + frameBuffer->cx,  NULL);
+                }
+            }
+            frameBuffer->cx++;
+        }else{
+            if(RenderBound.wrap && (frameBuffer->cx >= frameBuffer->w)){
+                frameBuffer->cx = 0;
+                frameBuffer->cy++;
+            }
+            if((frameBuffer->cx >= 0) && (frameBuffer->cy >= 0) && (frameBuffer->cx < frameBuffer->w) && (frameBuffer->cy < frameBuffer->h)){
+                if(depth >= frameBuffer->depth[frameBuffer->cy][frameBuffer->cx]){
+                    frameBuffer->data[frameBuffer->cy][frameBuffer->cx] = c;
+                    frameBuffer->depth[frameBuffer->cy][frameBuffer->cx] = depth;
+                    attr_get(frameBuffer->attr[frameBuffer->cy] + frameBuffer->cx, frameBuffer->color[frameBuffer->cy] + frameBuffer->cx,  NULL);
+                }
+            }
+            frameBuffer->cx++;
+        }
+    }else{
+        frameBuffer->cx++;
+    }
+}
+void framBufferPrintW(CharTexture* frameBuffer, int depth, const char * format, ...){
+    char* formatCopy = format;
+    int n = 0;
+    while(formatCopy[0]){
+        if(formatCopy[0] == '%'){
+            if(formatCopy[1] == '%') formatCopy++;
+            else n++;
+        }
+        formatCopy++;
+    }
+    va_list args;
+    va_start(args, n);
+
+    char* tmp = vWriteLog(format, args);
+    char* tmpCopy = tmp;
+
+    va_end(args);
+
+    if(RenderBound.cut){
+        while(tmp[0]){
+            if(RenderBound.wrap && (frameBuffer->cx >= RenderBound.x2)){
+                frameBuffer->cx = RenderBound.x1;
+                frameBuffer->cy++;
+            }
+            if((frameBuffer->cx >= 0) && (frameBuffer->cy >= 0) && (frameBuffer->cx < frameBuffer->w) && (frameBuffer->cy < frameBuffer->h) &&
+                (frameBuffer->cx >= RenderBound.x1) && (frameBuffer->cy >= RenderBound.y1) && (frameBuffer->cx <= RenderBound.x2) && 
+                (frameBuffer->cy <= RenderBound.y2)){
+                if(depth >= frameBuffer->depth[frameBuffer->cy][frameBuffer->cx]){
+                    frameBuffer->depth[frameBuffer->cy][frameBuffer->cx] = depth;
+                    frameBuffer->data[frameBuffer->cy][frameBuffer->cx] = tmp[0];
+                    attr_get(frameBuffer->attr[frameBuffer->cy] + frameBuffer->cx, frameBuffer->color[frameBuffer->cy] + frameBuffer->cx, NULL);
+                }
+            }
+            frameBuffer->cx++;
+            tmp++;
+        }
+    }else{
+        while(tmp[0]){
+            if(RenderBound.wrap && (frameBuffer->cx >= frameBuffer->w)){
+                frameBuffer->cx = 0;
+                frameBuffer->cy++;
+            }
+            if((frameBuffer->cx >= 0) && (frameBuffer->cy >= 0) && (frameBuffer->cx < frameBuffer->w) && (frameBuffer->cy < frameBuffer->h)){
+                if(depth >= frameBuffer->depth[frameBuffer->cy][frameBuffer->cx]){
+                    frameBuffer->depth[frameBuffer->cy][frameBuffer->cx] = depth;
+                    frameBuffer->data[frameBuffer->cy][frameBuffer->cx] = tmp[0];
+                    attr_get(frameBuffer->attr[frameBuffer->cy] + frameBuffer->cx, frameBuffer->color[frameBuffer->cy] + frameBuffer->cx, NULL);
+                }
+            }
+            frameBuffer->cx++;
+            tmp++;
+        }
+    }
+    
+    free(tmpCopy);
+}
+
+void moveInFrameBuffer(CharTexture* frameBuffer , int y, int x){
+    frameBuffer->cx = x;
+    frameBuffer->cy = y;
+}
+
+void setRenderBoundingWidget(struct Widget* w){
+}
+void setRenderBoundingBox(int x1, int y1, int x2, int y2){
+    RenderBound.x1 = x1;
+    RenderBound.y1 = y1;
+    RenderBound.x2 = x2;
+    RenderBound.y2 = y2;
+    RenderBound.cut = 1;
+}
+void setWrapMode(int m){
+    RenderBound.wrap = m;
+}
+void resetRenderBound(){
+    RenderBound.cut = 0;
 }

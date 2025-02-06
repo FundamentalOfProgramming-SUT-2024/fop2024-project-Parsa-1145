@@ -2,6 +2,7 @@
 
 #include "Useable.h"
 #include "../../ProgramStates/MainGame.h"
+#include "../../UiElements/ImageBox.h"
 #include "../../Globals.h"
 #include "ItemTypes.h"
 #include "Action.h"
@@ -49,9 +50,13 @@ void initKey(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
     }
+    if(!strcmp(o->name, "Broken key")){
+        o->openItemInfo = &openBrokenKeyINfo;
+    }else{
+        o->openItemInfo = &openKeyInfo;
+    }
     o->update = &pickableItemUpdate;
     o->render = &defaultItemRender;
-    o->openItemInfo = &openKeyInfo;
     o->pickUp = &defaultItemPickup;
     o->drop = &defaultItemDrop;
     o->isEqual = &defaultItemCompare;
@@ -89,188 +94,121 @@ void initAmulet(ItemBase* o){
     o->drop = &dropValueable;
     o->isEqual = &defaultItemCompare;
 }
-void openWeaponInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* dmg = malloc(sizeof(TextWidget));
 
-    Button* drop = malloc(sizeof(Button));
-    Button* equip = malloc(sizeof(Button));
-
+void openItemInfo(ItemBase* o){
     emptyWidget(&mgItemWidget);
 
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%u)", o->name, &(o->sprite));
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", &(o->damage));
-    createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
-    createButton    (equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
-
-    drop->contextObject = o;
-    drop->contextCallback = o->drop;
-    equip->contextObject = o;
-    equip->contextCallback = &equipInHand;
-
+    TextWidget* name = calloc(1, sizeof(TextWidget));
+    if((!strcmp(o->subType, "food")) && (!o->goodness)){
+        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%o%U%O)(%orotten%O)", o->name, o->color[0], o->color[1], o->color[2], o->sprite,
+        5, 2, 1);
+    }else{
+        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%o%U%O)", o->name, o->color[0], o->color[1], o->color[2], o->sprite);
+    }
     linkedListPushBack(mgItemWidget.children, name->uiBase);
+    
+    
+    if(o->asciiArt){
+        ImageBox* asciiArt = calloc(1, sizeof(ImageBox));
+        createImageBox(asciiArt, &mgItemWidget, o->asciiArt->data, rgb[o->color[0]][o->color[1]][o->color[2]], ALIGN_CENTER, WITH_PARENT, 0, 1);
+        linkedListPushBack(mgItemWidget.children, asciiArt->uiBase);
+    }
+
+    if(o->description){
+        TextWidget* description = calloc(1, sizeof(TextWidget));
+        createTextWidget(description, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 1, "description: %S", o->description);
+        linkedListPushBack(mgItemWidget.children, description->uiBase);
+    }
+
+    TextWidget* quantity = calloc(1, sizeof(TextWidget));
+    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 1, "quantity: %d", &(o->quantity));
     linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, dmg->uiBase);
-    if(o->range){
-        TextWidget* range = malloc(sizeof(TextWidget));
-        createTextWidget(range, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "range: %d", &(o->damage));
+
+    if(!strcmp(o->type, "weapon")){
+        TextWidget* dmg = calloc(1, sizeof(TextWidget));
+        createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", &(o->damage));
+        linkedListPushBack(mgItemWidget.children, dmg->uiBase);
+    }
+
+    if((!strcmp(o->type, "ammo")) || (!strcmp(o->subType, "ranged"))){
+        TextWidget* range = calloc(1, sizeof(TextWidget));
+        createTextWidget(range, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "range: %d", &(o->range));
         linkedListPushBack(mgItemWidget.children, range->uiBase);
     }
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
-    linkedListPushBack(mgItemWidget.children, equip->uiBase);
-    shownItem = o;
-}
-void openFoodInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* goodness = malloc(sizeof(TextWidget));
 
-    Button* drop = malloc(sizeof(Button));
-    Button* consume = malloc(sizeof(Button));
-
-    emptyWidget(&mgItemWidget);
-
-    if(!o->goodness){
-        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U) (rotten)", o->name, &(o->sprite));
-    }else{
-        createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
+    if(!strcmp(o->type, "consumable")){
+        if(!strcmp(o->subType, "food")){
+            TextWidget* goodness = calloc(1, sizeof(TextWidget));
+            createTextWidget(goodness, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "goodness: %d", &(o->goodness));
+            linkedListPushBack(mgItemWidget.children, goodness->uiBase);
+        }else if(!strcmp(o->subType, "potion")){
+            TextWidget* effectLabel = calloc(1, sizeof(TextWidget));
+            createTextWidget(effectLabel, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "effect: %S", (((Effect*)((o->effects.data)[1]))->type));
+            linkedListPushBack(mgItemWidget.children, effectLabel->uiBase);
+        }
     }
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(goodness, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "goodness: %d", &(o->goodness));
-    createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
-    createButton    (consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
 
+    if(o->value){
+        TextWidget* value = calloc(1, sizeof(TextWidget));
+        createTextWidget(value, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "value: %o%d%O",4, 4, 1 &(o->value));
+        linkedListPushBack(mgItemWidget.children, value->uiBase);
+    }
+
+    Button* drop = calloc(1, sizeof(Button));
+    createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+    linkedListPushBack(mgItemWidget.children, drop->uiBase);
     drop->contextObject = o;
     drop->contextCallback = o->drop;
-    consume->contextObject = o;
-    consume->contextCallback = o->primaryUse;
 
-    linkedListPushBack(mgItemWidget.children, name->uiBase);
-    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, goodness->uiBase);
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
-    linkedListPushBack(mgItemWidget.children, consume->uiBase);
+    o->openItemInfo(o);
+
     shownItem = o;
 }
-void openKeyInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* openProb = malloc(sizeof(TextWidget));
-
-    Button* drop = malloc(sizeof(Button));
-    Button* equip = malloc(sizeof(Button));
-
-    emptyWidget(&mgItemWidget);
-
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(openProb, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "opening chance: %f", &(o->openingProb));
-    createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
-    createButton    (equip, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
-
-    drop->contextObject = o;
-    drop->contextCallback = o->drop;
+void openWeaponInfo(ItemBase* o){
+    Button* equip = calloc(1, sizeof(Button));
+    createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
     equip->contextObject = o;
     equip->contextCallback = &equipInHand;
-
-    linkedListPushBack(mgItemWidget.children, name->uiBase);
-    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, openProb->uiBase);
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
-    shownItem = o;
 }
-void openPotionInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* sprite = malloc(sizeof(TextWidget));
-
-    Button* drop = malloc(sizeof(Button));
-    Button* consume = malloc(sizeof(Button));
-
-    emptyWidget(&mgItemWidget);
-
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S", o->name);
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(sprite, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "Shape: %U", &(o->sprite));
-    createButton    (drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
-    createButton    (consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
-
-    drop->contextObject = o;
-    drop->contextCallback = o->drop;
+void openFoodInfo(ItemBase* o){
+    Button* consume = calloc(1, sizeof(Button));
+    createButton(consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
     consume->contextObject = o;
     consume->contextCallback = o->primaryUse;
-
-    linkedListPushBack(mgItemWidget.children, name->uiBase);
-    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, sprite->uiBase);
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, consume->uiBase);
-    shownItem = o;
+}
+void openKeyInfo(ItemBase* o){
+    Button* equip = calloc(1, sizeof(Button));
+    createButton    (equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
+    equip->contextObject = o;
+    equip->contextCallback = &equipInHand;
+    linkedListPushBack(mgItemWidget.children, equip->uiBase);
+}
+void openPotionInfo(ItemBase* o){
+    Button* consume = calloc(1, sizeof(Button));
+    createButton(consume, &mgItemWidget, "consume", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 7);
+    consume->contextObject = o;
+    consume->contextCallback = o->primaryUse;
+    linkedListPushBack(mgItemWidget.children, consume->uiBase);
 }
 void openAmmoInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* dmg = malloc(sizeof(TextWidget));
-    TextWidget* range = malloc(sizeof(TextWidget));
-
-    Button* drop = malloc(sizeof(Button));
-    Button* equip = malloc(sizeof(Button));
-
-    emptyWidget(&mgItemWidget);
-
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(dmg, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "damage: %d", &(o->damage));
-    createTextWidget(range, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "range: %d", &(o->range));
-
-    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
+    Button* equip = calloc(1, sizeof(Button));
     createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
-
-    drop->contextObject = o;
-    drop->contextCallback = o->drop;
-
     if(!strcmp(o->subType, "arrow")){
         equip->contextCallback = &equipArrow;
         equip->contextObject = o;
     }
-    
-    linkedListPushBack(mgItemWidget.children, name->uiBase);
-    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, dmg->uiBase);
-    linkedListPushBack(mgItemWidget.children, range->uiBase);
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
-    shownItem = o;
 }
 void openValueableInfo(ItemBase* o){
-    TextWidget* name = malloc(sizeof(TextWidget));
-    TextWidget* quantity = malloc(sizeof(TextWidget));
-    TextWidget* value = malloc(sizeof(TextWidget));
-
-    Button* drop = malloc(sizeof(Button));
+}
+void openBrokenKeyINfo(ItemBase* o){
     Button* equip = malloc(sizeof(Button));
-
-    emptyWidget(&mgItemWidget);
-
-    createTextWidget(name, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "name: %S(%U)", o->name, &(o->sprite));
-    createTextWidget(quantity, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "quantity: %d", &(o->quantity));
-    createTextWidget(value, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 0, "value: %d", &(o->value));
-
-    createButton(drop, &mgItemWidget, "drop", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 4);
-    createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
-
-    drop->contextObject = o;
-    drop->contextCallback = o->drop;
-
-    linkedListPushBack(mgItemWidget.children, name->uiBase);
-    linkedListPushBack(mgItemWidget.children, quantity->uiBase);
-    linkedListPushBack(mgItemWidget.children, value->uiBase);
-    linkedListPushBack(mgItemWidget.children, drop->uiBase);
+    createButton    (equip, &mgItemWidget, "combine to make key", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 21);
+    equip->contextObject = o;
+    equip->contextCallback = &makeKey;
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
-    shownItem = o;
 }
 
 int isConsumableEqual(ItemBase* o1, ItemBase* o2){
@@ -294,7 +232,9 @@ void updateFood(ItemBase* o){
             o->decayed += 1;
         }
         if(o->decayed >= o->decayTime){
-            o->goodness--;
+            if(o->goodness >= 0){
+                o->goodness--;
+            }
             o->decayed = 0;
         }
     }

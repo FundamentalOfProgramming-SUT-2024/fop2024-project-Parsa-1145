@@ -5,7 +5,7 @@
 
 void initNewGameMenu();
 void enterNewGameMenu();
-void updateNewGameMenu();
+void updateNewGameMenu(int key);
 void renderNewGameMenu();
 void exitNewGameMenu();
 

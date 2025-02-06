@@ -7,6 +7,7 @@
 #include "LogInMenu.h"
 #include "SignupMenu.h"
 #include "Scoreboard.h"
+#include "SettingsMenu.h"
 #include "MainGame.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
@@ -28,15 +29,19 @@ Widget menu;
 
 LinkedList mmUiList;
 
-EngineState maineMenu = {&enterMainMenu, &updateMainMenu, &renderMainMenu, &exitMainMenu};
+EngineState maineMenu = {&enterMainMenu, &updateMainMenu, &renderMainMenu, &exitMainMenu, &mmUiList};
 
 CharTexture* mmBackGround;
 CharTexture* mmBackGround2;
 CharTexture* mmFrameBuffer;
 Camera mmCamera;
 
-void exitMainMenu(){
+void exitGame(){
     terminate = 1;
+}
+
+void exitMainMenu(){
+    
 }
 
 void mmStartGame(){
@@ -83,10 +88,11 @@ void initMainMenu(){
     linkedListPushBack(menu.children, mmExitBtn.uiBase);
     linkedListPushBack(menu.children, mmSocreboardBtn.uiBase);
     
-    mmExitBtn.callBack = &exitMainMenu;
+    mmExitBtn.callBack = &exitGame;
     mmNewGameBtn.callBack = &mmStartGame;
     mmLoginBtn.callBack = logInMenu.enter;
     mmNewCharacterBtn.callBack = signUpMenu.enter;
+    mmSettingsBtn.callBack = enterSettingsMenu;
     mmLogOutBtn.callBack = &logOut;
     mmLoadGameBtn.contextCallback = &loadGame;
     mmLoadGameBtn.contextObject = "outa.json";
@@ -94,7 +100,7 @@ void initMainMenu(){
 
     mmBackGround = loadCharTextureFromTxt("../Data/Ascii/mainMenu11.txt");
     mmBackGround2 = loadCharTextureFromTxt("../Data/Ascii/mainMenu9.txt");
-    mmFrameBuffer = createCharTexture(10, 10, 1, 1);
+    mmFrameBuffer = createFrameBuffer(scrW, scrH);
 
     getmaxyx(stdscr, startH, startW);
 
@@ -109,7 +115,8 @@ void enterMainMenu(){
     }
 
     getmaxyx(stdscr, scrH, scrW);
-    resizeCharTexture(&mmFrameBuffer, scrW, scrH);
+    resizeFrameBuffer(&mmFrameBuffer, scrW, scrH);
+
 
     mmCamera.x = -scrW/2;
     mmCamera.y = -scrH/2;
@@ -127,59 +134,21 @@ void enterMainMenu(){
     printf("\033[?1003h\n");
     changeAudio(getAudioByName("title"), 2000);
 }
-void updateMainMenu(){
-    int ch = getch();
-    switch(ch){
-        case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            resizeCharTexture(&mmFrameBuffer, scrW, scrH);
-    
-            mmCamera.x = -scrW/2;
-            mmCamera.y = -scrH/2;
-            mmCamera.w = scrW;
-            mmCamera.h = scrH;
-            clear();
-            refresh();
-            break;
-        case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                void** tmp = mmUiList.data;
-                //mvprintw(4, 4, "asd %lu %lu %lu", mEvent.bstate, BUTTON5_PRESSED, BUTTON4_PRESSED);
-                switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        FOR(i, mmUiList.size){
-                            ((UiBase*)tmp[1])->mouseMove(((UiBase*)tmp[1])->object);
-                            tmp = *tmp;
-                        }
-                        break;
-                    default:
-                        
-                        FOR(i, mmUiList.size){
-                            ((UiBase*)tmp[1])->mouseClick(((UiBase*)tmp[1])->object);
-                            tmp = *tmp;
-                        }
-                        break;
-                }
-            }
-            refresh();
-            break;
-        case ERR:
-            break;
-        default:
-            break;
-            
+void updateMainMenu(int ch){
+    if(ch == KEY_RESIZE){
+        getmaxyx(stdscr, scrH, scrW);
+        mmCamera.x = -scrW / 2;
+        mmCamera.y = -scrH / 2;
+        mmCamera.w = scrW;
+        mmCamera.h = scrH;
+        resizeFrameBuffer(&mmFrameBuffer, scrW, scrH);
     }
 }
 
 void renderMainMenu(){
     erase();
-    updateWidgetChildren(&menu);
-    fillCharTexture(mmFrameBuffer, ' ');
-
-    renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 20 + min(50, (scrW - startW)) + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
-    renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - min(15, ((scrH - startH) * 2)) , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
-
-    renderFrameBuffer(mmFrameBuffer);
+    emptyFrameBuffer(mmFrameBuffer);
+    emptyFrameBuffer(uiFrameBuffer);
 
     void** tmp = mmUiList.data;
     FOR(i, mmUiList.size){
@@ -187,10 +156,18 @@ void renderMainMenu(){
         tmp = *tmp;
     }
 
+    renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 20 + min(50, (scrW - startW)) + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
+    renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - min(15, ((scrH - startH) * 2)) , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
+
+    renderFrameBuffer(mmFrameBuffer);
+    renderFrameBuffer(uiFrameBuffer);
+
+
     if(account.username){
         mvprintw(2, 2, "Logged in as: %s", account.username);
     }else{
         mvprintw(2, 2, "Not logged in");
+
     }
     refresh();
 }

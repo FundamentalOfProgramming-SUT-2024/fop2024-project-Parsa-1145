@@ -28,14 +28,14 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     updateWidgetSize(widget);
 
 
-    widget->colorPair = bgColor;
-    widget->bordered = 0;
+    widget->bgColor = bgColor;
 
     widget->isVisible = 1;
     widget->layoutType = 0;
     widget->scrollOn = 0;
     widget->canScrollUp = 0;
-    widget->z = 1;
+    widget->z = 0;
+    widget->bordered = 0;
 
     widget->children = malloc(sizeof(LinkedList));
     createLinkedList(widget->children, sizeof(UiBase*));
@@ -51,7 +51,7 @@ void createWidget(Widget* widget,Widget* parent, int sizeTypeX, int sizeTypeY, i
     widget->uiBase->mouseMove = &WMouseMoveCb;
     widget->uiBase->update = &updateWidgetChildren;
     widget->uiBase->delete = &deleteWidget;
-    widget->uiBase->isHovered = &updateChildrenHovered;
+    widget->uiBase->isHovered = &widgetHoveredUpdate;
     widget->uiBase->z = &(widget->z);
 
     widget->uiBase->object = widget;
@@ -200,7 +200,8 @@ int widgetParentResized(Widget* widget){
 int isWidgetHovered(Widget* widget, int x, int y){
     return (isWidgetVisible(widget) && ((x >= widget->topLeftX) && (x < widget->topLeftX + widget->wCopy)) && ((y >= widget->topLeftY) && (y < widget->topLeftY + widget->hCopy)));
 }
-int widgetHoveredUpdate(Widget* widget){
+int widgetHoveredUpdate(UiBase* o){
+    Widget* widget = o->object;
     if(isWidgetHovered(widget, mEvent.x, mEvent.y)){
         if(widget->z >= hoveredZ){
             hoveredElement = widget->uiBase;
@@ -258,9 +259,9 @@ void updateWidgetChildren(Widget* w){
                             w->totalScrollArea += ch->hCopy + ch->y + w->layoutPadding * (num!=0);
                             num++;
                         }
-                        if((ch->topLeftY < w->topLeftY + margin)){
+                        if((ch->topLeftY + ch->hCopy < w->topLeftY + w->bordered + margin)){
                             ch->outOfBound = 1;
-                        }else if(ch->topLeftY + ch->hCopy > w->topLeftY + w->hCopy){
+                        }else if(ch->topLeftY >= w->topLeftY + w->hCopy - w->bordered){
                             ch->outOfBound = 1;
                             w->canScrollUp = 1;
                             outOfBound = 1;
@@ -296,16 +297,13 @@ void deleteWidget(Widget* w){
         w->iterPtr->delete(w->iterPtr->object);
     }
     emptyLinkedList(w->children);
-    free(w->uiBase);
+    deleteUiBase(w->uiBase);
     free(w->children);
     w->children = NULL;
     free(w);
 }
 int WMouseMoveCb(Widget* w){
     if(isWidgetVisible(w)){
-        if(!w->parent){
-            updateChildrenHovered(w->uiBase);
-        }
 
         w->tmpIterPtr = w->children->data;
         int flag = 0;
@@ -321,8 +319,6 @@ int WMouseMoveCb(Widget* w){
 }
 int WMouseClickCb(Widget* w){
     if(isWidgetVisible(w)){
-        updateChildrenHovered(w->uiBase);
-
         int scroll = (mEvent.bstate & BUTTON5_PRESSED) || (mEvent.bstate & BUTTON4_PRESSED);
         int flag = 0;
         w->tmpIterPtr = w->children->data;
@@ -346,15 +342,11 @@ int WMouseClickCb(Widget* w){
                             return 1;
                         } 
                     }
-                    w->bordered != w->bordered;
                 }
             }
         }
-
         if(flag){
             return 1;
-        }else{
-            return w->bgColor && isWidgetHovered(w, mEvent.x, mEvent.y);
         }
     }else{
         return 0;
@@ -376,45 +368,45 @@ int WKeyPressCb(Widget* w, int key){
 }
 void renderWidget(Widget* w){
     if(isWidgetVisible(w)){
-        if(w->colorPair){
-            attron(COLOR_PAIR(w->colorPair));
+        if(w->bgColor){
+            attr_set(0, w->bgColor, NULL);
             for(int i = w->topLeftY; i < w->topLeftY + w->hCopy ; i++){
-                move(i, w->topLeftX);
+                moveInFrameBuffer(uiFrameBuffer ,i, w->topLeftX);
                 for(int j = w->topLeftX; j < w->topLeftX + w->wCopy; j++){
-                    addch(' ');
+                    addWchToFrameBuffer(uiFrameBuffer , ' ', w->z, w->bgColor, NULL);
                 }
             }
-            attroff(COLOR_PAIR(w->colorPair));
+            attr_set(0, 0, NULL);
         }
         if(w->bordered){
-            move(w->topLeftY, w->topLeftX);
-            add_wch(WACS_D_ULCORNER);
+            moveInFrameBuffer(uiFrameBuffer, w->topLeftY, w->topLeftX);
+            addWchToFrameBuffer(uiFrameBuffer, WACS_D_ULCORNER->chars[0], w->z, 0, 0);
             FOR(i, w->wCopy-2){
-                add_wch(WACS_D_HLINE);
+                addWchToFrameBuffer(uiFrameBuffer , WACS_D_HLINE->chars[0], w->z, 0, 0);
             }
-            add_wch(WACS_D_URCORNER);
-            move(w->topLeftY + w->hCopy-1, w->topLeftX);
-            add_wch(WACS_D_LLCORNER);
+            addWchToFrameBuffer(uiFrameBuffer , WACS_D_URCORNER->chars[0], w->z, 0, 0);
+            moveInFrameBuffer(uiFrameBuffer, w->topLeftY + w->hCopy-1, w->topLeftX);
+            addWchToFrameBuffer(uiFrameBuffer , WACS_D_LLCORNER->chars[0], w->z, 0, 0);
             FOR(i, w->wCopy-2){
-                add_wch(WACS_D_HLINE);
+                addWchToFrameBuffer(uiFrameBuffer , WACS_D_HLINE->chars[0], w->z, 0, 0);
             }
-            add_wch(WACS_D_LRCORNER);
+            addWchToFrameBuffer(uiFrameBuffer , WACS_D_LRCORNER->chars[0], w->z, 0, 0);
             for(int i = w->topLeftY + 1; i < w->topLeftY + w->hCopy-1; i++){
-                move(i, w->topLeftX);
-                addch(ACS_VLINE);
-                move(i, w->topLeftX + w->wCopy-1);
-                addch(ACS_VLINE);
+                moveInFrameBuffer(uiFrameBuffer, i, w->topLeftX);
+                addWchToFrameBuffer(uiFrameBuffer , WACS_VLINE->chars[0], w->z, 0, NULL);
+                moveInFrameBuffer(uiFrameBuffer, i, w->topLeftX + w->wCopy-1);
+                addWchToFrameBuffer(uiFrameBuffer , WACS_VLINE->chars[0], w->z, 0, NULL);
             }
         }
         
         
         if(w->scrollOn && (w->totalScrollArea > w->hCopy)){
             FOR(i, w->hCopy-2){
-                mvaddch(w->topLeftY + i + 1, w->topLeftX + w->wCopy - 1, ACS_VLINE);
+                mvAddWchToFrameBuffer(uiFrameBuffer ,w->topLeftY + i + 1, w->topLeftX + w->wCopy - 1, WACS_VLINE->chars[0], w->z + 1, 0, NULL);
             }
             attron(A_REVERSE);
             FOR(i, w->scrollBarHeight){
-                mvaddch(w->topLeftY + i + 1 + w->scrollBarPos, w->topLeftX + w->wCopy - 1, ' ');
+                mvAddWchToFrameBuffer(uiFrameBuffer ,w->topLeftY + i + 1 + w->scrollBarPos, w->topLeftX + w->wCopy - 1, ' ', w->z + 1, 0, NULL);
             }
             attroff(A_REVERSE);
         }
@@ -436,11 +428,15 @@ void emptyWidget(Widget* w){
         w->iterPtr->delete(w->iterPtr->object);
     }
     emptyLinkedList(w->children);
+    w->layoutOffset = 0;
+    w->canScrollUp = 0;
+    w->totalScrollArea = 0;
+
 }
 
 void updateChildrenHovered(UiBase* o){
     Widget* w = o->object;
-    widgetHoveredUpdate(w);
+    widgetHoveredUpdate(o);
     if(w->children->size){
         void** tmp = w->children->data;
         UiBase* ptr;
@@ -450,6 +446,21 @@ void updateChildrenHovered(UiBase* o){
             tmp = tmp[0];
 
             ptr->isHovered(ptr);
+            if(ptr->type == UI_TYPE_WIDGET){
+                updateChildrenHovered(ptr);
+            }
+        }
+    }
+}
+
+int getTopColor(Widget* w){
+    if(w->bgColor){
+        return w->bgColor;
+    }else{
+        if(w->parent){
+            return getTopColor(w->parent);
+        }else{
+            return NULL;
         }
     }
 }

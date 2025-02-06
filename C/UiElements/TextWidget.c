@@ -11,6 +11,8 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
 
     t->format = copyString(format);
 
+    t->wrap = 1;
+
     int n = 0;
     t->strLength = strlen(format);
     FOR(i, t->strLength){
@@ -105,10 +107,10 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
 
     createWidget(t->widget, parent, ABSOLUTE, ABSOLUTE, alignmentX, alignmentY, x, y, 1, 1, NULL);
 
-    if((parent) && (parent->bgColor)){
-        t->bgColor = parent->bgColor;
+    if(parent){
+        t->bgColor = getTopColor(parent);
     }else{
-        t->bgColor = COLOR_BLACK;
+        t->bgColor = 0;
     }
 
     t->uiBase = malloc(sizeof(UiBase));
@@ -225,18 +227,83 @@ void changeTextWidget(TextWidget* t, char* format, ...){
 
     va_end(args);
 }
+int textWidgetGetStrLength(TextWidget* t){
+    uint32_t out = 0;
+    uint32_t argIter = 0;
+    FOR(i, t->strLength){
+        switch (t->format[i]){
+        case '\\':
+            if(t->format[i+1] == '%'){
+                out += 1;
+                i++;
+            }
+            break;
+        case '%':
+            switch (t->format[i+1]){
+                case 'S':
+                case 's':
+                    out += snprintf(NULL, 0, "%s", t->args[argIter].s);
+                    argIter++;
+                    break;
+                case 'd':
+                    out += snprintf(NULL, 0, "%d", t->args[argIter].d[0]);
+                    argIter++;
+                    break;
+                case 'D':
+                    out += snprintf(NULL, 0, "%d", t->args[argIter].sd);
+                    argIter++;
+                    break;
+                case 'F':
+                    out += snprintf(NULL, 0,"%d", t->args[argIter].sf);
+                    argIter++;
+                    break;
+                case 'u':
+                    out += snprintf(NULL, 0,"%lc", t->args[argIter].w[0]);
+                    argIter++;
+                    break;
+                case 'U':
+                    out += snprintf(NULL, 0,"%lc", t->args[argIter].w);
+                    argIter++;
+                    break;
+                case 'f':
+                    out += snprintf(NULL, 0,"%f", t->args[argIter].f[0]);
+                    argIter++;
+                    break;
+                case 'o':
+                    argIter +=3;
+                    break;
+                case 'i':
+                    argIter +=3;
+                    break;
+                case 'O':
+                    break;
+            }
+            i++;
+            break;
+        default:
+            out++;
+            break;
+        }
+    }
+    return out;
+}
 void renderTextWidget(TextWidget* t){
-    int prevColor = 0;
     if(isWidgetVisible(t->widget)){
-        attron(COLOR_PAIR(t->bgColor));
-        move(t->widget->topLeftY, t->widget->topLeftX);
+        color_set(t->bgColor, NULL);
+        moveInFrameBuffer(uiFrameBuffer, t->widget->topLeftY, t->widget->topLeftX);
 
         int argIter = 0;
+        if(t->widget->parent && (!t->widget->overflow[0])){
+            Widget* p = t->widget->parent;
+            setRenderBoundingBox(p->topLeftX + p->bordered, p->topLeftY + p->bordered, p->topLeftX + p->wCopy - 1 - p->bordered - (p->scrollOn && (p->totalScrollArea > p->hCopy)),
+                p->topLeftY + p->hCopy - 1 - p->bordered);
+        }
+        setWrapMode(t->wrap);
         FOR(i, t->strLength){
             switch (t->format[i]){
             case '\\':
                 if(t->format[i+1] == '%'){
-                    addch('%');
+                    addWchToFrameBuffer(uiFrameBuffer, '%', t->widget->z, 0, 0);
                     i++;
                 }
                 break;
@@ -244,62 +311,64 @@ void renderTextWidget(TextWidget* t){
                 switch (t->format[i+1]){
                     case 'S':
                     case 's':
-                        printw("%s", t->args[argIter].s);
+                        framBufferPrintW(uiFrameBuffer,  t->widget->z, "%s" ,t->args[argIter].s);
                         argIter++;
                         break;
                     case 'd':
-                        printw("%d", t->args[argIter].d[0]);
+                        framBufferPrintW(uiFrameBuffer,  t->widget->z,"%d", t->args[argIter].d[0]);
                         argIter++;
                         break;
                     case 'D':
-                        printw("%d", t->args[argIter].sd);
+                        framBufferPrintW(uiFrameBuffer,  t->widget->z,"%d", t->args[argIter].sd);
                         argIter++;
                         break;
                     case 'F':
-                        printw("%d", t->args[argIter].sf);
+                        framBufferPrintW(uiFrameBuffer,  t->widget->z,"%d", t->args[argIter].sf);
                         argIter++;
                         break;
                     case 'u':
-                        printw("%Lc", t->args[argIter].w[0]);
+                        addWchToFrameBuffer(uiFrameBuffer, t->args[argIter].w[0], t->widget->z, 0, 0);
                         argIter++;
                         break;
                     case 'U':
-                        printw("%Lc", t->args[argIter].sw);
+                        addWchToFrameBuffer(uiFrameBuffer, t->args[argIter].w, t->widget->z, 0, 0);
                         argIter++;
                         break;
                     case 'f':
-                        printw("%f", t->args[argIter].f[0]);
+                        framBufferPrintW(uiFrameBuffer,  t->widget->z,"%f", t->args[argIter].f[0]);
                         argIter++;
                         break;
                     case 'o':
-                        if (prevColor) attroff(COLOR_PAIR(prevColor));
-                        prevColor = rgb[t->args[argIter].sColor[0]][t->args[argIter+1].sColor[1]][t->args[argIter+2].sColor[2]];
+                        color_set(rgb[t->args[argIter].sColor[0]][t->args[argIter+1].sColor[1]][t->args[argIter+2].sColor[2]], NULL);
                         argIter +=3;
-                        attron(COLOR_PAIR(prevColor));
                         break;
                     case 'i':
-                        if (prevColor) attroff(COLOR_PAIR(prevColor));
-                        prevColor = rgb[t->args[argIter].color[0][0]][t->args[argIter+1].color[1][0]][t->args[argIter+2].color[2][0]];
+                        color_set(rgb[t->args[argIter].color[0][0]][t->args[argIter+1].color[1][0]][t->args[argIter+2].color[2][0]], NULL);
                         argIter +=3;
-                        attron(COLOR_PAIR(prevColor));
                         break;
                     case 'O':
-                        attroff(COLOR_PAIR(prevColor));
-                        prevColor = 0;
+                        color_set(t->bgColor, NULL);
                         break;
                 }
                 i++;
                 break;
             default:
-                addch(t->format[i]);
+                addWchToFrameBuffer(uiFrameBuffer, t->format[i], t->widget->z, 0, 0);
                 break;
             }
         }
-        attroff(COLOR_PAIR(t->bgColor));
+        setWrapMode(0);
+        if(t->widget->parent){
+            resetRenderBound();
+        }
+        color_set(0, NULL);
     }
 }
 void updateTextWidget(TextWidget* t){
     updateWidgetTopLeft(t->widget);
+    if(t->wrap){
+        t->widget->hCopy = (textWidgetGetStrLength(t) / t->widget->parent->wCopy) + 1;
+    }
 }
 void deleteTextWidget(TextWidget* t){
     int k = 0;
@@ -332,7 +401,7 @@ void deleteTextWidget(TextWidget* t){
                 break;
         }
     }
-    free(t->uiBase);
+    deleteUiBase(t->uiBase);
     free(t->widget);
     free(t->format);
     free(t->args);

@@ -8,6 +8,8 @@
 
 #include "Utilities/LinkedList.h"
 #include "Utilities/cJSON.h"
+#include "Utilities/TimedCallback.h"
+#include "SecondaryThread.h"
 
 EngineState* engineState;
 GameSettings gameSettings;
@@ -18,7 +20,9 @@ int mousey;
 int terminate = 0;
 int colorPairNum = 5;
 cJSON* itemsJson = NULL;
+cJSON* itemTypes = NULL;
 Account account;
+Settings settings;
 short rgb[6][6][6];
 
 
@@ -79,6 +83,12 @@ int randBetween(int min, int max, int seed){
 
     randSeed++;
     return ((rand()) % (max - min)) + min;
+}
+float fRandBetween(float min, float max, int seed){
+    srand(time(NULL) + randSeed);
+
+    randSeed++;
+    return (rand()/RAND_MAX) * (max - min) + min;
 }
 
 int randIndexWithProb(int n, float* prob,int seed){
@@ -203,6 +213,22 @@ extern char* writeLog(const char* format, ...){
     va_end(args);
     return out;
 }
+char* vWriteLog(const char* format, va_list args){
+    char* out;
+    int size;
+    va_list  args_copy;
+    va_copy(args_copy, args);
+
+    size = vsnprintf(NULL, 0, format, args_copy);
+    va_end(args_copy);
+
+    out = malloc(size + 2);
+    vsnprintf(out, size+1, format, args);
+
+    out[size] = '\0';
+    
+    return out;
+}
 int isVowel(char c) {
     switch(tolower(c)){
         case 'a':
@@ -254,4 +280,24 @@ int doLinesIntersect(float x1, float y1, float x2, float y2, float x3, float y3,
     if (o4 == 0 && onSegment(x3, y3, x4, y4, x2, y2)) return 1;
     return 0;
 
+}
+/////////////////////////////////////////////////////////////////////////////////
+
+void resetRgbColors(){
+    int k = 20;
+    float z = 1000 / 6;
+    FOR(i, 6){
+        FOR(j, 6){
+            FOR(t, 6){
+                init_extended_color(k, z * i, z * j, z * t);
+                init_extended_pair(k, k, 0);
+                rgb[i][j][t] = k;
+                k++;
+            }
+        }
+    }
+}
+void memFree(void* ptr, size_t size){
+    memset(ptr, 0, size);
+    free(ptr);
 }

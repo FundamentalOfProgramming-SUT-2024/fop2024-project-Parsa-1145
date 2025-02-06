@@ -6,14 +6,20 @@
 
 
 void createTabWidget(TabWidget* t, Widget* parent, int sizePolicyX, int sizePolicyY, int alignmentX, int alignmentY, int x, int y, int w, int h, int bgColor){
-    t->widget = malloc(sizeof(Widget));
+    t->widget = calloc(1, sizeof(Widget));
 
-    createWidget(t->widget, parent, sizePolicyX, sizePolicyY, alignmentX, alignmentY, x, y, w, h, COLOR_BLACK);
+    createWidget(t->widget, parent, sizePolicyX, sizePolicyY, alignmentX, alignmentY, x, y, w, h, NULL);
     t->widget->bordered = 1;
     t->widget->layoutType = 2;
 
 
-    t->bgColor = bgColor;
+    if(bgColor){
+        t->bgColor = bgColor;
+    }else{
+        if(parent){
+            t->bgColor = getTopColor(parent);
+        }
+    }
 
     t->active = NULL;
     t->Tabs = malloc(sizeof(LinkedList));
@@ -22,7 +28,7 @@ void createTabWidget(TabWidget* t, Widget* parent, int sizePolicyX, int sizePoli
 
     createLinkedList(t->Tabs, sizeof(TabStruct*));
     createLinkedList(t->tabButtons, sizeof(Button*));
-    createWidget(t->tabArea, t->widget, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, C_BG_BLACK);
+    createWidget(t->tabArea, t->widget, RELATIVE, RELATIVE, ABSOLUTE, ABSOLUTE, 0, 0, 100, 100, NULL);
 
     t->tabArea->bordered = 1;
 
@@ -55,7 +61,9 @@ void tabWidgetAddTab(TabWidget* t, char* name, Widget* w, void(*callback)()){
     linkedListPushBack(t->tabButtons, btn->uiBase);
 }
 int tabWidgetMouseMove(TabWidget* t){
-    
+    if(t->active){
+        t->active->uiBase->mouseMove(t->active);
+    }
 }
 int tabWidgetMouseClick(TabWidget* t){
     t->tmpIterPtr = t->tabButtons->data;
@@ -79,25 +87,29 @@ int tabWidgetScroll(TabWidget* t){
 
 }
 void tabWidgetRender(TabWidget* t){
-    
     t->tmpIterPtr = t->tabButtons->data;
     while(t->tmpIterPtr){
         t->iterPtr = t->tmpIterPtr[1];
         t->iterPtr->render(t->iterPtr->object);
-        addch(ACS_VLINE);
+        color_set(t->bgColor, NULL);
+        if(t->tmpIterPtr[0]){
+            addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], t->widget->z, t->bgColor, 0);
+        }
+        color_set(0, NULL);
         t->tmpIterPtr = t->tmpIterPtr[0];
     }
-    mvaddch(t->widget->topLeftY + 1, t->widget->topLeftX, ACS_HLINE);
-    FOR(i, t->widget->wCopy-1){
-        addch(ACS_HLINE);
+
+    color_set(t->bgColor, NULL);
+    moveInFrameBuffer(uiFrameBuffer, t->widget->topLeftY + 1, t->widget->topLeftX);
+    FOR(i, t->widget->wCopy){
+        addWchToFrameBuffer(uiFrameBuffer, WACS_HLINE->chars[0], t->widget->z, t->bgColor, 0);
     }
+    color_set(0, NULL);
+
 
     if(t->active){
         renderWidget(t->active);
     }
-    //renderWidget(t->tabArea);
-    //renderWidget(t->widget);
-
 }
 void tabWidgetSwitchTab(TabStruct* t){
     if(t->tabWidget->active) t->tabWidget->isVisible = 0;

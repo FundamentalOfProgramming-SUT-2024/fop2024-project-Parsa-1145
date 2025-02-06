@@ -5,7 +5,7 @@
 
 void initMainMenu();
 void enterMainMenu();
-void updateMainMenu();
+void updateMainMenu(int key);
 void renderMainMenu();
 void exitMainMenu();
 

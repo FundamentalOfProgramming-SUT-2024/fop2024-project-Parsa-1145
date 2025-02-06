@@ -15,13 +15,9 @@
 #define C_BG_GRAY0 10
 #define C_BG_GRAY1 12
 #define C_BG_BLACK 11
-#define C_BG_WHITE 12
-
-
+#define C_BG_WHITE 13
 
 #define FOR(i, n) for(int i = 0 ; i < n ; i++)
-#define startListIter(t, l) void** tmpPtr; while(tmpPtr){ t = tmpPtr[1];
-#define endListIter }
 
 #define PI 3.141592654
 

@@ -8,15 +8,15 @@
 #include "../UiElements/Button.h"
 #include "../Globals.h"
 
+LinkedList sbUiList;
 
-EngineState scoreboard = {&enterScoreBoard, &updateScoreBoard, &renderScoreBoard, &exitScoreBoard};
+EngineState scoreboard = {&enterScoreBoard, &updateScoreBoard, &renderScoreBoard, &exitScoreBoard, &sbUiList};
 
 Widget sbMainWidget;
 Widget sbScrollArea;
 
 Button sbBackBtn;
 
-LinkedList sbUiList;
 
 void** sbTmpIterPtr;
 UiBase* sbIterPtr;
@@ -155,48 +155,11 @@ void enterScoreBoard(){
     cJSON_free(json);
     
 }
-void updateScoreBoard(){
-    int ch = getch();
-
-    switch(ch){
-        case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            clear();
-            refresh();
-            break;
-        case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        sbTmpIterPtr = sbUiList.data;
-                        FOR(i, sbUiList.size){
-                            sbIterPtr = sbTmpIterPtr[1];
-                            sbIterPtr->mouseMove(sbIterPtr->object);
-                            sbTmpIterPtr = sbTmpIterPtr[0];
-                        }
-                        break;
-                    default:
-                        sbTmpIterPtr = sbUiList.data;
-                        FOR(i, sbUiList.size){
-                            sbIterPtr = sbTmpIterPtr[1];
-                            sbIterPtr->mouseClick(sbIterPtr->object);
-                            sbTmpIterPtr = sbTmpIterPtr[0];
-                        }
-                        break;
-                }
-            }
-            break;
-        case ERR:
-            break;
-        default:
-            break;
-    }
+void updateScoreBoard(int ch){
 }
 void renderScoreBoard(){
     erase();
-
-    updateWidgetChildren(&sbMainWidget);
-    updateWidgetChildren(&sbScrollArea);
+    emptyFrameBuffer(uiFrameBuffer);
 
     sbTmpIterPtr = sbUiList.data;
     FOR(i, sbUiList.size){
@@ -204,6 +167,7 @@ void renderScoreBoard(){
         sbIterPtr->render(sbIterPtr->object);
         sbTmpIterPtr = sbTmpIterPtr[0];
     }
+    renderFrameBuffer(uiFrameBuffer);
     refresh();
 }
 void exitScoreBoard(){

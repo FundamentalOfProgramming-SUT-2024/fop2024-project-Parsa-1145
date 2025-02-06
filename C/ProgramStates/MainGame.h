@@ -9,7 +9,7 @@
 
 void initMainGame();
 void enterMainGame();
-void updateMainGame();
+void updateMainGame(int key);
 void renderMainGame();
 void exitMainGame();
 
@@ -40,6 +40,7 @@ extern LinkedList playerActionList;
 int terminalGetInt();
 void loadGame(const char* address);
 
+void startNewGame();
 void updateInventoryTab();
 void updateEffectsTab();
 void updateWorld(int x, int y);

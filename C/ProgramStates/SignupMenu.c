@@ -33,15 +33,12 @@ LinkedList suUiList;
 LinkedList suTextBoxList;
 
 
-EngineState signUpMenu = {&enterSignUpMenu, &updateSignUpMenu, &renderSignUpMenu, &exitSignUpMenu};
 
 void** suTmpIterPtr;
 UiBase* suIterPtr;
 
-void closeInvalidPopup(){
-    deletePopUp(suInvalidPopup);
-    suInvalidPopup = NULL;
-}
+EngineState signUpMenu = {&enterSignUpMenu, &updateSignUpMenu, &renderSignUpMenu, &exitSignUpMenu, &suUiList};
+
 int isEmailValid(char* email){
     int size = strlen(email);
     int valid = 1;
@@ -84,21 +81,17 @@ int isPasswordValid(char* pass){
     return ((passSize >= 7) && hasLow && hasCap && hasNum);
 }
 void returnToMainMenu(){
-    removeItemFromLinkedList(&suUiList, suInvalidPopup->uiBase);
-    deletePopUp(suInvalidPopup);
-    suInvalidPopup = NULL;
-
     enterMainMenu();
 }
 void signUp(){
     if(suEnteredUsername[0] == '\0'){
-        suInvalidPopup = createPopUp("Please Enter a username for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        createPopUp("Please Enter a username for your acount.", NULL, 20, 20, NULL, &suUiList);
         return;
     }else if(suEnteredPssword[0] == '\0'){
-        suInvalidPopup = createPopUp("Please Enter a password for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        createPopUp("Please Enter a password for your acount.", NULL, 20, 20, NULL, &suUiList);
         return;
     }else if(suEnteredEmail[0] == '\0'){
-        suInvalidPopup = createPopUp("Please Enter a email for your acount.", NULL, 20, 20, &closeInvalidPopup);
+        createPopUp("Please Enter a email for your acount.", NULL, 20, 20, NULL, &suUiList);
 
         return;
     }else{
@@ -128,24 +121,24 @@ void signUp(){
                     cJSON_free(json);
                     if(new){
                         addAccount(suEnteredUsername, suEnteredPssword, suEnteredEmail);
-                        suInvalidPopup = createPopUp("User created. you need to log in.", NULL, 20, 20, &returnToMainMenu);
+                        createPopUp("User created. you need to log in.", NULL, 20, 20, &returnToMainMenu, &suUiList);
                     }else{
-                        suInvalidPopup = createPopUp("Username exists.", NULL, 20, 20, &closeInvalidPopup);
+                        createPopUp("Username exists.", NULL, 20, 20, NULL, &suUiList);
 
                     }
 
                 }else{
-                    suInvalidPopup = createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, &closeInvalidPopup);
+                    createPopUp("Cant open the players data file. consider changing the address in the settings.", NULL, 20, 20, NULL, &suUiList);
                     return;
                 }
                 free(usersData);
 
             }else{
-                suInvalidPopup = createPopUp("Please enter a valid email.", NULL, 20, 20, &closeInvalidPopup);
+                createPopUp("Please enter a valid email.", NULL, 20, 20, NULL, &suUiList);
                 return;
             }
         }else{
-            suInvalidPopup = createPopUp("Password should at least be 7 charachters, and contain an uppercase, a lowercase and a digit.", NULL, 20, 20, &closeInvalidPopup);
+            createPopUp("Password should at least be 7 charachters, and contain an uppercase, a lowercase and a digit.", NULL, 20, 20, NULL, &suUiList);
             return;
         }
     }
@@ -223,76 +216,26 @@ void enterSignUpMenu(){
     noecho();
     cbreak();
 }
-void updateSignUpMenu(){
-    int ch = getch();
-    static void** tmp;
-    static UiBase* tmp1;
-    
-
-    switch(ch){
-        case KEY_RESIZE:
-            getmaxyx(stdscr, scrH, scrW);
-            clear();
-            refresh();
-            break;
-        case KEY_MOUSE:
-            if(getmouse(&mEvent) == OK){
-                switch(mEvent.bstate){
-                    case KEY_MOUSE_MOVE:
-                        if(suInvalidPopup != NULL){
-                            buttonMouseMoveCallback(suInvalidPopup->close);
-                        }else{
-                            suTmpIterPtr = suUiList.data;
-                            FOR(i, suUiList.size){
-                                suIterPtr = suTmpIterPtr[1];
-                                suIterPtr->mouseMove(suIterPtr->object);
-                                suTmpIterPtr = suTmpIterPtr[0];
-                            }
-                        }
-                        
-                        
-                        break;
-                    default:
-                        if(suInvalidPopup != NULL){
-                            buttonMouseClickEvent(suInvalidPopup->close);
-                        }else{
-                            suTmpIterPtr = suUiList.data;
-                            FOR(i, suUiList.size){
-                                suIterPtr = suTmpIterPtr[1];
-                                suIterPtr->mouseClick(suIterPtr->object);
-                                suTmpIterPtr = suTmpIterPtr[0];
-                            }
-                        }
-                        break;
-                }
-            }
-            break;
-        case ERR:
-            break;
-        default:
-            if(suInvalidPopup == NULL){
-                suTmpIterPtr = suUiList.data;
-                FOR(i, suUiList.size){
-                    suIterPtr = suTmpIterPtr[1];
-                    suIterPtr->keyPress(suIterPtr->object, ch);
-                    suTmpIterPtr = suTmpIterPtr[0];
-                }
-            }
-            break;
-            
-    }
+void updateSignUpMenu(int ch){
 }
 void renderSignUpMenu(){
-
     erase();
-    updateWidgetChildren(&suFormWidget);
+    emptyFrameBuffer(uiFrameBuffer);
+
+    suTmpIterPtr = suUiList.data;
+    FOR(i, suUiList.size){
+        suIterPtr = suTmpIterPtr[1];
+        suIterPtr->update(suIterPtr->object);
+        suTmpIterPtr = suTmpIterPtr[0];
+    }
+
     suTmpIterPtr = suUiList.data;
     FOR(i, suUiList.size){
         suIterPtr = suTmpIterPtr[1];
         suIterPtr->render(suIterPtr->object);
         suTmpIterPtr = suTmpIterPtr[0];
     }
-    if(suInvalidPopup) renderPopup(suInvalidPopup);
+    renderFrameBuffer(uiFrameBuffer);
     refresh();
     
 }

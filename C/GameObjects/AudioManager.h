@@ -12,6 +12,7 @@ typedef struct{
     int id;
 
     int channel;
+    int volume;
 }Audio;
 
 typedef struct{
@@ -29,7 +30,10 @@ void playEffect(Audio* a);
 Audio* getAudioByName(const char * const);
 void initAudioManager();
 void freeAudioManager();
-
-
+void stopCurrentMuisc(unsigned int ms);
+void resumeCurrentMusic(unsigned int ms);
+void lowerCurrentMusic(unsigned int ms);
+void resetCurrentMusicVolume(unsigned int ms);
+void setMusicVolume();
 
 #endif

@@ -49,6 +49,7 @@ int effectLevitation(Effect* e);
 int effectBurning(Effect* e);
 int effectGreatLuck(Effect* e);
 int effectInvisibility(Effect* e);
+int makeKey(ItemBase* k);
 
 void deleteEffect(Effect* effect);
 cJSON* effectToJson(Effect* e);

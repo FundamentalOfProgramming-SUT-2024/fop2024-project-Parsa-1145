@@ -103,7 +103,7 @@ int swingAttack(ItemBase* o){
                     }else{
                         addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
                     }
-                    defaultMonsterTakeDamage(ptr, NULL, o->damage);
+                    defaultMonsterTakeDamage(ptr, NULL, o->damage * player.strenght);
                     
                     hit = 1;
                 }else{
@@ -133,6 +133,7 @@ int swingAttack(ItemBase* o){
     }
 }
 int stab(ItemBase* o){
+    int hit = 0;
     void** tmp = floors[player.z].itemList->data;
     ItemBase* ptr;
     while(tmp){
@@ -155,18 +156,33 @@ int stab(ItemBase* o){
                     }else{
                         addFormattedMessage("%o%D%O damage inflicted on %S", 1, 4, 1, player.heldObject->damage, ptr->name);
                     }
-                    if(ptr->health <= 0){
-                        defaultMonsterDeath(ptr);
-                    }
+                    defaultMonsterTakeDamage(ptr, NULL, o->damage * player.strenght);
+                    
+                    hit = 1;
                 }else{
                     if(randWithProb(0.5)){
                         addFormattedMessage("You %omissed%O the %S", 4, 1, 1, ptr->name);
                     }else{
-                        addFormattedMessage("%S %odoged%O your attack", ptr->name, 4, 1, 1);
+                        addFormattedMessage("%s %odoged%O your attack", ptr->name, 4, 1, 1);
                     }
-                break;
+                    break;
                 }
             }
+        }
+    }
+    if(!hit){
+        switch (randBetween(0, 3, 0)){
+        case 0:
+            playEffectByName("swing1");
+            break;
+        case 1:
+            playEffectByName("swing2");
+            break;
+        case 2:
+            playEffectByName("swing3");
+            break;
+        default:
+            break;
         }
     }
 }
@@ -223,6 +239,9 @@ int shootArrow(ItemBase* b){
             removeItemFromLinkedList(&(player.items), o);
             checkEquiped();
             updateInventoryTab();
+            if(shownItem == o){
+                emptyWidget(&mgItemWidget);
+            }
         }else{
             o->quantity--;
             o = LoadItemWithName(o->name);
@@ -273,6 +292,9 @@ int throwAttack(ItemBase* o){
         removeItemFromLinkedList(&(player.items), o);
         checkEquiped();
         updateInventoryTab();
+        if(shownItem == o){
+            emptyWidget(&mgItemWidget);
+        }
     }else{
         o->quantity--;
         o = LoadItemWithName(o->name);
@@ -420,6 +442,23 @@ int effectBurning(Effect* e){
         if(player.health <= 0){
             endGame(0, writeLog("You burned to death"));
         }
+    }
+}
+int makeKey(ItemBase* k){
+    if(k->quantity < 2){
+        addFormattedMessage("You need %o2%O broken keys", 5, 3, 1);
+    }else{
+        k->quantity -= 2;
+        if(k->quantity == 0){
+            removeItemFromLinkedList(&(player.items), k);
+            emptyWidget(&mgItemWidget);
+            defaultItemDelete(k);
+        }
+
+        ItemBase* o = LoadItemWithName("Makeshift key");
+        o->quantity = 1;
+        addItemToInventory(o);
+        updateInventoryTab();
     }
 }
 int effectLevitation(Effect*){

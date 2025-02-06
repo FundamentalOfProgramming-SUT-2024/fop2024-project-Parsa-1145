@@ -79,5 +79,9 @@
         "name" : "projectileHit1",
         "id" : 18,
         "address" : "../Data/Music/projectileHit1.wav"
+    },{
+        "name" : "otherworldNight",
+        "id" : 18,
+        "address" : "../Data/Music/otherworldNight.wav"
     }
 ]
