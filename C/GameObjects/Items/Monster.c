@@ -162,15 +162,17 @@ int defaultMonsterUpdate(ItemBase* m){
                     if(hypot(player.x - m->x, player.y - m->y) < 1.5){
                         m->primaryUse(m);
                     }
-                    addFormattedMessage("%o%S saw you%O", 5, 1, 1, m->name);
-                    m->tarx = player.x;
-                    m->tary = player.y;
-                    m->goodness = 1;
-                    m->decayed = m->decayTime;
+                    if(!m->cursed){
+                        addFormattedMessage("%o%S saw you%O", 5, 1, 1, m->name);
+                        m->tarx = player.x;
+                        m->tary = player.y;
+                        m->goodness = 1;
+                        m->decayed = m->decayTime;
+                    }
                 }
                 break;
             case 1:
-                if((player.z == m->z) && (!player.invisible)){
+                if((player.z == m->z) && (!player.invisible) && !(m->cursed)){
                     PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 1);
                     if(!tmpPoint) tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 0);
                     if(tmpPoint){
@@ -187,7 +189,7 @@ int defaultMonsterUpdate(ItemBase* m){
                     }
                     
                     if(!m->decayed){
-                        m->cursed = m->decayTime / 2;
+                        m->decayed = m->decayTime / 2;
                         if(randWithProb(0.5)){
                             m->goodness = 2;
                             addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
@@ -202,8 +204,8 @@ int defaultMonsterUpdate(ItemBase* m){
                 }
                 break;
             case 2:
-                m->cursed--;
-                if(!m->cursed) m->goodness = 0;
+                m->decayed--;
+                if(!m->decayed) m->goodness = 0;
                 break;
             case 3:
                 PathPoint* tmpPoint = pathFind(m->x, m->y, m->tarx, m->tary, floors + m->z, 1);
@@ -252,33 +254,4 @@ void defaultMonsterTakeDamage(ItemBase* m, ItemBase* o, int damage){
     if(m->health <= 0){
         defaultMonsterDeath(m);
     }
-}
-
-void eldarionUpdate(ItemBase* m){
-    if(deltaTime){
-        if(m->z == player.z){
-            PathPoint* tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 1);
-            if(!tmpPoint) tmpPoint = pathFind(m->x, m->y, player.x, player.y, floors + player.z, 0);
-            if(tmpPoint){
-                if(hypot(player.x - m->x, player.y - m->y) > 1.5){
-                    if (validForMove(tmpPoint[1].x, tmpPoint[1].y, floors + player.z)){
-                        m->x = tmpPoint[1].x;
-                        m->y = tmpPoint[1].y;
-                    }
-                }else{
-                    m->primaryUse(m);
-                }
-                free(tmpPoint);
-            }
-        }
-    }
-}
-void eldarionRender(ItemBase* m, CharTexture* frameBuffer, Camera* cam){
-
-}
-void eldarionAttack(ItemBase* m){
-
-}
-void eldarionDeath(ItemBase* m){
-
 }

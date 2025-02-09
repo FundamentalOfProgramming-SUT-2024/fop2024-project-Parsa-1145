@@ -11,6 +11,7 @@ typedef struct{
     long long firstPlayTime;
     int gamesFinished;
     int goldsCollected;
+    int totalScore;
     int goldRecord;
     int gamesPlayed;
     int deaths;

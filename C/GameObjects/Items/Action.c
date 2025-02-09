@@ -25,6 +25,7 @@ void(*getAction(char* name))(ItemBase*){
     else if (!strcmp(name, "trapTeleport")) return &trapTeleport;
     else if (!strcmp(name, "takeAim")) return &takeAim;
     else if (!strcmp(name, "bowTakeAim")) return &bowTakeAim;
+    else if (!strcmp(name, "wandTakeAim")) return &wandTakeAim;
 
     else return NULL;
 }
@@ -58,7 +59,7 @@ int takeAim(ItemBase* o){
 }
 int bowTakeAim(ItemBase* o){
     RayCollision collision;
-    if(player.equipedAmmo){
+    if(player.equipedAmmo && (!strcmp(player.equipedAmmo->subType, "arrow"))){
         castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range + player.equipedAmmo->range, &collision);
         renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
     }
@@ -71,16 +72,31 @@ int consume(ItemBase* o){
     addMessage(writeLog("You consumed the %s", o->name));
     if((!strcmp(o->subType, "food")) && o->goodness == 0){
         addMessage(writeLog("The %s was rotten", o->name));
-    }
-    for(void** i = o->effects.data; i; i = i[0]){
-        tmpEffect = i[1];
-        newEffect = calloc(1, sizeof(Effect));
-        newEffect->amount = tmpEffect->amount;
-        newEffect->type = copyString(tmpEffect->type);
-        newEffect->duration = tmpEffect->duration;
-        newEffect->func = tmpEffect->func;
+    }else{
+        if(!strcmp(o->subType, "food")){
+            int z = 0;
+            for(void** i = o->effects.data; i && z < o->goodness; i = i[0]){
+                tmpEffect = i[1];
+                newEffect = calloc(1, sizeof(Effect));
+                newEffect->amount = tmpEffect->amount;
+                newEffect->type = copyString(tmpEffect->type);
+                newEffect->duration = tmpEffect->duration;
+                newEffect->func = tmpEffect->func;
 
-        addPlayerEffect(newEffect);
+                addPlayerEffect(newEffect);
+            }
+        }else{
+            for(void** i = o->effects.data; i; i = i[0]){
+                tmpEffect = i[1];
+                newEffect = calloc(1, sizeof(Effect));
+                newEffect->amount = tmpEffect->amount;
+                newEffect->type = copyString(tmpEffect->type);
+                newEffect->duration = tmpEffect->duration;
+                newEffect->func = tmpEffect->func;
+
+                addPlayerEffect(newEffect);
+            }
+        }
     }
     updateWorld(0, 0);
 
@@ -185,9 +201,6 @@ int stab(ItemBase* o){
             break;
         }
     }
-}
-int castSpell(ItemBase* o){
-    addMessage(writeLog("HOHO cast spell"));
 }
 int kick(ItemBase* o){
     addMessage(writeLog("HOHO kick"));
@@ -308,32 +321,94 @@ int throwAttack(ItemBase* o){
 
     linkedListPushBack(floors[player.z].itemList, o);
 
+    playEffectByName("throw");
+
     RayCollision c;
     int collision = shootProjectile(o, o->range, &c);
 
     if(c.entity && c.entity->type && !strcmp(c.entity->type, "monster")){
-        if(randWithProb(player.luck * o->openingProb)){
-            addFormattedMessage("You %ohit%O the %S", 1, 5, 1, c.entity->name);
-            c.entity->health -= o->damage - 1;
-            if(c.entity->health <= 0){
-                defaultMonsterDeath(c.entity);
+            if(randWithProb(player.luck * o->openingProb)){
+                addFormattedMessage("You %ohit%O the %S", 1, 5, 1, c.entity->name);
+                defaultMonsterTakeDamage(c.entity, NULL, o->damage);
+            }else{
+                addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
+            }
+            defaultItemDelete(o);
+            removeItemFromLinkedList(floors[player.z].itemList, o);
+        }else{
+            if(collision){
+                playEffectByName("projectileh");
+                if(randWithProb(0.3)){
+                    addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
+                    defaultItemDelete(o);
+                    removeItemFromLinkedList(floors[player.z].itemList, o);
+                }
+                
+            }
+        }
+
+    return 0;
+}
+
+int wandTakeAim(ItemBase* o){
+    RayCollision collision;
+    if(player.equipedAmmo && (!strcmp(player.equipedAmmo->subType, "spell"))){
+        castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range + player.equipedAmmo->range, &collision);
+        renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+    }
+}
+int castSpell(ItemBase* b){
+    if(player.equipedAmmo && !strcmp(player.equipedAmmo->subType, "spell")){
+        ItemBase* o = player.equipedAmmo;
+        if(o->quantity == 1){
+            o->inInventory = 0;
+            removeItemFromLinkedList(&(player.items), o);
+            checkEquiped();
+            updateInventoryTab();
+            if(shownItem == o){
+                emptyWidget(&mgItemWidget);
             }
         }else{
-            addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
+            o->quantity--;
+            o = LoadItemWithName(o->name);
+            o->quantity = 1;
+
+            o->inInventory = 0;
+            o->x = player.x;
+            o->z = player.z;
+            o->y = player.y;
+        }
+
+        linkedListPushBack(floors[player.z].itemList, o);
+
+        playEffectByName("magic1");
+
+        RayCollision c;
+        int collision = shootProjectile(o, o->range + b->range, &c);
+
+        if(c.entity && c.entity->type && !strcmp(c.entity->type, "monster")){
+            if(randWithProb(player.luck * o->openingProb)){
+                addFormattedMessage("The %S is now %oparalized%O", c.entity->name, 1, 5, 1);
+                c.entity->cursed = 1;
+            }else{
+                addFormattedMessage("You %omissed%O the %S", 5, 1, 1, c.entity->name);
+            }
+        }else{
+            if(collision){
+                playEffectByName("projectileHit1");
+                if(randWithProb(0.3)){
+                    addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
+                }
+                
+            }
         }
         defaultItemDelete(o);
         removeItemFromLinkedList(floors[player.z].itemList, o);
-    }else{
-        if(collision){
-            if(randWithProb(0.3)){
-                addFormattedMessage("The %S %obroke%O", o->name, 5, 1, 1);
-                defaultItemDelete(o);
-                removeItemFromLinkedList(floors[player.z].itemList, o);
-            }
-        }
-    }
 
-    return 0;
+        return 0;
+    }else{
+        addMessage(writeLog("Equip an spell"));
+    }
 }
 
 int trapSimpleDamage(ItemBase* o){
@@ -342,6 +417,7 @@ int trapSimpleDamage(ItemBase* o){
     if(player.health <= 0){
         endGame(0, writeLog("You were killed by the spike trap"));
     }
+    playEffectByName("monsterHit1");
 }
 int trapPoisonDamage(ItemBase* o){
     Effect* poison = malloc(sizeof(Effect));
@@ -352,6 +428,8 @@ int trapPoisonDamage(ItemBase* o){
     poison->elapsed = 0;
     addPlayerEffect(poison);
     addFormattedMessage("%oYou stepped on a poisoned spike%O", 1, 4, 1);
+    playEffectByName("monsterHit1");
+
 }
 int trapFallToNextFloor(ItemBase* o){
     player.z++;
@@ -366,9 +444,11 @@ int trapTeleport(ItemBase* o){
     placeInRange(floors + player.z, 0, 0, floors[player.z].w, floors[player.z].h, &(player.x), &(player.y));
     addFormattedMessage("%oYou where teleported by a trap%O", 1, 3, 5);
     player.health -= 15;
+    playEffectByName("teleport");
     if(player.health <= 0){
         endGame(0, writeLog("You couldnt bare the teleportation."));
     }
+    
 }
 int unlockDoor(ItemBase* o){
     ItemBase* itemPtr;

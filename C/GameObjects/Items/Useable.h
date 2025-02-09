@@ -32,7 +32,7 @@ void pickupAmulet(ItemBase* o);
 
 
 void equipInHand(ItemBase* o);
-void equipArrow(ItemBase* o);
+void equipAmmo(ItemBase* o);
 
 
 #endif

@@ -116,7 +116,7 @@ void openItemInfo(ItemBase* o){
 
     if(o->description){
         TextWidget* description = calloc(1, sizeof(TextWidget));
-        createTextWidget(description, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 1, "description: %S", o->description);
+        createTextWidget(description, &mgItemWidget, ALIGN_LEFT, WITH_PARENT, 0, 1, "%odescription:%O %S", 3, 3, 3, o->description);
         linkedListPushBack(mgItemWidget.children, description->uiBase);
     }
 
@@ -195,10 +195,8 @@ void openPotionInfo(ItemBase* o){
 void openAmmoInfo(ItemBase* o){
     Button* equip = calloc(1, sizeof(Button));
     createButton(equip, &mgItemWidget, "equip", ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 5);
-    if(!strcmp(o->subType, "arrow")){
-        equip->contextCallback = &equipArrow;
-        equip->contextObject = o;
-    }
+    equip->contextCallback = &equipAmmo;
+    equip->contextObject = o;
     linkedListPushBack(mgItemWidget.children, equip->uiBase);
 }
 void openValueableInfo(ItemBase* o){
@@ -260,7 +258,7 @@ void pickupAmulet(ItemBase* o){
     endGame(1, NULL);
 }
 
-void equipArrow(ItemBase* o){
+void equipAmmo(ItemBase* o){
     player.equipedAmmo = o;
     addFormattedMessage("You equiped %o%S%O", o->color[0], o->color[1], o->color[2], o->name);
 }

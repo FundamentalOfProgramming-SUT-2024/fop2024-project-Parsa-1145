@@ -31,6 +31,7 @@ int throwAttack(ItemBase* o);
 int takeAim(ItemBase* o);
 int bowTakeAim(ItemBase* o);
 int shootArrow(ItemBase* o);
+int wandTakeAim(ItemBase* o);
 int unlockDoor(ItemBase* o);
 int trapSimpleDamage(ItemBase* o);
 int trapPoisonDamage(ItemBase* o);

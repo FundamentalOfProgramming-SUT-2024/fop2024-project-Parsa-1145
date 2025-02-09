@@ -19,9 +19,9 @@
         "name":"Hard",
         "rememberItems" : 0,
         "visionRadius" : 0.52359877559,
-        "baseMaximumHealth" : 60,
+        "baseMaximumHealth" : 1000,
         "healthRegenAmount" : 3,
-        "baseLuck" : 0.9,
+        "baseLuck" : 1,
         "baseSpeed" : 1
     },{
         "name":"Nightmare",
@@ -29,7 +29,7 @@
         "visionRadius" : 0.52359877559,
         "baseMaximumHealth" : 60,
         "healthRegenAmount" : 3,
-        "baseLuck" : 0.9,
+        "baseLuck" : 1,
         "baseSpeed" : 1
     }
 ]

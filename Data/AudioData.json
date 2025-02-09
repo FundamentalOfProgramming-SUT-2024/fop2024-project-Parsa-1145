@@ -83,5 +83,17 @@
         "name" : "otherworldNight",
         "id" : 18,
         "address" : "../Data/Music/otherworldNight.wav"
+    },{
+        "name" : "magic1",
+        "id" : 18,
+        "address" : "../Data/Music/magicWand.wav"
+    },{
+        "name" : "throw",
+        "id" : 18,
+        "address" : "../Data/Music/throw.wav"
+    },{
+        "name" : "teleport",
+        "id" : 18,
+        "address" : "../Data/Music/teleport.wav"
     }
 ]

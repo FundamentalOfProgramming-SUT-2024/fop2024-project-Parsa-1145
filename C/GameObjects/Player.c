@@ -116,6 +116,12 @@ cJSON* savePlayerToJson(Player* p){
     cJSON_AddNumberToObject(playerJ, "levitating", player.levitating);
     cJSON_AddNumberToObject(playerJ, "invisible", player.invisible);
 
+    cJSON_AddNumberToObject(playerJ, "cr", player.color[0]);
+    cJSON_AddNumberToObject(playerJ, "cg", player.color[1]);
+    cJSON_AddNumberToObject(playerJ, "cb", player.color[2]);
+
+    cJSON_AddNumberToObject(playerJ, "timeSince", player.timeSinceInEnhancedRoom);
+
 
     if(player.heldObject){
         cJSON_AddNumberToObject(playerJ, "heldObject", player.heldObject->id);
@@ -188,6 +194,12 @@ Player* loadPlayerFromJson(cJSON* data){
 
     player.levitating = cJSON_GetObjectItem(data, "levitating")->valueint;
     player.invisible = cJSON_GetObjectItem(data, "invisible")->valueint;
+
+    player.color[0] = cJSON_GetObjectItem(data, "cr")->valueint;
+    player.color[1] = cJSON_GetObjectItem(data, "cg")->valueint;
+    player.color[2] = cJSON_GetObjectItem(data, "cb")->valueint;
+
+    player.timeSinceInEnhancedRoom = cJSON_GetObjectItem(data, "timeSince")->valueint;
 
     emptyLinkedList(&(player.effects));
     emptyLinkedList(&(player.items));

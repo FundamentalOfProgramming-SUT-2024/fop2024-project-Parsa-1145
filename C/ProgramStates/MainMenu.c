@@ -61,6 +61,21 @@ void logOut(){
     mmLoginBtn.widget->isVisible = 1;
     mmLogOutBtn.widget->isVisible = 0;
 }
+void mmLoadGame(const char * const address){
+    cJSON* json = openJsonFile(address);
+
+    cJSON* accountJ = cJSON_GetObjectItem(json, "account");
+    int valid = 1;
+    if(accountJ){
+        if((!(account.username)) || (strcmp(account.username, accountJ->valuestring))){
+            createPopUp("You should load the game with the same account.", NULL, 15, 20, NULL, &mmUiList);
+            valid = 0;
+        }
+    }
+    if(valid){
+        loadGame(json);
+    }
+}
 int startW, startH;
 void initMainMenu(){
     createLinkedList(&mmUiList, sizeof(UiBase*));
@@ -94,7 +109,7 @@ void initMainMenu(){
     mmNewCharacterBtn.callBack = signUpMenu.enter;
     mmSettingsBtn.callBack = enterSettingsMenu;
     mmLogOutBtn.callBack = &logOut;
-    mmLoadGameBtn.contextCallback = &loadGame;
+    mmLoadGameBtn.contextCallback = &mmLoadGame;
     mmLoadGameBtn.contextObject = "outa.json";
     mmSocreboardBtn.callBack = &enterScoreBoard;
 
@@ -156,8 +171,8 @@ void renderMainMenu(){
         tmp = *tmp;
     }
 
-    renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 20 + min(50, (scrW - startW)) + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
-    renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - min(15, ((scrH - startH) * 2)) , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
+    renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 40 + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
+    renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - 20 , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
 
     renderFrameBuffer(mmFrameBuffer);
     renderFrameBuffer(uiFrameBuffer);

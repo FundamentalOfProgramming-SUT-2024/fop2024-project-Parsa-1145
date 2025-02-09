@@ -1,15 +1,15 @@
 [
     {
         "name" : "Scarce",
-        "multiplier" : 0.4
+        "multiplier" : 0.5
     },{
         "name" : "Balanced",
-        "multiplier" : 0.4
+        "multiplier" : 1
     },{
         "name" : "Generous",
-        "multiplier" : 0.4
+        "multiplier" : 1.5
     },{
         "name" : "Abundant",
-        "multiplier" : 0.4
+        "multiplier" : 2
     }
 ]

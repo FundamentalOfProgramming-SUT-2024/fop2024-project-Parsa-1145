@@ -273,6 +273,8 @@ void updateWidgetChildren(Widget* w){
                 w->tmpIterPtr = w->tmpIterPtr[0];
             }
 
+            w->layoutOffset = min(w->layoutOffset, w->totalScrollArea - w->hCopy);
+
             w->scrollBarHeight = (((float)w->hCopy) / ((float)w->totalScrollArea)) * (float)(w->hCopy-1);
             w->scrollBarPos = (((float)w->layoutOffset) / ((float)w->totalScrollArea)) * ((float)w->hCopy-1);
         }

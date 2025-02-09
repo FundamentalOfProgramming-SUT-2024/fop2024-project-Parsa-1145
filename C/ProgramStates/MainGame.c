@@ -22,7 +22,7 @@
 #include "../UiElements/TabWidget.h"
 #include "../UiElements/TextWidget.h"
 #include "../UiElements/ComboBox.h"
-
+#include "../UiElements/PopUp.h"
 
 #include "../GameObjects/Player.h"
 #include "../GameObjects/Room.h"
@@ -78,7 +78,6 @@ Widget mgEndGameMenu;
 TextWidget mgEndGameDialouge1;
 TextWidget mgEndGameTotalMovesTextWidget;
 TextWidget mgEndGameTotalScoreTextWidget;
-TextWidget mgEndGameTotalTimeTextWidget;
 Button mgEndGameExitBtn;
 
 Widget mgSidePane;
@@ -131,6 +130,9 @@ void saveGame(){
 
     cJSON_AddNumberToObject(json, "global time", globalTime);
     cJSON_AddNumberToObject(json, "floor num", floorNum);
+    if(account.username){
+        cJSON_AddStringToObject(json, "account", account.username);
+    }
     
     cJSON* floorsJ = cJSON_CreateArray();
     FOR(i, floorNum){
@@ -148,10 +150,8 @@ void saveGame(){
     saveJsonToFile("outa.json", json);
     cJSON_free(json);
 }
-void loadGame(const char* address){
+void loadGame(cJSON* json){
     resetGame();
-
-    cJSON* json = openJsonFile(address);
 
     floorNum = cJSON_GetObjectItem(json, "floor num")->valueint;
     globalTime = cJSON_GetObjectItem(json, "global time")->valueint;
@@ -470,14 +470,12 @@ void initMainGame(){
         createTextWidget(&mgEndGameDialouge1, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 1, "You Won");
         createTextWidget(&mgEndGameTotalScoreTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
         createTextWidget(&mgEndGameTotalMovesTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
-        createTextWidget(&mgEndGameTotalTimeTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
         createButton(&mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
         mgEndGameExitBtn.callBack = &enterMainMenu;
 
         linkedListPushBack(mgEndGameMenu.children, mgEndGameDialouge1.uiBase);
         linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalScoreTextWidget.uiBase);
         linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalMovesTextWidget.uiBase);
-        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalTimeTextWidget.uiBase);
         linkedListPushBack(mgEndGameMenu.children, mgEndGameExitBtn.uiBase);
     }
 
@@ -789,15 +787,14 @@ void endGame(int won, char * message){
             changeTextWidget(&mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
         }
     }
-    changeTextWidget(&mgEndGameTotalScoreTextWidget, "Your total score: %o%d%O", 4, 4, 0, &(player.totalGold));
-    changeTextWidget(&mgEndGameTotalMovesTextWidget, "Your total moves: %d", &globalTime);
-    changeTextWidget(&mgEndGameTotalTimeTextWidget, "Total play time: %d", &globalTime);
+    changeTextWidget(&mgEndGameTotalScoreTextWidget, "Your total score: %o%D%O", 4, 4, 0, (player.totalGold) * 2 + won * 1000);
+    changeTextWidget(&mgEndGameTotalMovesTextWidget, "Your total moves: %D", globalTime);
     if(account.username){
         account.goldsCollected += player.totalGold;
         if(player.totalGold >= account.goldRecord) account.goldRecord = player.totalGold;
+        account.totalScore += (player.totalGold) * 2 + won * 1000;
         saveAccount();
     }
-
 
     mgEndGameMenu.isVisible = 1;
 }
@@ -1318,37 +1315,6 @@ void placeRoomPointCloud(Floor* f){
         }
 
     }while(roomsPlaced < 200);
-
-    
-    // while(1){
-    //     int ch = getch();
-    //     if(ch == 'a') break;
-    //     else if(ch == KEY_RESIZE){
-    //         getmaxyx(stdscr, scrH, scrW);
-    //         clear();
-    //         refresh();
-
-    //         mainCamera.h = scrH;
-    //         mainCamera.w = scrW;
-    //         mainCamera.x = -scrW/2;
-    //         mainCamera.y = -scrH / 2;
-    //     }
-
-    //     erase();
-    //     // FOR(i, f->roomNum){
-    //     //     Point* p = f->pointCloud[i];
-    //     //     drawCircleOnTerminal(p->x, p->y, p->radius, '.');
-    //     // }
-    //     FOR(i, f->roomNum){
-    //         for(int j = i+1; j < f->roomNum; j++){
-    //             if(f->adjMat[i][j]){
-    //                 Point* p1 = f->pointCloud[i], *p2 = f->pointCloud[j];
-    //                 renderLineToTerminal('.', rgb[5][1][1], p1->x, p1->y, p2->x, p2->y, &mainCamera);
-    //             }
-    //         }
-    //     }
-    //     refresh();
-    // }
     
     return;
 }
@@ -1739,7 +1705,7 @@ void generateLoot(){
         FOR(i, f->roomNum){
             Room* r = f->roomList[i];
             int num = fRandBetween(cJSON_GetObjectItem(roomLootTable[r->theme->id], "minDensity")->valuedouble,
-             cJSON_GetObjectItem(roomLootTable[r->theme->id], "maxDensity")->valuedouble + 1, 0) * (r->w-1) * (r->h-1);
+             cJSON_GetObjectItem(roomLootTable[r->theme->id], "maxDensity")->valuedouble + 1, 0) * (r->w-1) * (r->h-1) * gameSettings.lootRarityMultiplier;
             num = min(num, (r->w-1) * (r->h-1) / 2);
 
             cJSON* enteries = cJSON_GetObjectItem(roomLootTable[r->theme->id], "enteries");
@@ -1787,76 +1753,84 @@ void generateLoot(){
 }
 
 void generateFloor(Floor* f){
-    f->roomNum = 0;
-    f->pointCloud = NULL;
-    f->roomList = NULL;
-    f->adjMat = NULL;
-    f->itemList = malloc(sizeof(LinkedList));
-    createLinkedList(f->itemList, sizeof(ItemBase*));
+    int z = 0;
+    do{
+        if(z != 0){
+            deleteFloor(f);
+        }
+        f->roomNum = 0;
+        f->pointCloud = NULL;
+        f->roomList = NULL;
+        f->adjMat = NULL;
+        f->itemList = malloc(sizeof(LinkedList));
+        createLinkedList(f->itemList, sizeof(ItemBase*));
 
-    placeRoomPointCloud(f);
-    roomDimensions(f);
-    if(f->index != 0){
-        Floor* prevF = floors + f->index -1;
-        f->roomList[f->stairRooms[0]]->w = prevF->roomList[prevF->stairRooms[1]]->w;
-        f->roomList[f->stairRooms[0]]->h = prevF->roomList[prevF->stairRooms[1]]->h;
-    }
-    firstGroundmeshPass(f);
-    f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
-    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
-    f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0 ,0);
+        placeRoomPointCloud(f);
+        roomDimensions(f);
+        if(f->index != 0){
+            Floor* prevF = floors + f->index -1;
+            f->roomList[f->stairRooms[0]]->w = prevF->roomList[prevF->stairRooms[1]]->w;
+            f->roomList[f->stairRooms[0]]->h = prevF->roomList[prevF->stairRooms[1]]->h;
+        }
+        firstGroundmeshPass(f);
+        f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+        f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+        f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0 ,0);
 
 
-    fillCharTexture(f->visited, 0);
-    
-    MovingCell* cell;
-    FOR(i, f->roomNum){
-        for(int j = i + 1; j < f->roomNum; j++){
-            
-            if(f->adjMat[i][j]){
-                int x1[2], y1[2], x2[2], y2[2];
+        fillCharTexture(f->visited, 0);
+        
+        MovingCell* cell;
+        FOR(i, f->roomNum){
+            for(int j = i + 1; j < f->roomNum; j++){
                 
-                x1[0] = f->roomList[i]->x-1;
-                x1[1] = f->roomList[i]->x + f->roomList[i]->w;
-                x2[0] = f->roomList[j]->x-1;
-                x2[1] = f->roomList[j]->x+ f->roomList[j]->w;
-                y1[0] = f->roomList[i]->y-1;
-                y1[1] = f->roomList[i]->y + f->roomList[i]->h;
-                y2[0] = f->roomList[j]->y-1;
-                y2[1] = f->roomList[j]->y+ f->roomList[j]->h;
-                int rx, ry, dx, dy;
+                if(f->adjMat[i][j]){
+                    int x1[2], y1[2], x2[2], y2[2];
+                    
+                    x1[0] = f->roomList[i]->x-1;
+                    x1[1] = f->roomList[i]->x + f->roomList[i]->w;
+                    x2[0] = f->roomList[j]->x-1;
+                    x2[1] = f->roomList[j]->x+ f->roomList[j]->w;
+                    y1[0] = f->roomList[i]->y-1;
+                    y1[1] = f->roomList[i]->y + f->roomList[i]->h;
+                    y2[0] = f->roomList[j]->y-1;
+                    y2[1] = f->roomList[j]->y+ f->roomList[j]->h;
+                    int rx, ry, dx, dy;
 
-                float xdif = x2[0] - x1[0], ydif = y2[0] - y1[0];
+                    float xdif = x2[0] - x1[0], ydif = y2[0] - y1[0];
 
-                cell = calloc(1, sizeof(MovingCell));
-                linkedListPushBack(&PathCells, cell);
-                cell->x = randBetween(f->roomList[i]->x, f->roomList[i]->x+ f->roomList[i]->w, 0);
-                cell->y = randBetween(f->roomList[i]->y, f->roomList[i]->y+ f->roomList[i]->h, 0);
-                cell->type = 0;
-                cell->attr[0] = randBetween(f->roomList[j]->x, f->roomList[j]->x+ f->roomList[j]->w, 0);
-                cell->attr[1] = randBetween(f->roomList[j]->y, f->roomList[j]->y+ f->roomList[j]->h, 0);
-                cell->attr[2] = 0;
-                cell->attr[3] = randBetween(0, 2, 0);
-                cell->attr[4] = j+1;
-                cell->attr[5] = i+1;
-                cell->attr[6] = 0;
-                if((f->roomList[i]->neighbours == 2) && (f->roomList[j]->neighbours == 1)&& (!f->roomList[j]->stairCandidate)){
-                    cell->attr[7] = 1;
-                    f->roomList[j]->hidden = 1;
-                }else if(f->roomList[i]->neighbours == 2){
-                    if(randWithProb(1)){
-                        cell->attr[7] = 2;
-                    }else{
-                        cell->attr[7] = 0;
+                    cell = calloc(1, sizeof(MovingCell));
+                    linkedListPushBack(&PathCells, cell);
+                    cell->x = randBetween(f->roomList[i]->x, f->roomList[i]->x+ f->roomList[i]->w, 0);
+                    cell->y = randBetween(f->roomList[i]->y, f->roomList[i]->y+ f->roomList[i]->h, 0);
+                    cell->type = 0;
+                    cell->attr[0] = randBetween(f->roomList[j]->x, f->roomList[j]->x+ f->roomList[j]->w, 0);
+                    cell->attr[1] = randBetween(f->roomList[j]->y, f->roomList[j]->y+ f->roomList[j]->h, 0);
+                    cell->attr[2] = 0;
+                    cell->attr[3] = randBetween(0, 2, 0);
+                    cell->attr[4] = j+1;
+                    cell->attr[5] = i+1;
+                    cell->attr[6] = 0;
+                    if((f->roomList[i]->neighbours == 2) && (f->roomList[j]->neighbours == 1)&& (!f->roomList[j]->stairCandidate)){
+                        cell->attr[7] = 1;
+                        f->roomList[j]->hidden = 1;
+                    }else if(f->roomList[i]->neighbours == 2){
+                        if(randWithProb(1)){
+                            cell->attr[7] = 2;
+                        }else{
+                            cell->attr[7] = 0;
+                        }
                     }
                 }
             }
         }
-    }
 
-    while(PathCells.size){
-        iterateMovingCells(&PathCells, f);
-    }
+        while(PathCells.size && (z <= 10000)){
+            iterateMovingCells(&PathCells, f);
+            z++;
+        }
+    }while(z > 10000);
+    
     
     FOR(i, f->roomNum){
         if(f->roomList[i]->hidden) f->roomList[i]->theme = themes + 1;
@@ -2236,7 +2210,7 @@ void renderMainGameToFramebuffer(){
 
     renderDepthlessTexture(floors[player.z].groundMesh, 0, 0, 0, &mainCamera, frameBuffer);
     mixTextures(floors[player.z].visited, floors[player.z].visionMesh);
-    colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
+    //colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
     renderDepthlessTexture(floors[player.z].visited, 0, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 }
@@ -2261,6 +2235,8 @@ void renderMainGame(){
 
         renderFrameBuffer(frameBuffer);
 
+
+        attr_set(0, rgb[player.color[0]][player.color[1]][player.color[2]], NULL);
         mvprintw(scrH/2, scrW/2, "@");
         break;
     case 1:

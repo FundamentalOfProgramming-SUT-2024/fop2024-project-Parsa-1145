@@ -38,7 +38,7 @@ extern TextWidget mgEquipedSecondaryextWidget;
 
 extern LinkedList playerActionList;
 int terminalGetInt();
-void loadGame(const char* address);
+void loadGame(cJSON* json);
 
 void startNewGame();
 void updateInventoryTab();

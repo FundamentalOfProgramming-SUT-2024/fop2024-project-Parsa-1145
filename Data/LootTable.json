@@ -5,9 +5,11 @@
     "enteries":[
         {
             "name" : "Sword",
-            "weight" : 15
+            "weight" : 5
         },{
             "name" : "Dagger",
+            "min" : 5,
+            "max" : 10,
             "weight" : 5
         },{
             "name" : "Bow",
@@ -22,7 +24,7 @@
             "max" : 10
         },{
             "name" : "Iron tip arrow",
-            "weight" : 5,
+            "weight" : 10,
             "min" : 3,
             "max" : 7
         },{
@@ -30,54 +32,59 @@
             "weight" : 5
         },{
             "name" : "Makeshift key",
-            "weight" : 100
+            "weight" : 5
         },{
             "name" : "Broken key",
-            "weight" : 100
+            "weight" : 10
+        },{
+            "name" : "Frost spell",
+            "weight" : 5,
+            "min" : 5,
+            "max" : 10
         },{
             "name" : "Maggot",
             "weight" : 5
         },{
             "name" : "Dead rat",
-            "weight" : 100
+            "weight" : 5
         },{
             "name" : "Wierd soup",
             "weight" : 5
         },{
             "name" : "Health regen",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Luck Potion",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Strength potion",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Heart crystal",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Health potion",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Invisibility",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Strength potion",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Levitation",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Speed potion",
-            "weight" : 5
+            "weight" : 3
         },{
             "name" : "Golden coint",
-            "weight" : 5,
+            "weight" : 15,
             "min" : 9,
             "max" : 16
         },{
             "name" : "Ruby",
-            "weight" : 5,
+            "weight" : 15,
             "min" : 3,
             "max" : 6
         }
@@ -89,19 +96,31 @@
     "enteries":[
         {
             "name" : "Health regen",
-            "weight" : 5
+            "weight" : 2
+        },{
+            "name" : "Luck Potion",
+            "weight" : 2
         },{
             "name" : "Strength potion",
-            "weight" : 5
-        },{
-            "name" : "Speed potion",
-            "weight" : 5
-        },{
-            "name" : "Levitation",
-            "weight" : 5
+            "weight" : 2
         },{
             "name" : "Heart crystal",
-            "weight" : 5
+            "weight" : 2
+        },{
+            "name" : "Health potion",
+            "weight" : 2
+        },{
+            "name" : "Invisibility",
+            "weight" : 2
+        },{
+            "name" : "Strength potion",
+            "weight" : 2
+        },{
+            "name" : "Levitation",
+            "weight" : 2
+        },{
+            "name" : "Speed potion",
+            "weight" : 2
         }
     ]
 },{
@@ -173,7 +192,7 @@
 },{
     "type" : 3,
     "minDensity" : 0.4,
-    "maxDensity" : 0.6,
+    "maxDensity" : 0.8,
     "enteries":[
         {
             "name" : "Golden coin",

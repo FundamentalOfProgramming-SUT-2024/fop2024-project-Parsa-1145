@@ -7,7 +7,8 @@
 		"playedGames":	4,
 		"totalGoldCollected":	270,
 		"goldRecord":	0,
-		"deaths":	5
+		"deaths":	5,
+		"totalScore":	0
 	}, {
 		"username":	"grimslayer",
 		"password":	"Grim2025",
@@ -17,7 +18,8 @@
 		"playedGames":	12,
 		"totalGoldCollected":	320,
 		"goldRecord":	150,
-		"deaths":	10
+		"deaths":	10,
+		"totalScore":	0
 	}, {
 		"username":	"shadowcaster",
 		"password":	"Shadow@123",
@@ -27,7 +29,8 @@
 		"playedGames":	8,
 		"totalGoldCollected":	450,
 		"goldRecord":	200,
-		"deaths":	8
+		"deaths":	8,
+		"totalScore":	0
 	}, {
 		"username":	"nightstalker",
 		"password":	"Night2022",
@@ -37,7 +40,8 @@
 		"playedGames":	16,
 		"totalGoldCollected":	850,
 		"goldRecord":	400,
-		"deaths":	6
+		"deaths":	6,
+		"totalScore":	0
 	}, {
 		"username":	"ironshield",
 		"password":	"Shield2020",
@@ -47,7 +51,8 @@
 		"playedGames":	5,
 		"totalGoldCollected":	150,
 		"goldRecord":	50,
-		"deaths":	9
+		"deaths":	9,
+		"totalScore":	0
 	}, {
 		"username":	"flameblade",
 		"password":	"Flame123",
@@ -57,7 +62,8 @@
 		"playedGames":	20,
 		"totalGoldCollected":	1000,
 		"goldRecord":	500,
-		"deaths":	12
+		"deaths":	12,
+		"totalScore":	0
 	}, {
 		"username":	"dungeonlord",
 		"password":	"Dungeon@456",
@@ -67,7 +73,8 @@
 		"playedGames":	25,
 		"totalGoldCollected":	1200,
 		"goldRecord":	600,
-		"deaths":	15
+		"deaths":	15,
+		"totalScore":	0
 	}, {
 		"username":	"cryptkeeper",
 		"password":	"Crypt1234",
@@ -77,7 +84,8 @@
 		"playedGames":	10,
 		"totalGoldCollected":	220,
 		"goldRecord":	100,
-		"deaths":	7
+		"deaths":	7,
+		"totalScore":	0
 	}, {
 		"username":	"thunderfist",
 		"password":	"Thunder2024",
@@ -87,7 +95,8 @@
 		"playedGames":	14,
 		"totalGoldCollected":	400,
 		"goldRecord":	200,
-		"deaths":	6
+		"deaths":	6,
+		"totalScore":	0
 	}, {
 		"username":	"stormshadow",
 		"password":	"Storm#2022",
@@ -97,7 +106,8 @@
 		"playedGames":	6,
 		"totalGoldCollected":	180,
 		"goldRecord":	75,
-		"deaths":	10
+		"deaths":	10,
+		"totalScore":	0
 	}, {
 		"username":	"shadowfang",
 		"password":	"Fang2023",
@@ -107,7 +117,8 @@
 		"playedGames":	15,
 		"totalGoldCollected":	950,
 		"goldRecord":	400,
-		"deaths":	12
+		"deaths":	12,
+		"totalScore":	0
 	}, {
 		"username":	"stormbringer",
 		"password":	"Storm$2023",
@@ -117,7 +128,8 @@
 		"playedGames":	18,
 		"totalGoldCollected":	1100,
 		"goldRecord":	500,
-		"deaths":	5
+		"deaths":	5,
+		"totalScore":	0
 	}, {
 		"username":	"nightshade",
 		"password":	"Shade@2022",
@@ -127,7 +139,8 @@
 		"playedGames":	10,
 		"totalGoldCollected":	560,
 		"goldRecord":	250,
-		"deaths":	8
+		"deaths":	8,
+		"totalScore":	0
 	}, {
 		"username":	"flamedancer",
 		"password":	"Dance!2024",
@@ -137,7 +150,8 @@
 		"playedGames":	7,
 		"totalGoldCollected":	150,
 		"goldRecord":	100,
-		"deaths":	6
+		"deaths":	6,
+		"totalScore":	0
 	}, {
 		"username":	"ancientseeker",
 		"password":	"Seek@2023",
@@ -147,7 +161,8 @@
 		"playedGames":	30,
 		"totalGoldCollected":	2200,
 		"goldRecord":	800,
-		"deaths":	20
+		"deaths":	20,
+		"totalScore":	0
 	}, {
 		"username":	"blackthorn",
 		"password":	"Thorn!2024",
@@ -157,7 +172,8 @@
 		"playedGames":	22,
 		"totalGoldCollected":	1700,
 		"goldRecord":	600,
-		"deaths":	15
+		"deaths":	15,
+		"totalScore":	0
 	}, {
 		"username":	"darkweaver",
 		"password":	"Weave2024",
@@ -167,7 +183,8 @@
 		"playedGames":	3,
 		"totalGoldCollected":	320,
 		"goldRecord":	150,
-		"deaths":	7
+		"deaths":	7,
+		"totalScore":	0
 	}, {
 		"username":	"steelwarden",
 		"password":	"Steel$2023",
@@ -177,7 +194,8 @@
 		"playedGames":	40,
 		"totalGoldCollected":	3000,
 		"goldRecord":	1200,
-		"deaths":	25
+		"deaths":	25,
+		"totalScore":	0
 	}, {
 		"username":	"a",
 		"password":	"",
@@ -187,7 +205,8 @@
 		"playedGames":	42,
 		"totalGoldCollected":	3040,
 		"goldRecord":	1200,
-		"deaths":	25
+		"deaths":	25,
+		"totalScore":	0
 	}, {
 		"username":	"itsame",
 		"password":	"Parsa1145",
@@ -197,5 +216,39 @@
 		"playedGames":	1,
 		"totalGoldCollected":	0,
 		"goldRecord":	0,
-		"deaths":	0
+		"deaths":	0,
+		"totalScore":	0
+	}, {
+		"username":	"arsios",
+		"password":	"0earh>?UoD4:GnT\\<",
+		"email":	"e@b.c",
+		"firstPlayTime":	0,
+		"finishedGames":	0,
+		"playedGames":	0,
+		"totalGoldCollected":	0,
+		"goldRecord":	0,
+		"deaths":	0,
+		"totalScore":	0
+	}, {
+		"username":	"test2",
+		"password":	"Parsa1145",
+		"email":	"a@b.c",
+		"firstPlayTime":	1738839147,
+		"finishedGames":	1,
+		"playedGames":	1,
+		"totalGoldCollected":	170,
+		"goldRecord":	170,
+		"deaths":	0,
+		"totalScore":	1340
+	}, {
+		"username":	"parsios1145",
+		"password":	"Parsa1145",
+		"email":	"a@b.c",
+		"firstPlayTime":	0,
+		"finishedGames":	0,
+		"playedGames":	0,
+		"totalGoldCollected":	0,
+		"goldRecord":	0,
+		"deaths":	0,
+		"totalScore":	0
 	}]

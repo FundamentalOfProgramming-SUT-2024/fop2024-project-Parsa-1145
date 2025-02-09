@@ -1,3 +1,7 @@
+#include "RollDialouge.h"
+
+extern EngineState loadNewGame;
+
 #include <SDL2/SDL.h>
 
 #include "LoadNewGame.h"
@@ -6,23 +10,61 @@
 #include "../GameObjects/Renderer.h"
 #include "../Globals.h"
 
-EngineState loadNewGame;
+EngineState rollDialouge = {NULL, &updateRollDialouge, &renderRollDialouge, NULL, NULL};
 
 
 
-CharTexture* dialougeTexture;
-
-void fadeIn(int* color, int ms){
-    
-}
-
-EngineState loadNewGame = {NULL, &updateNewGameLoading, &renderNewGameLoading, NULL, NULL};
+CharTexture* dialougeTexture = NULL;
 
 uint32_t enterTime, prevTime2, curTime2, dAmount;
 long long total;
 int passed;
 int op;
 int reverse;
+
+enum dialougeRollType{
+    simpleFade,
+    wordFade
+};
+
+void simpleFade(int ch){
+
+}
+
+void wordFade(int ch){
+
+}
+
+void (*rollDialougeUpdates[2])() = {&simpleFade, &wordFade};
+
+void startRollingDialouge(const char * const txt, enum dialougeRollType type, uint32_t ms, uint32_t startOffset, int cr, int cg, int cb){
+    if(dialougeTexture) deleteCharTexture(dialougeTexture);
+
+    dialougeTexture = getTextureByName(txt);
+
+    int k = 20;
+    int totalColors = 255 - k;
+    int br, bg, bb, color, background;
+    {
+        pair_content(0, &color, &background);
+        color_content(background, &br, &bg, &bb);
+
+        init_color(k, br, bg, bb);
+    }
+
+    FOR(i, totalColors){
+        init_pair(k, k, 20);
+        k++;
+        init_color(k, (cr-br) * (i / 254.1), (cg-bg) * (i / 254.1), (cb-bb) * (i / 254.1));
+    }
+
+    rollDialouge.update = rollDialougeUpdates[type];
+
+    engineState = &rollDialouge;
+
+    nodelay(stdscr, 1);
+}
+
 void enterNewGameLoading(){
     dialougeTexture = loadCharTextureFromTxt("../Data/Ascii/Dialouges/openningText.txt");
 

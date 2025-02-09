@@ -39,8 +39,9 @@ void initScoreBoard(){
     linkedListPushBack(sbMainWidget.children, sbScrollArea.uiBase);
 
     TextWidget* tmp = malloc(sizeof(TextWidget));
-    char* format = writeLog("%3s. %-42s %-7s %-6s %-7s %-17s","No", "Name", "Golds", "Games", "Deaths", "Experience");
+    char* format = writeLog("%3s. %-42s %-7s %-6s %-7s %-17s","No", "Name", "Golds", "Games", "score", "Experience");
     createTextWidget(tmp, &sbMainWidget, ALIGN_LEFT, ABSOLUTE, 1, 3, format, 5, 5, 0);
+    tmp->wrap = 0;
     free(format);
     linkedListPushBack(sbMainWidget.children, tmp->uiBase);
 
@@ -66,13 +67,10 @@ void enterScoreBoard(){
     }
 
     emptyWidget(&sbScrollArea);
-    {
-        
-    }
 
     FOR(i, n){
         for(int j = i+1; j < n; j++){
-            if(accounts[i]->goldsCollected < accounts[j]->goldsCollected){
+            if(accounts[i]->totalScore < accounts[j]->totalScore){
                 Account* tmp = accounts[i];
                 accounts[i] = accounts[j];
                 accounts[j] = tmp;
@@ -93,45 +91,46 @@ void enterScoreBoard(){
         int years = months / 12;
 
         char* timeSinceFirstGame;
-        if(years){
-            timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", years, years > 1 ? "Yrs":"Yr", months%12, months%12>1 ? "Mos":"Mo");
-        }else if(months){
-            timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", months, months>1 ? "Mos":"Mo", days%30, days%30 > 1?"Dys":"Dy");
-        }else if(days){
-            timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", days, days > 1?"Dys":"Dy", hours%24, hours%24>1?"Hrs":"Hr");
-        }else if(hours){
-            timeSinceFirstGame = writeLog("%-2d %-3s", hours, hours > 1?"Hrs":"Hr");
-        }else{
-            if(accounts[i]->gamesPlayed){
-                timeSinceFirstGame = writeLog("Less than one hour");
+        if(accounts[i]->gamesPlayed){
+            if(years){
+                timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", years, years > 1 ? "Yrs":"Yr", months%12, months%12>1 ? "Mos":"Mo");
+            }else if(months){
+                timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", months, months>1 ? "Mos":"Mo", days%30, days%30 > 1?"Dys":"Dy");
+            }else if(days){
+                timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", days, days > 1?"Dys":"Dy", hours%24, hours%24>1?"Hrs":"Hr");
+            }else if(hours){
+                timeSinceFirstGame = writeLog("%-2d %-3s", hours, hours > 1?"Hrs":"Hr");
             }else{
-                timeSinceFirstGame = writeLog("-");
+                timeSinceFirstGame = writeLog("%-2d %-3s %-2d %-3s", minutes, minutes > 1?"Mns":"Mn", duration%24, duration%24>1?"Scs":"Sc");
             }
+        }
+        else{
+            timeSinceFirstGame = writeLog("-");
         }
         if(i == 0){
             char* longName = writeLog("%s The No-Cap King", accounts[i]->username);
             format = writeLog("%3d. %%o%%U %-40s%%O %-7d %-6d %-7d %-17s", i+1, longName, accounts[i]->goldsCollected,
-             accounts[i]->gamesPlayed, accounts[i]->deaths, timeSinceFirstGame);
+            accounts[i]->gamesPlayed, accounts[i]->totalScore, timeSinceFirstGame);
 
             createTextWidget(tmp, &sbScrollArea, ALIGN_LEFT, WITH_PARENT, 0, 0, format, 5, 5, 0, 10051);
             free(longName);
         }else if(i == 1){
             char* longName = writeLog("The Legandary %s", accounts[i]->username);
             format = writeLog("%3d. %%o%%U %-40s%%O %-7d %-6d %-7d %-17s", i+1, longName, accounts[i]->goldsCollected,
-             accounts[i]->gamesPlayed, accounts[i]->deaths, timeSinceFirstGame);
+            accounts[i]->gamesPlayed, accounts[i]->totalScore, timeSinceFirstGame);
 
             createTextWidget(tmp, &sbScrollArea, ALIGN_LEFT, WITH_PARENT, 0, 0, format, 5, 5, 4, 6821);
             free(longName);
         }else if(i == 2){
             char* longName = writeLog("The Almost Legandary %s", accounts[i]->username);
             format = writeLog("%3d. %%o%%U %-40s%%O %-7d %-6d %-7d %-17s", i+1, longName, accounts[i]->goldsCollected,
-             accounts[i]->gamesPlayed, accounts[i]->deaths, timeSinceFirstGame);
+            accounts[i]->gamesPlayed, accounts[i]->totalScore, timeSinceFirstGame);
 
             createTextWidget(tmp, &sbScrollArea, ALIGN_LEFT, WITH_PARENT, 0, 0, format, 5, 3, 0, 6819);
             free(longName);
         }else{
             format = writeLog("%3d. %-42s %-7d %-6d %-7d %-17s", i+1, accounts[i]->username, accounts[i]->goldsCollected,
-             accounts[i]->gamesPlayed, accounts[i]->deaths, timeSinceFirstGame);
+            accounts[i]->gamesPlayed, accounts[i]->totalScore, timeSinceFirstGame);
 
             createTextWidget(tmp, &sbScrollArea, ALIGN_LEFT, WITH_PARENT, 0, 0, format);
         }
@@ -145,6 +144,7 @@ void enterScoreBoard(){
             createTextWidget(tmp, &sbScrollArea, ALIGN_LEFT, WITH_PARENT, 0, -1, "     %U", 5579);
             linkedListPushBack(sbScrollArea.children, tmp->uiBase);
         }
+        tmp->wrap = 0;
 
     }
 

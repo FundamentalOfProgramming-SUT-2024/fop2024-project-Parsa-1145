@@ -14,6 +14,8 @@ void loadAccount(cJSON* data, Account* a){
     a->goldsCollected = cJSON_GetObjectItem(data, "totalGoldCollected")->valueint;
     a->goldRecord = cJSON_GetObjectItem(data, "goldRecord")->valueint;
     a->deaths = cJSON_GetObjectItem(data, "deaths")->valueint;
+    a->totalScore = cJSON_GetObjectItem(data, "totalScore")->valueint;
+
 }
 
 void saveAccount(){
@@ -33,6 +35,7 @@ void saveAccount(){
     cJSON_SetNumberValue(cJSON_GetObjectItem(accountJ, "totalGoldCollected"), account.goldsCollected);
     cJSON_SetNumberValue(cJSON_GetObjectItem(accountJ, "goldRecord"), account.goldRecord);
     cJSON_SetNumberValue(cJSON_GetObjectItem(accountJ, "deaths"), account.deaths);
+    cJSON_SetNumberValue(cJSON_GetObjectItem(accountJ, "totalScore"), account.totalScore);
     
 
     saveJsonToFile(playerDbAddress, accounts);
@@ -52,6 +55,7 @@ void addAccount(const char * const username, const char * const password, const 
     cJSON_AddNumberToObject(accountJ, "totalGoldCollected", 0);
     cJSON_AddNumberToObject(accountJ, "goldRecord", 0);
     cJSON_AddNumberToObject(accountJ, "deaths", 0);
+    cJSON_AddNumberToObject(accountJ, "totalScore", 0);
 
     cJSON_AddItemToArray(accounts, accountJ);
 

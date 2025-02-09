@@ -27,5 +27,9 @@
         "name" : "mace",
         "id" : 3,
         "address" : "../Data/Ascii/Items/mace.txt"
+    },{
+        "name" : "rougeLogo",
+        "id" : 3,
+        "address" : "../Data/Ascii/rougeLogo.txt"
     }
 ]

@@ -12,7 +12,7 @@
         "cg" : 4,
         "cb" : 4,
         "asciiArt" : "mace",
-        "description" : "Worn, rusted, but familiar in your grip. It has seen countless battles. now, it’s your only ally."
+        "description" : "Worn, rusted, but familiar in your grip. It has seen countless battles."
     },{
         "name" : "Sword",
         "openProb" : 0.6,
@@ -62,7 +62,9 @@
     },{
         "name" : "Magic Wand",
         "type" : "weapon",
+        "inHandUpdate" : "wandTakeAim",
         "subType" : "ranged",
+        "openProb" : 0.7,
         "damage" : 2,
         "range" : 8,
         "sprite" : 5848,
@@ -76,13 +78,15 @@
     },{
         "name" : "Frost spell",
         "type" : "ammo",
+        "openProb" : 0.7,
         "subType" : "spell",
         "damage" : 2,
-        "range" : 8,
-        "sprite" : 10230,
-        "cr" : 3,
+        "range" : 2,
+        "sprite" : 9072,
+        "cr" : 2,
         "cg" : 3,
-        "cb" : 3
+        "cb" : 5,
+        "description" : "A potent incantation that freezes enemies in place, encasing them in ice. Their limbs stiffen, rendering them helpless to your attack."
     },{
         "name" : "Fire spell",
         "type" : "ammo",
@@ -123,7 +127,8 @@
         "sprite" : 10230,
         "cr" : 3,
         "cg" : 3,
-        "cb" : 3
+        "cb" : 3,
+        "description" : "An arrow carved from ancient timber, whispering with the echoes of the forest. Though simple in form, it flies true, guided by unseen hands."
     },{
         "name" : "Iron tip arrow",
         "type" : "ammo",
@@ -134,7 +139,8 @@
         "sprite" : 10233,
         "cr" : 3,
         "cg" : 3,
-        "cb" : 3
+        "cb" : 3,
+        "description" : "A sturdy arrow tipped with forged iron, humming with the weight of battle. Its sharpened point thirsts for the blood of foes."
     },{
         "name" : "Ancient key",
         "type" : "useable",
@@ -144,7 +150,8 @@
         "primaryUse" : "Unlock door",
         "cr" : 3,
         "cg" : 3,
-        "cb" : 0
+        "cb" : 0,
+        "description" : "A relic from a forgotten age, its surface etched with cryptic runes. It bends the will of most locks, though some secrets remain beyond its grasp."
     },{
         "name" : "Makeshift key",
         "type" : "useable",
@@ -154,7 +161,8 @@
         "primaryUse" : "Unlock door",
         "cr" : 2,
         "cg" : 2,
-        "cb" : 0
+        "cb" : 0,
+        "description" : "A crude creation of bent wire and determination. It can fool simple locks, but its fragile form may not last long."
     },{
         "name" : "Broken key",
         "type" : "useable",
@@ -339,7 +347,8 @@
         ],
         "cr" : 4,
         "cg" : 1,
-        "cb" : 1
+        "cb" : 1,
+        "description" : "A radiant gem pulsing with lifeforce. Its warmth seeps into your veins, expanding your vitality beyond mortal limits."
     },{
         "name" : "Speed potion",
         "type" : "consumable",
@@ -391,7 +400,8 @@
         "value" : 10,
         "cr" : 5,
         "cg" : 0,
-        "cb" : 0
+        "cb" : 0,
+        "description" : "A flawless gemstone, rich in crimson hues. Coveted by merchants and nobles alike, its worth is matched only by its beauty."
     },{
         "name" : "Daemon",
         "type" : "monster",
@@ -459,19 +469,6 @@
         "visionRadius" : 1,
         "decayTime" : 5,
         "damage" : 20,
-        "cr" : 3,
-        "cg" : 1,
-        "cb" : 5,
-        "openProb" :  0.6,
-        "deathSound" : "zombieDeath2"
-    },{
-        "name" : "King Eldarion",
-        "type" : "monster",
-        "sprite" : 85,
-        "health" : 300,
-        "visionRadius" : -1,
-        "decayTime" : -1,
-        "damage" : 5,
         "cr" : 3,
         "cg" : 1,
         "cb" : 5,
