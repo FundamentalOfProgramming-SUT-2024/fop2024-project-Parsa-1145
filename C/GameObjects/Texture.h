@@ -39,6 +39,8 @@ void mixTextures( CharTexture* t1, CharTexture* t2);
 cJSON* saveCharTextureToJson(CharTexture* t);
 CharTexture* loadCharTextureFromJson(cJSON* data);
 CharTexture* loadCharTextureFromTxt(const char * const address);
+CharTexture* copyTexture(const CharTexture * const t);
+
 
 
 extern CharTexture* globalFrameBuffer;

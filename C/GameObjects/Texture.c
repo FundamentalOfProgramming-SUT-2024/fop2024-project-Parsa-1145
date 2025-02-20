@@ -312,3 +312,19 @@ void emptyFrameBuffer(CharTexture* f){
         }
     }
 }
+CharTexture* copyTexture(const CharTexture * const t){
+    CharTexture* out = createCharTexture(t->w, t->h, t->hasDepth, t->hasColor);
+
+    FOR(i, out->h){
+        FOR(j, out->w){
+            out->data[i][j] = t->data[i][j];
+            if(out->hasColor){
+                out->color[i][j] = t->color[i][j];
+            }if(out->hasDepth){
+                out->depth[i][j] = t->depth[i][j];
+            }
+        }
+    }
+
+    return out;
+}

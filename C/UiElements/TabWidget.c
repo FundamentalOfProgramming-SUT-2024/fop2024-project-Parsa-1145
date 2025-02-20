@@ -106,7 +106,7 @@ void tabWidgetRender(TabWidget* t){
     }
     color_set(0, NULL);
 
-
+    renderWidget(t->tabArea);
     if(t->active){
         renderWidget(t->active);
     }

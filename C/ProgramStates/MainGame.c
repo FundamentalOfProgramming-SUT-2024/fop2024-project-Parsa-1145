@@ -6,6 +6,7 @@
 
 #include "MainGame.h"
 #include "MainMenu.h"
+#include "RollDialouge.h"
 #include "SettingsMenu.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
@@ -470,7 +471,7 @@ void initMainGame(){
         createTextWidget(&mgEndGameDialouge1, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 1, "You Won");
         createTextWidget(&mgEndGameTotalScoreTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
         createTextWidget(&mgEndGameTotalMovesTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
-        createButton(&mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", ABSOLUTE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
+        createButton(&mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
         mgEndGameExitBtn.callBack = &enterMainMenu;
 
         linkedListPushBack(mgEndGameMenu.children, mgEndGameDialouge1.uiBase);
@@ -625,7 +626,7 @@ void initMainGame(){
     gameSettings.roomThemeProb[3] = 0.05;
     gameSettings.roomThemeNum = 4;
     
-    gameSettings.baseMaxHealth = 1000;
+    gameSettings.baseMaxHealth = 100;
     gameSettings.baseHealthRegenTime = 5;
     gameSettings.baseHungerTime = 10;
     gameSettings.baseSpeed = 1;
@@ -767,6 +768,10 @@ void startNewGame(){
     updateInventoryTab();
     updateMusic();
 
+    emptyFrameBuffer(uiFrameBuffer);
+    emptyFrameBuffer(frameBuffer);
+    renderMainGame();
+
     timeout(100);
     nodelay(stdscr, FALSE);
 }
@@ -780,6 +785,8 @@ void endGame(int won, char * message){
             account.gamesFinished++;
         }
     }else{
+        changeAudio(getAudioByName("sunset"), 1000);
+        startRollingDialouge("youDied", staryFade, 4000, 5, 2500, 1000, 300, 300, enterMainGame);
         if(message){
             changeTextWidget(&mgEndGameDialouge1, "%o%S%O", 5, 1, 0, message);
             free(message);
@@ -799,6 +806,8 @@ void endGame(int won, char * message){
     mgEndGameMenu.isVisible = 1;
 }
 void enterMainGame(){
+    resetRgbColors();
+    engineState = &mainGame;
     renderFrameBuffer(uiFrameBuffer);
     resetCurrentMusicVolume(1000);
 }
@@ -2006,9 +2015,6 @@ void updateWorld(int x, int y){
 
     updatePlayerStats(&player);
 
-    if(player.health <= 0){
-        endGame(0, "hoho");
-    }
     if(deltaTime){
         player.hungerCounter++;
         if(player.hungerCounter >= player.hungerTime){
@@ -2210,7 +2216,7 @@ void renderMainGameToFramebuffer(){
 
     renderDepthlessTexture(floors[player.z].groundMesh, 0, 0, 0, &mainCamera, frameBuffer);
     mixTextures(floors[player.z].visited, floors[player.z].visionMesh);
-    //colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
+    colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
     renderDepthlessTexture(floors[player.z].visited, 0, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 }
@@ -2234,7 +2240,6 @@ void renderMainGame(){
         renderMainGameToFramebuffer();
 
         renderFrameBuffer(frameBuffer);
-
 
         attr_set(0, rgb[player.color[0]][player.color[1]][player.color[2]], NULL);
         mvprintw(scrH/2, scrW/2, "@");

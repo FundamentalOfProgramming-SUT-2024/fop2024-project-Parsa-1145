@@ -31,5 +31,13 @@
         "name" : "rougeLogo",
         "id" : 3,
         "address" : "../Data/Ascii/rougeLogo.txt"
+    },{
+        "name" : "loreDialouge",
+        "id" : 3,
+        "address" : "../Data/Ascii/Dialouges/openningText.txt"
+    },{
+        "name" : "youDied",
+        "id" : 3,
+        "address" : "../Data/Ascii/Dialouges/youDied.txt"
     }
 ]

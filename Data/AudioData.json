@@ -95,5 +95,13 @@
         "name" : "teleport",
         "id" : 18,
         "address" : "../Data/Music/teleport.wav"
+    },{
+        "name" : "curroption",
+        "id" : 18,
+        "address" : "../Data/Music/curroption.wav"
+    },{
+        "name" : "sunset",
+        "id" : 18,
+        "address" : "../Data/Music/sunset.wav"
     }
 ]

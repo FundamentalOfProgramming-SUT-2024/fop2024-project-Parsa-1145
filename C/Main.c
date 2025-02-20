@@ -11,6 +11,7 @@
 #include "ProgramStates/MainGame.h"
 #include "ProgramStates/SignupMenu.h"
 #include "ProgramStates/Scoreboard.h"
+#include "ProgramStates/RollDialouge.h"
 #include "ProgramStates/SettingsMenu.h"
 #include "SecondaryThread.h"
 #include "UiElements/PopUp.h"
@@ -34,6 +35,7 @@ int main(){
     init_extended_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
 
     resetRgbColors();
+
 
     getmaxyx(stdscr, scrH, scrW);
     globalCamera.h = scrH;
@@ -64,7 +66,8 @@ int main(){
 
     engineState = &maineMenu;
 
-    (*(engineState->enter))();
+    changeAudio(getAudioByName("curroption"), 1000);
+    startRollingDialouge("rougeLogo", simpleFade, 9000, 5, 1000, 1000, 400, 400, &enterMainMenu);
 
     int ch;
     void** tmp;

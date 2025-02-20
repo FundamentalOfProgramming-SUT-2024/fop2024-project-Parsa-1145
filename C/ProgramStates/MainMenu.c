@@ -129,9 +129,10 @@ void enterMainMenu(){
         mmLogOutBtn.widget->isVisible = 1;
     }
 
+    resetRgbColors();
+
     getmaxyx(stdscr, scrH, scrW);
     resizeFrameBuffer(&mmFrameBuffer, scrW, scrH);
-
 
     mmCamera.x = -scrW/2;
     mmCamera.y = -scrH/2;
@@ -147,7 +148,7 @@ void enterMainMenu(){
     mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
     timeout(100);
     printf("\033[?1003h\n");
-    changeAudio(getAudioByName("title"), 2000);
+    changeAudio(getAudioByName("title"), 5000);
 }
 void updateMainMenu(int ch){
     if(ch == KEY_RESIZE){

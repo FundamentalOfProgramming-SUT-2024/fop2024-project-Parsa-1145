@@ -4,7 +4,7 @@
 #include "MainMenu.h"
 #include "MainGame.h"
 #include "NewGameMenu.h"
-#include "LoadNewGame.h"
+#include "RollDialouge.h"
 #include "../Globals.h"
 #include "../GlobalDefines.h"
 #include "../UiElements/Widget.h"
@@ -85,8 +85,8 @@ void ngmStartGame(){
     cJSON_free(lootProfiles);
     cJSON_free(mapSizeProfiles);
 
-    changeAudio(getAudioByName("otherworldNight"), 100);
-    enterNewGameLoading();
+    changeAudio(getAudioByName("otherworldNight"), 1000);
+    startRollingDialouge("loreDialouge", wordFade, 1000, 10, 1000, 1000, 800, 700, &startNewGame);
 }
 
 
