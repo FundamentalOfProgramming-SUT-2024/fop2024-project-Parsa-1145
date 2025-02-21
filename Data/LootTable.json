@@ -52,33 +52,33 @@
             "weight" : 5
         },{
             "name" : "Health regen",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Luck Potion",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Strength potion",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Heart crystal",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Health potion",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Invisibility",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Strength potion",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Levitation",
-            "weight" : 3
+            "weight" : 1
         },{
             "name" : "Speed potion",
-            "weight" : 3
+            "weight" : 1
         },{
-            "name" : "Golden coint",
+            "name" : "Golden coin",
             "weight" : 15,
             "min" : 9,
             "max" : 16

@@ -750,6 +750,7 @@ void startNewGame(){
     addItemToInventory(startingMace);
     updateInventoryTab();
     updateMusic();
+    updateInteractionsWidget();
 
     emptyFrameBuffer(uiFrameBuffer);
     emptyFrameBuffer(frameBuffer);
