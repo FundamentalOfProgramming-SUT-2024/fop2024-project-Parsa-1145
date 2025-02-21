@@ -37,6 +37,8 @@ int trapSimpleDamage(ItemBase* o);
 int trapPoisonDamage(ItemBase* o);
 int trapFallToNextFloor(ItemBase* o);
 int trapTeleport(ItemBase* o);
+int enterAmuletChamber(ItemBase* o);
+
 
 int effectSpeedIncrease(Effect* e);
 int effectHealthRegen(Effect* e);

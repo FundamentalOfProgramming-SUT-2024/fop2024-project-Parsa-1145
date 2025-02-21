@@ -244,7 +244,7 @@ void updateWidgetChildren(Widget* w){
                 w->iterPtr = w->tmpIterPtr[1];
                 if(w->iterPtr){
                     ch = w->iterPtr->widget;
-                    margin = ch->y;
+                    margin = ch->y - 1;
                 }
                 while(w->tmpIterPtr){
                     w->iterPtr = w->tmpIterPtr[1];
@@ -260,7 +260,7 @@ void updateWidgetChildren(Widget* w){
                                 w->totalScrollArea += ch->hCopy + ch->y + w->layoutPadding * (num!=0);
                                 num++;
                             }
-                            if((ch->topLeftY + ch->hCopy < w->topLeftY + w->bordered + margin)){
+                            if((ch->topLeftY + ch->hCopy <= w->topLeftY + w->bordered + margin)){
                                 ch->outOfBound = 1;
                             }else if(ch->topLeftY >= w->topLeftY + w->hCopy - w->bordered){
                                 ch->outOfBound = 1;
@@ -419,6 +419,10 @@ void renderWidget(Widget* w){
             w->iterPtr->render(w->iterPtr->object);
             w->tmpIterPtr = w->tmpIterPtr[0];
         }
+
+        // mvFramBufferPrintW(uiFrameBuffer ,w->topLeftY, w->topLeftX, 0, "%d", w->topLeftY + w->hCopy);
+        // mvFramBufferPrintW(uiFrameBuffer ,w->topLeftY + w->hCopy, w->topLeftX + w->wCopy - 5, 0, "%d", w->topLeftY + w->bordered);
+
     }
    
 }

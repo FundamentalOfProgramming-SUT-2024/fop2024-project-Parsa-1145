@@ -74,9 +74,11 @@ int comboBoxMouseClick(ComboBox* c){
                 c->optionAreaOpen = !c->optionAreaOpen;
                 playEffectByName("click");
             }else if(c->optionAreaOpen && isWidgetHovered(c->optionsArea, mEvent.x, mEvent.y)){
-                c->selected = mEvent.y - c->optionsArea->topLeftY;
-                if(c->selected >= c->options->size){
-                    c->selected = 0;
+                if(mEvent.y - c->optionsArea->topLeftY <= c->options->size){
+                    c->selected = mEvent.y - c->optionsArea->topLeftY;
+                    if(c->optionCallback){
+                        c->optionCallback();
+                    }
                 }
                 c->optionAreaOpen = 0;
                 c->btnHovered = 0;

@@ -144,6 +144,7 @@
     },{
         "name" : "Ancient key",
         "type" : "useable",
+        "asciiArt" : "key",
         "subType" : "key",
         "openProb" : 0.9,
         "sprite" : 11237,
@@ -156,6 +157,7 @@
         "name" : "Makeshift key",
         "type" : "useable",
         "subType" : "key",
+        "asciiArt" : "key",
         "openProb" : 0.4,
         "sprite" : 11228,
         "primaryUse" : "Unlock door",
@@ -318,6 +320,13 @@
         "cg" : 5,
         "cb" : 0
     },{
+        "name" : "Amulet of yendor",
+        "type" : "endgame",
+        "sprite" : 11097,
+        "cr" : 5,
+        "cg" : 5,
+        "cb" : 0
+    },{
         "name" : "Health potion",
         "type" : "consumable",
         "subType" : "potion",
@@ -337,6 +346,7 @@
         "name" : "Heart crystal",
         "type" : "consumable",
         "subType" : "potion",
+        "asciiArt" : "heartCrystal",
         "sprite" : 9829,
         "primaryUse" : "consume",
         "effects": [
@@ -410,8 +420,8 @@
         "visionRadius" : 8,
         "decayTime" : 10,
         "damage" : 5,
-        "cr" : 3,
-        "cg" : 1,
+        "cr" : 5,
+        "cg" : 2,
         "cb" : 5,
         "deathSound" : "daemonDeath1",
         "openProb" :  0.5
@@ -423,8 +433,8 @@
         "visionRadius" : 5,
         "decayTime" : 10,
         "damage" : 10,
-        "cr" : 3,
-        "cg" : 1,
+        "cr" : 5,
+        "cg" : 2,
         "cb" : 5,
         "openProb" : 0.4,
         "deathSound" : "daemonDeath2",
@@ -443,8 +453,8 @@
         "visionRadius" : 10,
         "decayTime" : 10,
         "damage" : 30,
-        "cr" : 3,
-        "cg" : 1,
+        "cr" : 5,
+        "cg" : 2,
         "cb" : 5,
         "openProb" :  0.3,
         "deathSound" : "giantDeath"
@@ -456,8 +466,8 @@
         "visionRadius" : 8,
         "decayTime" : -1,
         "damage" : 5,
-        "cr" : 3,
-        "cg" : 1,
+        "cr" : 5,
+        "cg" : 2,
         "cb" : 5,
         "openProb" :  0.8,
         "deathSound" : "snakeDeath1"
@@ -469,8 +479,8 @@
         "visionRadius" : 1,
         "decayTime" : 5,
         "damage" : 20,
-        "cr" : 3,
-        "cg" : 1,
+        "cr" : 5,
+        "cg" : 2,
         "cb" : 5,
         "openProb" :  0.6,
         "deathSound" : "zombieDeath2"

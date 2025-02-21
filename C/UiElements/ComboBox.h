@@ -10,6 +10,8 @@ typedef struct{
 
     Widget* optionsArea;
 
+    void (*optionCallback)();
+
     int isVisible;
     int optionAreaOpen;
     int btnHovered;

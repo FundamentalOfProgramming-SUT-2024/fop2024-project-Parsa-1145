@@ -39,5 +39,61 @@
         "name" : "youDied",
         "id" : 3,
         "address" : "../Data/Ascii/Dialouges/youDied.txt"
+    },{
+        "name" : "youWon",
+        "id" : 3,
+        "address" : "../Data/Ascii/Dialouges/youWon.txt"
+    },{
+        "name" : "skull",
+        "id" : 3,
+        "address" : "../Data/Ascii/skull.txt"
+    },{
+        "name" : "happyKnight",
+        "id" : 3,
+        "address" : "../Data/Ascii/happyKnight.txt"
+    },{
+        "name" : "key",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/key.txt"
+    },{
+        "name" : "heartCrystal",
+        "id" : 3,
+        "address" : "../Data/Ascii/Items/heartCrystal.txt"
+    },{
+        "name" : "mapSizeSmall",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/mapSizeSmall.txt"
+    },{
+        "name" : "mapSizeNormal",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/mapSizeNormal.txt"
+    },{
+        "name" : "mapSizeBig",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/mapSizeBig.txt"
+    },{
+        "name" : "mapSizeGigantic",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/mapSizeGigantic.txt"
+    },{
+        "name" : "difficultyEasy",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/difficultyEasy.txt"
+    },{
+        "name" : "difficultyNormal",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/difficultyNormal.txt"
+    },{
+        "name" : "difficultyHard",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/difficultyHard.txt"
+    },{
+        "name" : "difficultyNightmare",
+        "id" : 3,
+        "address" : "../Data/Ascii/Images/difficultyNightmare.txt"
+    },{
+        "name" : "sky",
+        "id" : 3,
+        "address" : "../Data/Ascii/sky.txt"
     }
 ]

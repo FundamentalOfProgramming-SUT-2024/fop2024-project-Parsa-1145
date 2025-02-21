@@ -26,6 +26,8 @@ typedef struct{
     int roomNum;
     int index;
     int stairRooms[2];
+
+    int startX, startY;
     
     CharTexture* groundMesh;
     CharTexture* featureMesh;

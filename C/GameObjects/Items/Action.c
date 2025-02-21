@@ -55,7 +55,7 @@ void moveInStair(ItemBase* o){
 int takeAim(ItemBase* o){
     RayCollision collision;
     castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range, &collision);
-    renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+    renderLineToFrameBuffer(0, rgb[5][1][1], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
 }
 int bowTakeAim(ItemBase* o){
     RayCollision collision;
@@ -75,7 +75,7 @@ int consume(ItemBase* o){
     }else{
         if(!strcmp(o->subType, "food")){
             int z = 0;
-            for(void** i = o->effects.data; i && z < o->goodness; i = i[0]){
+            for(void** i = o->effects.data; i && (z < o->goodness); i = i[0]){
                 tmpEffect = i[1];
                 newEffect = calloc(1, sizeof(Effect));
                 newEffect->amount = tmpEffect->amount;
@@ -84,6 +84,8 @@ int consume(ItemBase* o){
                 newEffect->func = tmpEffect->func;
 
                 addPlayerEffect(newEffect);
+
+                z++;
             }
         }else{
             for(void** i = o->effects.data; i; i = i[0]){
@@ -98,6 +100,7 @@ int consume(ItemBase* o){
             }
         }
     }
+    useItem(o);
     updateWorld(0, 0);
 
     updateEffectsTab();
@@ -481,6 +484,13 @@ int unlockDoor(ItemBase* o){
     }
 }
 
+int enterAmuletChamber(ItemBase* o){
+    player.x = floors[floorNum - 1].startX;
+    player.y = floors[floorNum - 1].startY;
+    player.z = floorNum - 1;
+
+    addFormattedMessage("You enter the final chamber. The %oAmulet of Yendor%O awaits—but so do its guardians. Fight or %odie trying%O...", 5, 5, 1, 5, 1, 1);
+}
 int effectSpeedIncrease(struct Effect* e){
     player.speedModifier = e->amount; 
 }

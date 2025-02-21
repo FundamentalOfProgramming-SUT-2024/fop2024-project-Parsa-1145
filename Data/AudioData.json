@@ -103,5 +103,17 @@
         "name" : "sunset",
         "id" : 18,
         "address" : "../Data/Music/sunset.wav"
+    },{
+        "name" : "journeysEnd",
+        "id" : 18,
+        "address" : "../Data/Music/journeysEnd.wav"
+    },{
+        "name" : "amuletChamber",
+        "id" : 18,
+        "address" : "../Data/Music/amuletChamber.wav"
+    },{
+        "name" : "gameStartClick",
+        "id" : 18,
+        "address" : "../Data/Music/gameStartClick.wav"
     }
 ]

@@ -251,4 +251,15 @@
 		"goldRecord":	0,
 		"deaths":	0,
 		"totalScore":	0
+	}, {
+		"username":	"Parsa",
+		"password":	"Parsa1145",
+		"email":	"parsa@gmail.com",
+		"firstPlayTime":	1740159298,
+		"finishedGames":	1,
+		"playedGames":	1,
+		"totalGoldCollected":	60,
+		"goldRecord":	60,
+		"deaths":	0,
+		"totalScore":	1120
 	}]

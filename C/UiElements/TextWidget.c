@@ -37,7 +37,11 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
     va_list args;
     va_start(args, n);
 
-    t->args = calloc(n ,sizeof(Arg));
+    if(n){
+        t->args = calloc(n ,sizeof(Arg));
+    }else{
+        t->args = NULL;
+    }
 
     int k = 0;
     FOR(i, t->strLength){
@@ -131,7 +135,9 @@ void createTextWidget(TextWidget* t, Widget* parent, int alignmentX, int alignme
 }
 void changeTextWidget(TextWidget* t, char* format, ...){
     free(t->format);
-    free(t->args);
+    if(t->args){
+        free(t->args);
+    }
 
     t->format = copyString(format);
 
@@ -365,9 +371,10 @@ void renderTextWidget(TextWidget* t){
     }
 }
 void updateTextWidget(TextWidget* t){
+    t->widget->w = textWidgetGetStrLength(t);
     updateWidgetTopLeft(t->widget);
     if(t->wrap){
-        t->widget->hCopy = (textWidgetGetStrLength(t) / t->widget->parent->wCopy) + 1;
+        t->widget->hCopy = (t->widget->w / t->widget->parent->wCopy) + 1;
     }
 }
 void deleteTextWidget(TextWidget* t){

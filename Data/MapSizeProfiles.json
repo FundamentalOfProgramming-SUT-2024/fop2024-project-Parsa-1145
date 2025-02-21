@@ -4,24 +4,31 @@
         "minRoomNum" : 3,
         "maxRoomNum" : 5,
         "minFloorNum" : 4,
-        "maxFloorNum" : 5
+        "maxFloorNum" : 5,
+        "image" : "mapSizeSmall"
     },{
         "name" : "Normal",
         "minRoomNum" : 5,
         "maxRoomNum" : 7,
         "minFloors" : 5,
-        "maxFloorNum" : 7
+        "maxFloorNum" : 7,
+        "image" : "mapSizeNormal"
+
     },{
         "name" : "Big",
         "minRoomNum" : 7,
         "maxRoomNum" : 9,
         "minFloors" : 6,
-        "maxFloorNum" : 8
+        "maxFloorNum" : 8,
+        "image" : "mapSizeBig"
+
     },{
         "name" : "Gigantic",
         "minRoomNum" : 9,
         "maxRoomNum" : 11,
         "minFloors" : 8,
-        "maxFloorNum" : 10
+        "maxFloorNum" : 10,
+        "image" : "mapSizeGigantic"
+
     }
 ]

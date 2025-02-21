@@ -22,6 +22,10 @@ Widget smMainWidget;
 TabWidget smTabWidget;
 
 Widget smAudioWidget;
+Widget smGamePlayWidget;
+Widget smGraphicsWidget;
+
+
 
 Widget smAudioComboWrapper;
 TextWidget smAudioComboLabel;
@@ -45,7 +49,6 @@ Settings tmpSettings;
 void forceSmBack(){
     engineState = prevEngineState;
     prevEngineState->enter();
-
 }
 void smBack(){
     if(memcmp(&tmpSettings, &settings, sizeof(Settings))){
@@ -109,15 +112,24 @@ void initSettingsMenu(){
                 linkedListPushBack(smAudioWidget.children, smMusicVolumeWrapper.uiBase);
                 linkedListPushBack(smAudioWidget.children, smEffectsVolumeWrapper.uiBase);
             }
+            createWidget(&smGraphicsWidget, smTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 100, 100, NULL);
+            smGraphicsWidget.layoutType = VERTICAL_LAYOUT;
+            smGraphicsWidget.layoutPadding = 1;
+
+            createWidget(&smGamePlayWidget, smTabWidget.tabArea, RELATIVE, RELATIVE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 100, 100, NULL);
+            smGamePlayWidget.layoutType = VERTICAL_LAYOUT;
+            smGamePlayWidget.layoutPadding = 1;
+
             tabWidgetAddTab(&smTabWidget, "Audio", &smAudioWidget, NULL);
+            tabWidgetAddTab(&smTabWidget, "Graphics", &smGraphicsWidget, NULL);
+            tabWidgetAddTab(&smTabWidget, "Gameplay", &smGamePlayWidget, NULL);
+
         }
         createButton(&smApplyBtn, &smMainWidget, "Apply", ABSOLUTE, ALIGN_RIGHT, ALIGN_BOTTOM, 2, 2, 7);
         createButton(&smBackBtn, &smMainWidget, "Back", ABSOLUTE, ALIGN_LEFT, ALIGN_BOTTOM, 2, 2, 6);
 
         smBackBtn.callBack = &smBack;
         smApplyBtn.callBack = &applySettings;
-
-
 
         linkedListPushBack(smMainWidget.children, smTabWidget.uiBase);
         linkedListPushBack(smMainWidget.children, smApplyBtn.uiBase);

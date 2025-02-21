@@ -80,54 +80,63 @@ void createNumberInput(TextBox* textBox, Widget* parent, char* label, int* num, 
     textBox->uiBase->type = UI_TYPE_TEXTBOX;
 }
 
-void renderTextBox(TextBox* textBox){
-    if(isWidgetVisible(textBox->widget->parent)){
-        color_set(textBox->bgColor, NULL);
-        int top = textBox->widget->topLeftY;
-        if(textBox->label[0]){
-            moveInFrameBuffer(uiFrameBuffer ,top++, textBox->widget->topLeftX + 1);
-            framBufferPrintW(uiFrameBuffer,  textBox->widget->z,"%s:", textBox->label);
+void renderTextBox(TextBox* t){
+    if(isWidgetVisible(t->widget->parent)){
+        color_set(t->bgColor, NULL);
+        int top = t->widget->topLeftY;
+
+        if(t->widget->parent){
+            Widget* p = t->widget->parent;
+            setRenderBoundingBox(p->topLeftX + p->bordered, p->topLeftY + p->bordered, p->topLeftX + p->wCopy - 1 - p->bordered - (p->scrollOn && (p->totalScrollArea > p->hCopy)),
+                p->topLeftY + p->hCopy - 1 - p->bordered);
+        }
+    
+        if(t->label[0]){
+            moveInFrameBuffer(uiFrameBuffer ,top++, t->widget->topLeftX + 1);
+            framBufferPrintW(uiFrameBuffer,  t->widget->z,"%s:", t->label);
         }
 
-        if((hoveredElement == textBox->uiBase) && !textBox->focused)attron(A_DIM);
-        moveInFrameBuffer(uiFrameBuffer ,top++, textBox->widget->topLeftX);
-        addWchToFrameBuffer(uiFrameBuffer, WACS_ULCORNER->chars[0], textBox->widget->z, 0, 0);
+        if((hoveredElement == t->uiBase) && !t->focused)attron(A_DIM);
+        moveInFrameBuffer(uiFrameBuffer ,top++, t->widget->topLeftX);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_ULCORNER->chars[0], t->widget->z, 0, 0);
         
-        FOR(i, textBox->widget->wCopy-2){
-            addWchToFrameBuffer(uiFrameBuffer, WACS_HLINE->chars[0], textBox->widget->z, 0, 0);
+        FOR(i, t->widget->wCopy-2){
+            addWchToFrameBuffer(uiFrameBuffer, WACS_HLINE->chars[0], t->widget->z, 0, 0);
         }
-        addWchToFrameBuffer(uiFrameBuffer, WACS_URCORNER->chars[0], textBox->widget->z, 0, 0);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_URCORNER->chars[0], t->widget->z, 0, 0);
 
-        moveInFrameBuffer(uiFrameBuffer, top, textBox->widget->topLeftX);
-        addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], textBox->widget->z, 0, 0);
-        FOR(i, textBox->widget->wCopy-2){
-            addWchToFrameBuffer(uiFrameBuffer, ' ', textBox->widget->z, 0, 0);
+        moveInFrameBuffer(uiFrameBuffer, top, t->widget->topLeftX);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], t->widget->z, 0, 0);
+        FOR(i, t->widget->wCopy-2){
+            addWchToFrameBuffer(uiFrameBuffer, ' ', t->widget->z, 0, 0);
         }
-        moveInFrameBuffer(uiFrameBuffer, top, textBox->widget->topLeftX + 1);
-        if(textBox->integer && textBox->integer[0]){
-            sprintf(textBox->str, "%d", textBox->integer[0]);
-            textBox->index = strlen(textBox->integer);
+        moveInFrameBuffer(uiFrameBuffer, top, t->widget->topLeftX + 1);
+        if(t->integer && t->integer[0]){
+            sprintf(t->str, "%d", t->integer[0]);
+            t->index = strlen(t->integer);
         }
-        framBufferPrintW(uiFrameBuffer,  textBox->widget->z, "%s", textBox->str);
-        textBox->index = strlen(textBox->str);
-        if(textBox->focused){
+        framBufferPrintW(uiFrameBuffer,  t->widget->z, "%s", t->str);
+        t->index = strlen(t->str);
+        if(t->focused){
             attron(A_BLINK);
-            addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], textBox->widget->z, 0, 0);
+            addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], t->widget->z, 0, 0);
             attroff(A_BLINK);
         }else{
-            addWchToFrameBuffer(uiFrameBuffer, ' ', textBox->widget->z, 0, 0);
+            addWchToFrameBuffer(uiFrameBuffer, ' ', t->widget->z, 0, 0);
         }
-        moveInFrameBuffer(uiFrameBuffer, top++, textBox->widget->topLeftX + textBox->widget->wCopy-1);
-        addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], textBox->widget->z, 0, 0);
+        moveInFrameBuffer(uiFrameBuffer, top++, t->widget->topLeftX + t->widget->wCopy-1);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_VLINE->chars[0], t->widget->z, 0, 0);
         
-        moveInFrameBuffer(uiFrameBuffer, top, textBox->widget->topLeftX);
-        addWchToFrameBuffer(uiFrameBuffer, WACS_LLCORNER->chars[0], textBox->widget->z, 0, 0);
-        FOR(i, textBox->widget->wCopy-2){
-            addWchToFrameBuffer(uiFrameBuffer, WACS_HLINE->chars[0], textBox->widget->z, 0, 0);
+        moveInFrameBuffer(uiFrameBuffer, top, t->widget->topLeftX);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_LLCORNER->chars[0], t->widget->z, 0, 0);
+        FOR(i, t->widget->wCopy-2){
+            addWchToFrameBuffer(uiFrameBuffer, WACS_HLINE->chars[0], t->widget->z, 0, 0);
         }
-        addWchToFrameBuffer(uiFrameBuffer, WACS_LRCORNER->chars[0], textBox->widget->z, 0, 0);
+        addWchToFrameBuffer(uiFrameBuffer, WACS_LRCORNER->chars[0], t->widget->z, 0, 0);
         color_set(0, NULL);
-        if((hoveredElement == textBox->uiBase) && !textBox->focused)attroff(A_DIM);
+        if((hoveredElement == t->uiBase) && !t->focused)attroff(A_DIM);
+
+        resetRenderBound();
     }
 }
 int TBMouseMoveCb(TextBox* textBox){

@@ -28,14 +28,14 @@ int main(){
     initscr();
     start_color();
     init_extended_color(10, 150, 150, 150);
-    init_extended_color(12, 100, 100, 100);
+    init_extended_color(12, 350, 350, 300);
     init_extended_pair(C_BG_GRAY0, COLOR_WHITE, 10);
     init_extended_pair(C_BG_GRAY1, COLOR_WHITE, 12);
     init_extended_pair(C_BG_BLACK, COLOR_WHITE, COLOR_BLACK);
     init_extended_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
 
+    use_default_colors();
     resetRgbColors();
-
 
     getmaxyx(stdscr, scrH, scrW);
     globalCamera.h = scrH;
@@ -45,7 +45,9 @@ int main(){
 
     uiFrameBuffer = createFrameBuffer(scrW, scrH);
     globalFrameBuffer = createFrameBuffer(scrW, scrH);
-
+    
+    initAudioManager();
+    initTextureManager();
     initSettings();
     initMainMenu();
     initSettingsMenu();
@@ -67,7 +69,7 @@ int main(){
     engineState = &maineMenu;
 
     changeAudio(getAudioByName("curroption"), 1000);
-    startRollingDialouge("rougeLogo", simpleFade, 9000, 5, 1000, 1000, 400, 400, &enterMainMenu);
+    startRollingDialouge("rougeLogo", simpleFade, 7000, 5, 1000, 1000, 400, 400, &enterMainMenu);
 
     int ch;
     void** tmp;

@@ -73,11 +73,11 @@ int iterateRootCell(LinkedList* list, MovingCell* cell, Floor* f){
 
 
     if((cell->attr[6])){
-        if(( cell->attr[2] > 2) && (randWithProb(cell->attr[2]) * 0.1)){
+        if(( cell->attr[2] > 2) && (randWithProb(cell->attr[2]) * 0.05)){
             cell->attr[3] = !(cell->attr[3]);
             cell->attr[2] = 0;
         }else{
-            cell->attr[2]++;
+            cell->attr[2] += randBetween (0, 3, 0);
         }
     }
     float xdir = cell->attr[0] - cell->x, ydir = cell->attr[1] - cell->y, dist;

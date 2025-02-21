@@ -105,7 +105,6 @@ PathPoint* pathFind(int x1, int y1, int x2, int y2, Floor* f, int o){
         iterPtr = iterPtr[0];
     }
 
-
     if(found){
         out = malloc(sizeof(PathPoint) * (curPoint->depth + 1));
         out[0].depth = curPoint->depth;
@@ -189,15 +188,18 @@ int defaultMonsterUpdate(ItemBase* m){
                     }
                     
                     if(!m->decayed){
-                        m->decayed = m->decayTime / 2;
-                        if(randWithProb(0.5)){
-                            m->goodness = 2;
-                            addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
+                        if((floors[m->z].featureMesh->data[m->y][m->x] == 3)){
+                            m->decayed = 10;
                         }else{
-                            m->goodness = 3;
-                            addFormattedMessage("%S lost %ointrest%O in you", m->name, 1, 5, 1 );
+                            m->decayed = m->decayTime / 2;
+                            if(randWithProb(0.5)){
+                                m->goodness = 2;
+                                addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
+                            }else{
+                                m->goodness = 3;
+                                addFormattedMessage("%S lost %ointrest%O in you", m->name, 1, 5, 1 );
+                            }
                         }
-                        
                     }
                 }else{
                     m->goodness = 0;

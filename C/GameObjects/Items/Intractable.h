@@ -5,11 +5,13 @@
 void initDoor(ItemBase* o);
 void initStair(ItemBase* o);
 void initTrap(ItemBase* o);
+void initTressureRoomEntrance(ItemBase* o);
 void initPasswordGenerator(ItemBase* o);
 
 void trapPlayerCollision(ItemBase* o);
 void doorPlayerCollision(ItemBase* o);
 void stairPlayerCollision(ItemBase* o);
+void tressureRoomEntrancePlayerCollision(ItemBase* o);
 void passwordGeneratorPlayerCollision(ItemBase* o);
 
 void updatePasswordGenerator(ItemBase* o);

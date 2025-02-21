@@ -132,6 +132,8 @@ ItemBase* loadItemFromJson(cJSON* data){
     }else {
         if(!strcmp(o->name, "Door")){
             initDoor(o);
+        }if(!strcmp(o->name, "tressureRoomEntrance")){
+            initTressureRoomEntrance(o);
         }else if(!strcmp(o->name, "Stair")){
             initStair(o);
         }else if(!strcmp(o->name, "Trap")){
@@ -455,6 +457,9 @@ void useItem(ItemBase* o){
         removeItemFromLinkedList(&(player.items), o);
         defaultItemDelete(o);
         renderMainGame();
+        if(shownItem == o){
+            emptyWidget(&mgItemWidget);
+        }
     }
     updateInventoryTab();
 }

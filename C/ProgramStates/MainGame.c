@@ -24,6 +24,8 @@
 #include "../UiElements/TextWidget.h"
 #include "../UiElements/ComboBox.h"
 #include "../UiElements/PopUp.h"
+#include "../UiElements/ImageBox.h"
+
 
 #include "../GameObjects/Player.h"
 #include "../GameObjects/Room.h"
@@ -76,10 +78,7 @@ CheckBox mgSeeAllCb;
 ComboBox mgDebugRenderLayer;
 
 Widget mgEndGameMenu;
-TextWidget mgEndGameDialouge1;
-TextWidget mgEndGameTotalMovesTextWidget;
-TextWidget mgEndGameTotalScoreTextWidget;
-Button mgEndGameExitBtn;
+
 
 Widget mgSidePane;
 Widget mgTerminalWidget;
@@ -115,14 +114,7 @@ CheckBox* mgCheckBoxList[2] = {&mgShowPointCloudCb, &mgNoClipCb};
 char mgTerminalInput[50];
 LinkedList messages;
 
-typedef enum GameState{
-    inDungeon,
-    inEntrance,
-    inTressureRoom,
-    inFightRoom
-}GameState;
-
-GameState gameState;
+int tressureRoomPlayerX, tressureRoomPlayerY;
 
 void updateMusic();
 
@@ -248,6 +240,8 @@ void updateInteractionsWidget(){
                 break;
         }
         tmpText->widget->overflow[0] = 1;
+        tmpText->wrap = 0;
+
         linkedListPushBack(mgInteractionsWidget.children, tmpText->uiBase);
     }
 }
@@ -467,18 +461,6 @@ void initMainGame(){
     mgEndGameMenu.bordered = 1;
     mgEndGameMenu.layoutType = VERTICAL_LAYOUT;
     mgEndGameMenu.layoutPadding = 1;
-    {
-        createTextWidget(&mgEndGameDialouge1, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 1, "You Won");
-        createTextWidget(&mgEndGameTotalScoreTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
-        createTextWidget(&mgEndGameTotalMovesTextWidget, &mgEndGameMenu, ALIGN_LEFT, WITH_PARENT, 1, 0, "You Won");
-        createButton(&mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
-        mgEndGameExitBtn.callBack = &enterMainMenu;
-
-        linkedListPushBack(mgEndGameMenu.children, mgEndGameDialouge1.uiBase);
-        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalScoreTextWidget.uiBase);
-        linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalMovesTextWidget.uiBase);
-        linkedListPushBack(mgEndGameMenu.children, mgEndGameExitBtn.uiBase);
-    }
 
 
     createWidget(&mgPauseMenu, NULL, ABSOLUTE, ABSOLUTE, ALIGN_CENTER, ALIGN_CENTER, 0, 0, 21, 11, C_BG_GRAY0);
@@ -581,6 +563,7 @@ void initMainGame(){
     createWidget(&mgEquipedWidget, NULL, ABSOLUTE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 0, 0, 20, 100, NULL);
     mgEquipedWidget.layoutType = VERTICAL_LAYOUT;
     mgEquipedWidget.layoutPadding = 0;
+    mgEquipedWidget.overflow[0] = 1;
     {
         createTextWidget(&mgEquipedNameTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 1, "Nothing is equiped");
         createTextWidget(&mgEquipedPrimaryTextWidget, &mgEquipedWidget, ALIGN_LEFT, WITH_PARENT, 1, 0, "");
@@ -589,11 +572,14 @@ void initMainGame(){
         mgEquipedNameTextWidget.widget->overflow[0] = 1;
         mgEquipedPrimaryTextWidget.widget->overflow[0] = 1;
         mgEquipedSecondaryextWidget.widget->overflow[0] = 1;
+        mgEquipedNameTextWidget.wrap = 0;
+        mgEquipedPrimaryTextWidget.wrap = 0;
+        mgEquipedSecondaryextWidget.wrap = 0;
 
-        createWidget(&mgInteractionsWidget, &mgEquipedWidget, RELATIVE, ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 2, 100, 10, NULL);
+        createWidget(&mgInteractionsWidget, &mgEquipedWidget, RELATIVE, ABSOLUTE, ALIGN_LEFT, WITH_PARENT, 0, 1, 100, 10, NULL);
         mgInteractionsWidget.layoutType = VERTICAL_LAYOUT;
-        mgInteractionsWidget.scrollOn = 1;
-
+        mgInteractionsWidget.layoutPadding = 0;
+        mgInteractionsWidget.overflow[0] = 1;
 
         mgEquipedPrimaryTextWidget.widget->isVisible = 0;
         mgEquipedSecondaryextWidget.widget->isVisible = 0;
@@ -618,7 +604,7 @@ void initMainGame(){
     gameSettings.minFloorNum = 4;
     gameSettings.minRoomSize = 8;
     gameSettings.maxRoomSize = 16;
-    gameSettings.roomSpread = 3;
+    gameSettings.roomSpread = 5;
     gameSettings.roomThemeProb = malloc(4 * 4);
     gameSettings.roomThemeProb[0] = 0.5;
     gameSettings.roomThemeProb[1] = 0.2;
@@ -638,10 +624,10 @@ void initMainGame(){
     gameSettings.visionRadius = PI / 4;
 
     gameSettings.debugMode = 1;
-    gameSettings.debugShowPointCloud = 1;
-    gameSettings.noClip = 1;
+    gameSettings.debugShowPointCloud = 0;
+    gameSettings.noClip = 0;
     gameSettings.debugItemInfo = 0;
-    gameSettings.debugSeeAll = 1;
+    gameSettings.debugSeeAll = 0;
     gameSettings.debugMapGenerationLayer = 0;
     gameSettings.debugMapGenerationStepped = 0;
 
@@ -653,9 +639,6 @@ void initMainGame(){
     createLinkedList(&(player.items), sizeof(ItemBase*));
     createLinkedList(&(player.effects), sizeof(Effect*));
     createLinkedList(&(playerActionList), sizeof(Interaction*));
-
-    initAudioManager();
-    initTextureManager();
 
     visitedMaskBuffer = createFrameBuffer(scrW, scrH);
     frameBuffer = createFrameBuffer(scrW, scrH);
@@ -779,29 +762,52 @@ void endGame(int won, char * message){
     mgDebugMenu.isVisible = 0;
     mgPauseMenu.isVisible = 0;
     gameEnded = 1;
+    emptyWidget(&mgEndGameMenu);
+
+    TextWidget* mgEndGameDialouge1 = calloc(1, sizeof(TextWidget));
+    TextWidget* mgEndGameTotalMovesTextWidget = calloc(1, sizeof(TextWidget));
+    TextWidget* mgEndGameTotalScoreTextWidget = calloc(1, sizeof(TextWidget));
+    Button* mgEndGameExitBtn = calloc(1, sizeof(Button));
+    ImageBox* tmpImageBox = calloc(1, sizeof(ImageBox));
+
+    createTextWidget(mgEndGameDialouge1, &mgEndGameMenu, ALIGN_CENTER, WITH_PARENT, 1, 1, "Your total score:");
+    createTextWidget(mgEndGameTotalScoreTextWidget, &mgEndGameMenu, ALIGN_CENTER, WITH_PARENT, 1, 1, "Your total score: %o%D%O", 4, 4, 0, (player.totalGold) * 2 + won * 1000);
+    createTextWidget(mgEndGameTotalMovesTextWidget, &mgEndGameMenu, ALIGN_CENTER, WITH_PARENT, 1, 0, "Your total moves: %D", globalTime);
+    createButton(mgEndGameExitBtn, &mgEndGameMenu, "Return to main menu", RELATIVE, ALIGN_CENTER, ALIGN_BOTTOM, 1, 2, 80);
+    mgEndGameExitBtn->callBack = &enterMainMenu;
+
     if(won){
-        changeTextWidget(&mgEndGameDialouge1, "%oYou found the Amulet Of Yendor%O", 5, 5, 0);
+        changeAudio(getAudioByName("journeysEnd"), 1000);
+        startRollingDialouge("youWon", horizontalFade, 4000, 5, 3600, 1000, 1000, 300, enterMainGame);
+        changeTextWidget(mgEndGameDialouge1, "%oYou found the Amulet Of Yendor%O", 5, 5, 0);
         if(account.username){
             account.gamesFinished++;
         }
+
+        createImageBox(tmpImageBox, &mgEndGameMenu, getTextureByName("happyKnight")->data, rgb[5][5][2], ALIGN_CENTER, WITH_PARENT, 2, 2);
     }else{
         changeAudio(getAudioByName("sunset"), 1000);
         startRollingDialouge("youDied", staryFade, 4000, 5, 2500, 1000, 300, 300, enterMainGame);
         if(message){
-            changeTextWidget(&mgEndGameDialouge1, "%o%S%O", 5, 1, 0, message);
+            changeTextWidget(mgEndGameDialouge1, "%o%S%O", 5, 1, 0, message);
             free(message);
         }else{
-            changeTextWidget(&mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
+            changeTextWidget(mgEndGameDialouge1, "%oYou Died%O", 5, 1, 0);
         }
+        createImageBox(tmpImageBox, &mgEndGameMenu, getTextureByName("skull")->data, rgb[5][2][2], ALIGN_CENTER, WITH_PARENT, 2, 2);
     }
-    changeTextWidget(&mgEndGameTotalScoreTextWidget, "Your total score: %o%D%O", 4, 4, 0, (player.totalGold) * 2 + won * 1000);
-    changeTextWidget(&mgEndGameTotalMovesTextWidget, "Your total moves: %D", globalTime);
     if(account.username){
         account.goldsCollected += player.totalGold;
         if(player.totalGold >= account.goldRecord) account.goldRecord = player.totalGold;
         account.totalScore += (player.totalGold) * 2 + won * 1000;
         saveAccount();
     }
+
+    linkedListPushBack(mgEndGameMenu.children, tmpImageBox->uiBase);
+    linkedListPushBack(mgEndGameMenu.children, mgEndGameDialouge1->uiBase);
+    linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalScoreTextWidget->uiBase);
+    linkedListPushBack(mgEndGameMenu.children, mgEndGameTotalMovesTextWidget->uiBase);
+    linkedListPushBack(mgEndGameMenu.children, mgEndGameExitBtn->uiBase);
 
     mgEndGameMenu.isVisible = 1;
 }
@@ -1065,6 +1071,31 @@ int castVisionRay(int x1, int y1, double x, double y, Floor* f, long double leng
     }
     return 0;
 }
+int castHearingRay(int x1, int y1, double x, double y, Floor* f, long double length, CharTexture* tex){
+    x1 += 0.5;
+    y1 += 0.5;
+
+    long double curx = x1, cury = y1, traversed = 0;
+    int curxd, curyd;
+    while(1){
+        curx += x;
+        cury += y;
+        curxd = round(curx);
+        curyd = round(cury);
+
+        traversed += 1;
+        tex->data[curyd][curxd] = 1;
+
+        if((f->groundMesh->data[curyd][curxd] != '.')){
+            return 1;
+        }else if(length > 1){
+            if(traversed >= length){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
 
 Room* createRoomGraph(Room* start, int branchSide, int* createdNum, int minN, int maxN, float branchingProb, int depth){
     Room** branchRoomList;
@@ -1165,7 +1196,7 @@ void parseRoomGraph(Room* r, Floor* f, float x, float y){
         p->x = x;
         p->y = y + randBetween(0, 3, 0) - 6;
         p->radius = randBetween(ceil(gameSettings.minRoomSize * 1.4 / 2) + 1, ceil(gameSettings.maxRoomSize * 1.4 / 2) + 1, 0);
-        p->spread = randBetween(gameSettings.roomSpread, gameSettings.roomSpread * 2, 0);
+        p->spread = randBetween(2, gameSettings.roomSpread * 2, 0);
         p->locked = 0;
         f->pointCloud[++f->roomNum] = p;
         r->visited = 1;
@@ -1537,71 +1568,74 @@ void postProccessFloor(Floor* f){
         }
     }
 }
-void placeTraps(Floor* f){
-    float trapProbs[4] = {0.5, 0.3, 0.1, 0.2};
-    FOR(i, f->roomNum){
-        Room* r = f->roomList[i];
+void placeTraps(){
+    FOR(z, floorNum){
+        Floor* f = floors + z;
+        float trapProbs[4] = {0.5, 0.3, 0.1, 0.2};
+        FOR(i, f->roomNum){
+            Room* r = f->roomList[i];
 
-        int n;
+            int n;
+            float area = (r->w-1) * (r->h-1);
 
-        if(r->theme->id == 0){
-            n = randBetween(0, 4, 0);
-        }else if(r->theme->id == 1){
-            n = 0;
-        }else if(r->theme->id == 2){
-            n = randBetween(2, 5, 0);
-        }else if(r->theme->id == 3){
-            n = randBetween(5, 12, 0);
-            n = min(r->w * r->h / 2 - 1, n);
-        }
-
-        FOR(j, n){
-            ItemBase* t = calloc(1, sizeof(ItemBase));
-
-            t->name = writeLog("Trap");
-            placeInRange(f, r->x, r->y, r->x + r->w, r->y + r->h, &(t->x), &(t->y));
-
-            int type = randIndexWithProb(4, trapProbs, 0);
-            if((type == 3) && (f->index == floorNum-1)) type = 2;
-
-            switch(type){
-                case 0:
-                    t->damage = 2;
-                    t->sprite = '^';
-                    t->color[0] = 5;
-                    t->color[1] = 2;
-                    t->color[2] = 2;
-                    t->primaryUseName = writeLog("trapSimpleDamage");
-                    t->primaryUse = trapSimpleDamage;
-                    break;
-                case 1:
-                    t->sprite = '^';
-                    t->color[0] = 1;
-                    t->color[1] = 4;
-                    t->color[2] = 1;
-                    t->primaryUseName = writeLog("trapPoisonDamage");
-                    t->primaryUse = trapPoisonDamage;
-                    break;
-                case 2:
-                    t->sprite = 9635;
-                    t->color[0] = 1;
-                    t->color[1] = 4;
-                    t->color[2] = 5;
-                    t->primaryUseName = writeLog("trapTeleport");
-                    t->primaryUse = trapTeleport;
-                    break;
-                case 3:
-                    t->sprite = 11041;
-                    t->color[0] = 3;
-                    t->color[1] = 3;
-                    t->color[2] = 2;
-                    t->primaryUseName = writeLog("trapFallToNextFloor");
-                    t->primaryUse = trapFallToNextFloor;
-                    break;
+            if(r->theme->id == 0){
+                n = randBetween(0, 4, 0);
+            }else if(r->theme->id == 1){
+                n = 0;
+            }else if(r->theme->id == 2){
+                n = randBetween(2, 5, 0);
+            }else if(r->theme->id == 3){
+                n = randBetween(area * 0.05, area * 0.07, 0);
             }
-            t->hidden = 1;
-            initTrap(t);
-            linkedListPushBack(f->itemList, t);
+
+            FOR(j, n){
+                ItemBase* t = calloc(1, sizeof(ItemBase));
+
+                t->name = writeLog("Trap");
+                placeInRange(f, r->x, r->y, r->x + r->w, r->y + r->h, &(t->x), &(t->y));
+
+                int type = randIndexWithProb(4, trapProbs, 0);
+                if((type == 3) && (f->index == floorNum-1)) type = 2;
+
+                switch(type){
+                    case 0:
+                        t->damage = 2;
+                        t->sprite = '^';
+                        t->color[0] = 5;
+                        t->color[1] = 2;
+                        t->color[2] = 2;
+                        t->primaryUseName = writeLog("trapSimpleDamage");
+                        t->primaryUse = trapSimpleDamage;
+                        break;
+                    case 1:
+                        t->sprite = '^';
+                        t->color[0] = 1;
+                        t->color[1] = 4;
+                        t->color[2] = 1;
+                        t->primaryUseName = writeLog("trapPoisonDamage");
+                        t->primaryUse = trapPoisonDamage;
+                        break;
+                    case 2:
+                        t->sprite = 9635;
+                        t->color[0] = 1;
+                        t->color[1] = 4;
+                        t->color[2] = 5;
+                        t->primaryUseName = writeLog("trapTeleport");
+                        t->primaryUse = trapTeleport;
+                        break;
+                    case 3:
+                        t->sprite = 11041;
+                        t->color[0] = 3;
+                        t->color[1] = 3;
+                        t->color[2] = 2;
+                        t->primaryUseName = writeLog("trapFallToNextFloor");
+                        t->primaryUse = trapFallToNextFloor;
+                        break;
+                }
+                t->hidden = 1;
+                initTrap(t);
+                linkedListPushBack(f->itemList, t);
+            }
         }
     }
 }
@@ -1681,7 +1715,7 @@ void generateLoot(){
     FOR(j, floorNum){ 
         Floor* f = floors + j;
         Floor* nextF = floors + j + 1;
-        if(j!=floorNum-1){
+        if(j <= floorNum-2){
             int x1, y1, x2, y2;
             do{
                 x1 = randBetween(f->roomList[f->stairRooms[1]]->x + 1,f->roomList[f->stairRooms[1]]->x + f->roomList[f->stairRooms[1]]->w-1, 0);
@@ -1747,14 +1781,6 @@ void generateLoot(){
                     if(r->theme->id == 2) gen->fake = 1;
                     linkedListPushBack(f->itemList, gen);
                 }
-            }
-            if(r->theme->id == 3){
-                ItemBase* amulet = LoadItemWithName("Amulet of yendor");
-                amulet->quantity = 1;
-
-                placeInRange(f, r->x, r->y, r->x + r->w-1, r->y + r->h-1, &(amulet->x), &(amulet->y));
-                amulet->z = j;
-                linkedListPushBack(f->itemList, amulet);
             }
         }
     }
@@ -1851,9 +1877,6 @@ void generateFloor(Floor* f){
             f->roomList[i]->theme = themes;
         }
     }
-    if(f->index == floorNum-1){
-        f->roomList[f->stairRooms[1]]->theme = themes + 3;
-    }
 
     FOR(i, f->roomNum){
         for(int j = f->roomList[i]->x - 1; j <= f->roomList[i]->x + f->roomList[i]->w ; j++){
@@ -1868,21 +1891,116 @@ void generateFloor(Floor* f){
     thirdGroundMeshPass(f);
 }
 
+void generateSpecialFloors(){
+    Floor* f = floors + floorNum;
+
+    f->roomNum = 0;
+    f->pointCloud = NULL;
+    f->roomList = NULL;
+    f->adjMat = NULL;
+    f->itemList = malloc(sizeof(LinkedList));
+    f->index = floorNum;
+    createLinkedList(f->itemList, sizeof(ItemBase*));
+
+    f->groundMesh = loadCharTextureFromTxt("../Data/Ascii/Map/tressureFloor.txt");
+    f->w = f->groundMesh->w;
+    f->h = f->groundMesh->h;
+    f->visionMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+    f->pathFindMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+    f->visited = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+    f->featureMesh = createCharTexture(f->groundMesh->w, f->groundMesh->h, 0, 0);
+
+    fillCharTexture(f->visited, 1);
+    fillCharTexture(f->featureMesh, 3);
+
+    FOR(i, f->h){
+        FOR(j, f->w){
+            switch (f->groundMesh->data[i][j]){
+            case 'A':
+                ItemBase* amulet = LoadItemWithName("Amulet of yendor");
+                amulet->z = floorNum;
+                amulet->x = j;
+                amulet->y = i;
+                linkedListPushBack(f->itemList, amulet);
+                f->groundMesh->data[i][j] = '.';
+                break;
+            case 'P':
+                f->startX = j;
+                f->startY = i;
+                f->groundMesh->data[i][j] = '.';
+                break;
+            default:
+                f->groundMesh->color[i][j] = rgb[3][3][3];
+                break;
+            }
+        }
+    }
+
+    int offset;
+    FOR(i, f->h){
+        FOR(j, f->w){
+            switch (f->groundMesh->data[i][j]){
+            case '.':
+                offset = randBetween(-1, 2, 0);
+                f->groundMesh->color[i][j] = rgb[3][3 ][1];
+                break;
+            default:
+                f->groundMesh->color[i][j] = rgb[4][4][4];
+                break;
+            }
+        }
+    }
+
+    f->roomNum = 1;
+    f->roomList = malloc(sizeof(Room*));
+    f->roomList[0] = malloc(sizeof(Room));
+    f->roomList[0]->w = f->groundMesh->w;
+    f->roomList[0]->h = f->groundMesh->h;
+    f->roomList[0]->x = 0;
+    f->roomList[0]->y = 0;
+    f->roomList[0]->theme = themes + 3;
+
+    fillCharTexture(f->featureMesh, 3);
+
+    floorNum++;
+}
+
+void placeTressureRoomEntrance(){
+    Floor* f = floors + floorNum-1;
+    Room* r = f->roomList[f->stairRooms[1]];
+    ItemBase* entrance = calloc(1, sizeof(ItemBase));
+    entrance->sprite = 5854;
+    entrance->name = writeLog("tressureRoomEntrance");
+    entrance->color[0] = 5;
+    entrance->color[1] = 5;
+    entrance->color[2] = 2;
+    initTressureRoomEntrance(entrance);
+
+    placeInRange(f, r->x + 1, r->y + 1, r->x + r->w, r->y + r->h, &(entrance->x), &(entrance->y));
+
+    linkedListPushBack(f->itemList, entrance);
+
+}
+
 void generateMap(){
     floorNum = randBetween(gameSettings.minFloorNum, gameSettings.maxFloorNum + 1, 0);
-    floors = malloc((floorNum)* sizeof(Floor));
+    floors = malloc((floorNum + 2)* sizeof(Floor));
     
     for(int i = 0; i < floorNum; i++){
         floors[i].index = i;
         generateFloor(floors + i);
         placePillars(floors + i);
-        placeTraps(floors + i);
         fillCharTexture(floors[i].visited, '\0');
     }
-
-    placeMonsters();
+    //placeTressureRoomEntrance();
+    //generateSpecialFloors();
+    
+    //placeTraps();
+    //placeMonsters();
     generateLoot();
-}
+
+    //floors[floorNum - 1].roomNum = 0;
+}   
 
 int rays = 800;
 void updateVisionMesh(){
@@ -1895,7 +2013,7 @@ void updateVisionMesh(){
     
     double a, da;
     if(gameSettings.fullVision){
-        a = 0, da = PI * 2 / 800;
+        a = 0, da = PI * 2 / rays;
         FOR(i, rays){
             castVisionRay(player.x, player.y, cos(a), sin(a), f, 5, f->visionMesh);
             a += da;
@@ -1906,6 +2024,12 @@ void updateVisionMesh(){
         da = 2 * gameSettings.visionRadius / rays;
         FOR(i, rays){
             castVisionRay(player.x, player.y, cos(a), sin(a), f, 5, f->visionMesh);
+            a += da;
+        }
+
+        a = 0, da = PI * 2 / 100;
+        FOR(i, 100){
+            castHearingRay(player.x, player.y, cos(a), sin(a), f, 2, f->visionMesh);
             a += da;
         }
     }
@@ -1927,9 +2051,9 @@ void searchForHidden(ItemBase* o){
 }
 void updateMusic(){
     if(floors[player.z].featureMesh->data[player.y][player.x] != -1){
-        changeAudio(themes[floors[player.z].featureMesh->data[player.y][player.x]].music, 3000);
+        changeAudio(themes[floors[player.z].featureMesh->data[player.y][player.x]].music, 5000);
     }else{
-        changeAudio(audioManager.audioList, 3000);
+        changeAudio(audioManager.audioList, 5000);
     }
  
 }
@@ -2040,6 +2164,8 @@ void updateWorld(int x, int y){
                     endGame(0, writeLog("You couldnt bare the arcane"));
                 }
             }
+        }else{
+            player.timeSinceInEnhancedRoom = 0;
         }
         player.healthRegenCounter++;
         if(player.healthRegenCounter >= player.healthRegenTime){
@@ -2058,7 +2184,7 @@ void updateWorld(int x, int y){
     }
 
     addInteraction("search for hidden doors and traps", &searchForHidden, 'f', NULL);
-
+    Floor* f = floors + player.z;
     tmpPtr = floors[player.z].itemList->data;
     while(tmpPtr && !gameEnded){
         tmpItemBase = tmpPtr[1];
@@ -2122,15 +2248,15 @@ void playerKeyPress(int ch){
         case 'u':
             if(player.z != 0){
                 player.z--;
-                player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                player.x = floors[player.z].w / 2;
+                player.y = floors[player.z].h / 2;
             }
             break;
         case 'j':
             if(player.z != floorNum-1){
                 player.z++;
-                player.x = floors[player.z].roomList[0]->x + floors[player.z].roomList[0]->w / 2;
-                player.y = floors[player.z].roomList[0]->y + floors[player.z].roomList[0]->h / 2;
+                player.x = floors[player.z].w / 2;
+                player.y = floors[player.z].h / 2;
             }
             break;
         case 'i':
@@ -2173,9 +2299,10 @@ void updateMainGame(int ch){
         case ERR:
             break;
         default:
-            playerKeyPress(ch);
+            if(!gameEnded){
+                playerKeyPress(ch);
+            }
             break;
-            
     }
 
     if(player.heldObject && player.heldObject->inHandUpdate) player.heldObject->inHandUpdate(player.heldObject);
@@ -2216,7 +2343,7 @@ void renderMainGameToFramebuffer(){
 
     renderDepthlessTexture(floors[player.z].groundMesh, 0, 0, 0, &mainCamera, frameBuffer);
     mixTextures(floors[player.z].visited, floors[player.z].visionMesh);
-    colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
+    if(!gameSettings.debugSeeAll) colorMaskFrameBuffer(frameBuffer, visitedMaskBuffer);
     renderDepthlessTexture(floors[player.z].visited, 0, 0, 0, &mainCamera, visitedMaskBuffer);
     if(!gameSettings.debugSeeAll) maskFrameBuffer(frameBuffer, visitedMaskBuffer);
 }

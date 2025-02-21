@@ -119,9 +119,9 @@ void staryFadeUpdate(int ch){
     }else{
         rdCurTime = SDL_GetTicks();
         if(start){
-            if(rdCurTime - rdPrevTime[0] >= 50){
-                int finished = 1;
-                if(!reverse){
+            if(!reverse){
+                if(rdCurTime - rdPrevTime[0] >= 5){
+                    int finished = 1;
                     FOR(i, dialougeTexture->h){
                         FOR(j, dialougeTexture->w){
                             dialougeTexture->color[i][j] += randBetween(0, stepSize, 0);
@@ -136,8 +136,14 @@ void staryFadeUpdate(int ch){
                     }
                     if(finished){
                         reverse = 1;
+                        SDL_Delay(300);
                     }
-                }else{
+                    rdPrevTime[0] = rdCurTime;
+                    renderRollDialouge();
+                }
+            }else{
+                if(rdCurTime - rdPrevTime[0] >= 30){
+                    int finished = 1;
                     FOR(i, dialougeTexture->h){
                         FOR(j, dialougeTexture->w){
                             dialougeTexture->color[i][j] -= randBetween(0, stepSize, 0);
@@ -153,9 +159,10 @@ void staryFadeUpdate(int ch){
                     if(finished){
                         exitFunc();
                     }
+                    rdPrevTime[0] = rdCurTime;
+                    renderRollDialouge();
+
                 }
-                rdPrevTime[0] = rdCurTime;
-                renderRollDialouge();
             }
         }else if(rdCurTime - enterTime >= startDelay){
             start = 1;
@@ -164,7 +171,64 @@ void staryFadeUpdate(int ch){
     }
 }
 
-void (*rollDialougeUpdates[3])(int) = {&simpleFadeUpdate, &wordFadeUpdate, &staryFadeUpdate};
+void horizontalFadeUpdate(int ch){
+    if(ch == 'e'){
+        exitFunc();
+    }else{
+        rdCurTime = SDL_GetTicks();
+        if(start){
+            if(rdCurTime - rdPrevTime[1] >= 20){
+                passed = min(dialougeTexture->w, passed + 1);
+                rdPrevTime[1] = rdCurTime;
+            }
+            if(rdCurTime - rdPrevTime[0] >= 20){
+                int finished = 1;
+                if(!reverse){
+                    FOR(i, dialougeTexture->h){
+                        FOR(j, passed){
+                            dialougeTexture->color[i][j] += randBetween(0, stepSize, 0);
+
+                            if(dialougeTexture->color[i][j] >= 254){
+                                dialougeTexture->color[i][j] = 254;
+                            }
+                            if(dialougeTexture->color[i][j] <= 150){
+                                finished = 0;
+                            }
+                        }
+                    }
+                    if(finished && (passed >= dialougeTexture->w - 1)){
+                        reverse = 1;
+                        passed = 0;
+                    }
+                }else{
+                    FOR(i, dialougeTexture->h){
+                        FOR(j, passed){
+                            dialougeTexture->color[i][j] -= randBetween(0, stepSize, 0);
+
+                            if(dialougeTexture->color[i][j] <= 20){
+                                dialougeTexture->color[i][j] = 20;
+                            }
+                            if(dialougeTexture->color[i][j] >= 21){
+                                finished = 0;
+                            }
+                        }
+                    }
+                    if(finished && (passed >= dialougeTexture->w - 1)){
+                        exitFunc();
+                    }
+                }
+                rdPrevTime[0] = rdCurTime;
+                renderRollDialouge();
+            }
+        }else if(rdCurTime - enterTime >= startDelay){
+            start = 1;
+            rdPrevTime[0] = rdCurTime;
+            rdPrevTime[1] = rdCurTime;
+        }
+    }
+}
+
+void (*rollDialougeUpdates[4])(int) = {&simpleFadeUpdate, &wordFadeUpdate, &staryFadeUpdate, &horizontalFadeUpdate};
 
 void startRollingDialouge(const char * const txt, enum dialougeRollType type, uint32_t ms, uint8_t stpSize, uint32_t startOffset, int cr, int cg, int cb, void (*extFunc)()){
     if(dialougeTexture) deleteCharTexture(dialougeTexture);

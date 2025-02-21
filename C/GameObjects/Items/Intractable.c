@@ -11,6 +11,13 @@ void initDoor(ItemBase* o){
     o->render = &defaultItemRender;
     o->playerCollision = &doorPlayerCollision;
 }
+void initTressureRoomEntrance(ItemBase* o){
+    if(!(o->id)){
+        o->id = globalItemIdCounter++;
+    }
+    o->playerCollision = &tressureRoomEntrancePlayerCollision;
+    o->render = &defaultItemRender;
+}
 void initStair(ItemBase* o){
     if(!(o->id)){
         o->id = globalItemIdCounter++;
@@ -70,7 +77,9 @@ void stairUpdate(ItemBase* o){
         }
     }
 }
-
+void tressureRoomEntrancePlayerCollision(ItemBase* o){
+    addInteraction("enter the amulet chamber", &enterAmuletChamber, KEY_DOWN, o);
+}
 void passwordGeneratorPlayerCollision(ItemBase* o){
     
 }

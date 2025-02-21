@@ -11,6 +11,8 @@
 #include "../UiElements/TextBox.h"
 #include "../UiElements/Button.h"
 #include "../UiElements/ComboBox.h"
+#include "../UiElements/ImageBox.h"
+
  
 Button ngmStart;
 Button ngmBackBtn;
@@ -34,6 +36,14 @@ Widget ngmLootWidget;
 TextWidget ngmLootLabel;
 ComboBox ngmLootCombo;
 
+Widget ngmRightWidget;
+ImageBox ngmMapSizeImage;
+ImageBox ngmDifficultyImage;
+
+CharTexture** mapSizeImages;
+CharTexture** difficultyImages;
+
+
 LinkedList ngmUiList;
 
 EngineState newGameMenu = {&enterNewGameMenu, &updateNewGameMenu, &renderNewGameMenu, &exitNewGameMenu, &ngmUiList};
@@ -47,6 +57,7 @@ void loadDifficulty(){
 }
 
 void ngmStartGame(){
+    playEffectByName("gameStartClick");
     int difIndex = ngmDifficultyCombo.selected;
 
     
@@ -89,7 +100,9 @@ void ngmStartGame(){
     startRollingDialouge("loreDialouge", wordFade, 1000, 10, 1000, 1000, 800, 700, &startNewGame);
 }
 
-
+void mapSizeChangedCallback(){
+    changeImageBox(&ngmMapSizeImage, mapSizeImages[ngmMapSizeCombo.selected]);
+}
 void initNewGameMenu(){
     createLinkedList(&ngmUiList, sizeof(UiBase*));
 
@@ -138,12 +151,32 @@ void initNewGameMenu(){
         {
             createTextWidget(&ngmMapSizeLabel, &ngmMapSizeWidget, ABSOLUTE, ABSOLUTE, 0, 0, "Map size");
             createComboBox(&ngmMapSizeCombo, &ngmMapSizeWidget, ABSOLUTE, ABSOLUTE, ABSOLUTE, ABSOLUTE, 11, 0, 15, 1, C_BG_GRAY0);
+            ngmMapSizeCombo.optionCallback = &mapSizeChangedCallback;
             {   
                 cJSON* mapSizeProfiles = openJsonFile("../Data/MapSizeProfiles.json");
                 cJSON* tmp = mapSizeProfiles->child;
+                mapSizeImages = calloc(cJSON_GetArraySize(mapSizeProfiles), sizeof(CharTexture*));
+                int i = 0;
                 while(tmp){
                     comboBoxAddOption(&ngmMapSizeCombo, cJSON_GetObjectItem(tmp, "name")->valuestring);
+                    mapSizeImages[i] = getTextureByName(cJSON_GetObjectItem(tmp, "image")->valuestring)->data;
+                    CharTexture* t = mapSizeImages[i];
+                    FOR(i, t->h){
+                        FOR(j, t->w){
+                            switch (t->data[i][j]){
+                            case '.':
+                                t->color[i][j] =  rgb[2][2][2];
+                                break;
+                            case '#':
+                                t->color[i][j] =  rgb[4][4][4];
+                                break;
+                            default:
+                                break;
+                            }
+                        }
+                    }
                     tmp = tmp->next;
+                    i++;
                 }
                 cJSON_free(mapSizeProfiles);
             }
@@ -175,12 +208,21 @@ void initNewGameMenu(){
         linkedListPushBack(ngmSideBar.children, ngmLootWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmPlayerColorTextWidget.uiBase);
         linkedListPushBack(ngmSideBar.children, ngmPlayerColorWidget.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmStart.uiBase);
+        linkedListPushBack(ngmSideBar.children, ngmBackBtn.uiBase);
     }
 
-    linkedListPushBack(ngmSideBar.children, ngmStart.uiBase);
-    linkedListPushBack(ngmSideBar.children, ngmBackBtn.uiBase);
+    createWidget(&ngmRightWidget, NULL, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 32, 0, 100, 100, NULL);
+    {
+        createImageBox(&ngmMapSizeImage, &ngmRightWidget, getTextureByName("mapSizeSmall")->data, -1, ALIGN_CENTER, ALIGN_CENTER, 0, 5);
+
+        linkedListPushBack(ngmRightWidget.children, ngmMapSizeImage.uiBase);
+    }
+
 
     linkedListPushBack(&ngmUiList, ngmSideBar.uiBase);
+    linkedListPushBack(&ngmUiList, ngmRightWidget.uiBase);
+
 
     ngmBackBtn.callBack = maineMenu.enter;
     ngmStart.callBack = &ngmStartGame;

@@ -191,8 +191,8 @@
     ]
 },{
     "type" : 3,
-    "minDensity" : 0.4,
-    "maxDensity" : 0.8,
+    "minDensity" : 0.09,
+    "maxDensity" : 0.15,
     "enteries":[
         {
             "name" : "Golden coin",

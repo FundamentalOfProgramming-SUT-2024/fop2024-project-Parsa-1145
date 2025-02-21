@@ -21,7 +21,7 @@
         "cr" : 3,
         "cb" : 2,
         "cg" : 1,
-        "mist" : 2,
+        "mist" : 1,
         "backgroundMusic" : "underworld"
 
     },{
@@ -31,6 +31,6 @@
         "cb" : 4,
         "cg" : 1,
         "mist" : 0,
-        "backgroundMusic" : "eerie"
+        "backgroundMusic" : "amuletChamber"
     }
 ]

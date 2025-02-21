@@ -6,7 +6,8 @@
         "baseMaximumHealth" : 100,
         "healthRegenAmount" : 3,
         "baseLuck" : 2,
-        "baseSpeed" : 2
+        "baseSpeed" : 2,
+        "image" : "difficultyEasy"
     },{
         "name":"Normal",
         "rememberItems" : 1,
@@ -14,15 +15,17 @@
         "baseMaximumHealth" : 80,
         "healthRegenAmount" : 3,
         "baseLuck" : 1,
-        "baseSpeed" : 1
+        "baseSpeed" : 1,
+        "image" : "difficultyNormal"
     },{
         "name":"Hard",
         "rememberItems" : 0,
         "visionRadius" : 0.52359877559,
-        "baseMaximumHealth" : 1000,
+        "baseMaximumHealth" : 70,
         "healthRegenAmount" : 3,
         "baseLuck" : 1,
-        "baseSpeed" : 1
+        "baseSpeed" : 1,
+        "image" : "difficultyHard"
     },{
         "name":"Nightmare",
         "rememberItems" : 0,
@@ -30,6 +33,7 @@
         "baseMaximumHealth" : 60,
         "healthRegenAmount" : 3,
         "baseLuck" : 1,
-        "baseSpeed" : 1
+        "baseSpeed" : 1,
+        "image" : "difficultyNightmare"
     }
 ]

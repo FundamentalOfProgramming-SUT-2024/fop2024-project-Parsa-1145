@@ -33,6 +33,7 @@ EngineState maineMenu = {&enterMainMenu, &updateMainMenu, &renderMainMenu, &exit
 
 CharTexture* mmBackGround;
 CharTexture* mmBackGround2;
+CharTexture* mmBackGroundSky;
 CharTexture* mmFrameBuffer;
 Camera mmCamera;
 
@@ -115,6 +116,7 @@ void initMainMenu(){
 
     mmBackGround = loadCharTextureFromTxt("../Data/Ascii/mainMenu11.txt");
     mmBackGround2 = loadCharTextureFromTxt("../Data/Ascii/mainMenu9.txt");
+    mmBackGroundSky = loadCharTextureFromTxt("../Data/Ascii/sky.txt");
     mmFrameBuffer = createFrameBuffer(scrW, scrH);
 
     getmaxyx(stdscr, startH, startW);
@@ -174,6 +176,7 @@ void renderMainMenu(){
 
     renderDepthlessTexture(mmBackGround2, (scrW / 2) - mmBackGround2->w + 40 + (scrW & 1) , (scrH / 2) - mmBackGround2->h + (scrH & 1), 0, &mmCamera, mmFrameBuffer);
     renderDepthlessTexture(mmBackGround, -(scrW / 2) - (scrW & 1) - 20 , (scrH / 2) - mmBackGround->h + (scrH & 1), 10, &mmCamera, mmFrameBuffer);
+    renderDepthlessTexture(mmBackGroundSky, -mmBackGroundSky->w / 2 , -(scrH / 2) - (scrH & 1), -1, &mmCamera, mmFrameBuffer);
 
     renderFrameBuffer(mmFrameBuffer);
     renderFrameBuffer(uiFrameBuffer);
