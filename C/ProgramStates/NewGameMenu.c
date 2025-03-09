@@ -159,7 +159,7 @@ void initNewGameMenu(){
                 int i = 0;
                 while(tmp){
                     comboBoxAddOption(&ngmMapSizeCombo, cJSON_GetObjectItem(tmp, "name")->valuestring);
-                    mapSizeImages[i] = getTextureByName(cJSON_GetObjectItem(tmp, "image")->valuestring)->data;
+                    mapSizeImages[i] = loadCharTextureFromTxt(cJSON_GetObjectItem(tmp, "image")->valuestring);
                     CharTexture* t = mapSizeImages[i];
                     FOR(i, t->h){
                         FOR(j, t->w){
@@ -214,7 +214,7 @@ void initNewGameMenu(){
 
     createWidget(&ngmRightWidget, NULL, RELATIVE, RELATIVE, ALIGN_LEFT, ALIGN_CENTER, 32, 0, 100, 100, NULL);
     {
-        createImageBox(&ngmMapSizeImage, &ngmRightWidget, getTextureByName("mapSizeSmall")->data, -1, ALIGN_CENTER, ALIGN_CENTER, 0, 5);
+        createImageBox(&ngmMapSizeImage, &ngmRightWidget, mapSizeImages[0], -1, ALIGN_CENTER, ALIGN_CENTER, 0, 5);
 
         linkedListPushBack(ngmRightWidget.children, ngmMapSizeImage.uiBase);
     }

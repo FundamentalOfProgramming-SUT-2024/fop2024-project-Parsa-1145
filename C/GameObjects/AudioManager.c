@@ -50,9 +50,6 @@ Audio* getAudioByName(const char * const name){
     return NULL;
 }
 void freeAudioManager(){
-    FOR(i, audioManager.audioListNum){
-        Mix_FreeChunk(audioManager.audioList[i].data);
-    }
     Mix_CloseAudio();
     SDL_Quit();
 }

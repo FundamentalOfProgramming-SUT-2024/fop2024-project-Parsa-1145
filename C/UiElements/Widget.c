@@ -244,7 +244,7 @@ void updateWidgetChildren(Widget* w){
                 w->iterPtr = w->tmpIterPtr[1];
                 if(w->iterPtr){
                     ch = w->iterPtr->widget;
-                    margin = ch->y - 1;
+                    margin = ch->y - w->bordered;
                 }
                 while(w->tmpIterPtr){
                     w->iterPtr = w->tmpIterPtr[1];

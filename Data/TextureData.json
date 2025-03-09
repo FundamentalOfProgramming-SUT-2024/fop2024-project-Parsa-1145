@@ -76,22 +76,6 @@
         "id" : 3,
         "address" : "../Data/Ascii/Images/mapSizeGigantic.txt"
     },{
-        "name" : "difficultyEasy",
-        "id" : 3,
-        "address" : "../Data/Ascii/Images/difficultyEasy.txt"
-    },{
-        "name" : "difficultyNormal",
-        "id" : 3,
-        "address" : "../Data/Ascii/Images/difficultyNormal.txt"
-    },{
-        "name" : "difficultyHard",
-        "id" : 3,
-        "address" : "../Data/Ascii/Images/difficultyHard.txt"
-    },{
-        "name" : "difficultyNightmare",
-        "id" : 3,
-        "address" : "../Data/Ascii/Images/difficultyNightmare.txt"
-    },{
         "name" : "sky",
         "id" : 3,
         "address" : "../Data/Ascii/sky.txt"

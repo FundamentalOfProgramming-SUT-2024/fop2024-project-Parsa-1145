@@ -5,14 +5,14 @@
         "maxRoomNum" : 5,
         "minFloorNum" : 4,
         "maxFloorNum" : 5,
-        "image" : "mapSizeSmall"
+        "image" : "../Data/Ascii/Images/mapSizeSmall.txt"
     },{
         "name" : "Normal",
         "minRoomNum" : 5,
         "maxRoomNum" : 7,
         "minFloors" : 5,
         "maxFloorNum" : 7,
-        "image" : "mapSizeNormal"
+        "image" : "../Data/Ascii/Images/mapSizeNormal.txt"
 
     },{
         "name" : "Big",
@@ -20,7 +20,7 @@
         "maxRoomNum" : 9,
         "minFloors" : 6,
         "maxFloorNum" : 8,
-        "image" : "mapSizeBig"
+        "image" : "../Data/Ascii/Images/mapSizeBig.txt"
 
     },{
         "name" : "Gigantic",
@@ -28,7 +28,7 @@
         "maxRoomNum" : 11,
         "minFloors" : 8,
         "maxFloorNum" : 10,
-        "image" : "mapSizeGigantic"
+        "image" : "../Data/Ascii/Images/mapSizeGigantic.txt"
 
     }
 ]

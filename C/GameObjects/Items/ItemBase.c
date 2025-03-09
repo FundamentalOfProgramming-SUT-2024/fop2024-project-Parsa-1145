@@ -225,8 +225,8 @@ void defaultItemPickup(ItemBase* o){
         while(tmp){
             ptr = tmp[1];
             tmp = tmp[0];
-            if((o->type) && !strcmp(o->type, "consumable") && (o->subType) && (!strcmp(o->subType, "food"))){
-                n+= o->quantity;
+            if(((ptr->type) && (!strcmp(ptr->type, "consumable"))) && ((ptr->subType) && (!strcmp(ptr->subType, "food")))){
+                n+= ptr->quantity;
             }
         }
 

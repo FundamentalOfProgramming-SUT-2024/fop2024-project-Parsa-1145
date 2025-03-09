@@ -61,7 +61,7 @@ int bowTakeAim(ItemBase* o){
     RayCollision collision;
     if(player.equipedAmmo && (!strcmp(player.equipedAmmo->subType, "arrow"))){
         castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range + player.equipedAmmo->range, &collision);
-        renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+        renderLineToFrameBuffer(0, rgb[5][1][1], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
     }
 }
 
@@ -357,7 +357,7 @@ int wandTakeAim(ItemBase* o){
     RayCollision collision;
     if(player.equipedAmmo && (!strcmp(player.equipedAmmo->subType, "spell"))){
         castRay(player.x, player.y, mainCamera.x + mEvent.x, mainCamera.y + mEvent.y, floors + player.z, player.heldObject->range + player.equipedAmmo->range, &collision);
-        renderLineToFrameBuffer(0, rgb[1][5][2], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
+        renderLineToFrameBuffer(0, rgb[5][1][1], INT8_MAX, player.x, player.y, collision.x, collision.y, &mainCamera, frameBuffer);
     }
 }
 int castSpell(ItemBase* b){

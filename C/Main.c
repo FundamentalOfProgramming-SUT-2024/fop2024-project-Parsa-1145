@@ -34,7 +34,6 @@ int main(){
     init_extended_pair(C_BG_BLACK, COLOR_WHITE, COLOR_BLACK);
     init_extended_pair(C_BG_WHITE, COLOR_BLACK, COLOR_WHITE);
 
-    use_default_colors();
     resetRgbColors();
 
     getmaxyx(stdscr, scrH, scrW);
@@ -46,8 +45,7 @@ int main(){
     uiFrameBuffer = createFrameBuffer(scrW, scrH);
     globalFrameBuffer = createFrameBuffer(scrW, scrH);
     
-    initAudioManager();
-    initTextureManager();
+    
     initSettings();
     initMainMenu();
     initSettingsMenu();
@@ -169,7 +167,6 @@ int main(){
 
     pthread_join(secondaryThread, NULL);
     freeAudioManager();
-
 
 
     refresh();

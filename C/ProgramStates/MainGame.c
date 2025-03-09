@@ -614,10 +614,10 @@ void initMainGame(){
     
     gameSettings.baseMaxHealth = 100;
     gameSettings.baseHealthRegenTime = 5;
-    gameSettings.baseHungerTime = 10;
+    gameSettings.baseHungerTime = 50;
     gameSettings.baseSpeed = 1;
     gameSettings.baseStrength = 1;
-    gameSettings.maxFullness = 20;
+    gameSettings.maxFullness = 40;
     gameSettings.baseLuck = 1;
 
     gameSettings.rememberItems = 1;
@@ -642,7 +642,9 @@ void initMainGame(){
 
     visitedMaskBuffer = createFrameBuffer(scrW, scrH);
     frameBuffer = createFrameBuffer(scrW, scrH);
-
+    
+    initAudioManager();
+    initTextureManager();
     initThemes();
 }
 void resetGame(){
@@ -1993,14 +1995,14 @@ void generateMap(){
         placePillars(floors + i);
         fillCharTexture(floors[i].visited, '\0');
     }
-    //placeTressureRoomEntrance();
-    //generateSpecialFloors();
+    placeTressureRoomEntrance();
+    generateSpecialFloors();
     
-    //placeTraps();
-    //placeMonsters();
+    placeTraps();
+    placeMonsters();
     generateLoot();
 
-    //floors[floorNum - 1].roomNum = 0;
+    floors[floorNum - 1].roomNum = 0;
 }   
 
 int rays = 800;

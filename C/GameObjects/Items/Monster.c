@@ -188,17 +188,13 @@ int defaultMonsterUpdate(ItemBase* m){
                     }
                     
                     if(!m->decayed){
-                        if((floors[m->z].featureMesh->data[m->y][m->x] == 3)){
-                            m->decayed = 10;
+                        m->decayed = m->decayTime / 2;
+                        if(randWithProb(0.5)){
+                            m->goodness = 2;
+                            addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
                         }else{
-                            m->decayed = m->decayTime / 2;
-                            if(randWithProb(0.5)){
-                                m->goodness = 2;
-                                addFormattedMessage("%S is %oexhausted%O", m->name, 1, 5, 1 );
-                            }else{
-                                m->goodness = 3;
-                                addFormattedMessage("%S lost %ointrest%O in you", m->name, 1, 5, 1 );
-                            }
+                            m->goodness = 3;
+                            addFormattedMessage("%S lost %ointrest%O in you", m->name, 1, 5, 1 );
                         }
                     }
                 }else{

@@ -154,6 +154,7 @@ void enterPassword(ItemBase* o){
                             break;
                         }
                         o->decayed++;
+                        renderMainGame();
                     }
                 }else{
                     addMessage(writeLog("Password invalid"));
